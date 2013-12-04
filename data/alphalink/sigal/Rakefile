@@ -1,0 +1,32 @@
+version = "1.14.0-SNAPSHOT"
+artifact_name = "sigal-#{version}"
+artifact = "dist/target/#{artifact_name}.tar.bz2"
+deploy_url = "svn"
+mvn_options = "-o"
+stage_dir = "/tmp/sigal"
+task :update do
+  sh "svn up"
+end
+
+desc "Quick build"
+task :quick do
+  sh "mvn -o -DskipTests -Dmaven.test.skip=true install"
+end
+
+desc "Build project"
+task :build => [ :update ] do
+  sh "mvn #{mvn_options} clean install"
+end
+
+file artifact => [ :build ] do
+  sh "cd dist; mvn #{mvn_options} assembly:assembly"
+end
+
+desc "build project archive and deploy it to svn server"
+task :test_deploy => [ artifact ] do
+  mkdir_p stage_dir
+  rm_rf "#{stage_dir}/#{artifact_name || 'failsave'}/"
+  sh "tar jxvf #{artifact} -C #{stage_dir}"
+  sh "rsync -azvcP --delete #{stage_dir}/#{artifact_name}/ #{deploy_url}:/root/#{artifact_name}/"
+end
+

@@ -1,0 +1,117 @@
+Scenario: Forced routing nominal call
+  Given ss7.MobileForcedRoutingAgi and inbound_timeout: 120, outbound_timeout: 121, ft_chan: FT, op_chan: ORT, nsg_chan: SIP/NSG, gw_chan: SIP/GW
+  Given a call from Jean Bon <123456780> to 123456789
+  Given account code 0981000001019
+  Given header X-FreeTDM-CPC: ordinary
+  Given header X-FreeTDM-CLD-NADI: 3
+  Given header X-FreeTDM-CLG-NADI: 3
+  Given header X-FreeTDM-Screen: 3
+  Given header X-FreeTDM-Presentation: 0
+  Given header X-FreeTDM-GN: <null>
+  Given header X-FreeTDM-RDNIS: <null>
+  When redirecting from <null>
+  Then query MLIDB with 33123456780 and return account_code: 0981000001019, carrier_code: D200912010001.1
+  Then set callerIdNum to +33123456780
+  Then add header P-Asserted-Identity: <tel:+33123456780>
+  Then add header X-AccountCode: 0981000001019
+  Then add header X-CarrierCode: D200912010001.1
+  Then cdr <any>/D200912010001.1 - e/0981000001019/+33123456780/+33123456780/ALLOWED/<any> -- i/<any>/33123456789
+  Then set P-Charging-Vector
+  Then dial channel SIP/GW with number 33123456789, timeout 120 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+  Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0981000001019/+33123456780/+33123456780/ALLOWED/<any> -- i/<any>/33123456789
+  Then done
+
+Scenario: Forced routing anonymous call
+  Given ss7.MobileForcedRoutingAgi and inbound_timeout: 120, outbound_timeout: 121, ft_chan: FT, op_chan: ORT, nsg_chan: SIP/NSG, gw_chan: SIP/GW
+  Given a call from Jean Bon <123456780> to 123456789
+  Given account code 0981000001019
+  Given header X-FreeTDM-CPC: ordinary
+  Given header X-FreeTDM-CLD-NADI: 3
+  Given header X-FreeTDM-CLG-NADI: 3
+  Given header X-FreeTDM-Screen: 3
+  Given header X-FreeTDM-Presentation: 1
+  Given header X-FreeTDM-GN: <null>
+  Given header X-FreeTDM-RDNIS: <null>
+  When redirecting from <null>
+  Then query MLIDB with 33123456780 and return account_code: 0981000001019, carrier_code: D200912010001.1
+  Then set callerIdNum to +33123456780
+  Then add header P-Asserted-Identity: <tel:+33123456780>
+  Then add header Privacy: id
+  Then add header X-AccountCode: 0981000001019
+  Then add header X-CarrierCode: D200912010001.1
+  Then cdr <any>/D200912010001.1 - e/0981000001019/+33123456780/+33123456780/RESTRICTED/<any> -- i/<any>/33123456789
+  Then set P-Charging-Vector
+  Then dial channel SIP/GW with number 33123456789, timeout 120 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+  Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0981000001019/+33123456780/+33123456780/RESTRICTED/<any> -- i/<any>/33123456789
+  Then done
+
+Scenario: Forced routing failed call unknown Msisdn
+  Given ss7.MobileForcedRoutingAgi and inbound_timeout: 120, outbound_timeout: 121, ft_chan: FT, op_chan: ORT, nsg_chan: SIP/NSG, gw_chan: SIP/GW
+  Given a call from Jean Bon <123456780> to 123456789
+  Given account code 0981000001019
+  Given header X-FreeTDM-CPC: ordinary
+  Given header X-FreeTDM-CLD-NADI: 3
+  Given header X-FreeTDM-CLG-NADI: 3
+  Given header X-FreeTDM-Screen: 3
+  Given header X-FreeTDM-Presentation: 0
+  Given header X-FreeTDM-GN: <null>
+  Given header X-FreeTDM-RDNIS: <null>
+  When redirecting from <null>
+  Then query MLIDB with 33123456780 and find nothing
+  Then hangup with cause 21
+  Given answered time 0
+  Then complete cdr <any> 403/AccountNotFound 0
+  Then done
+
+Scenario: Number of calls is greater than VNO max calls
+  Given ss7.MobileForcedRoutingAgi and inbound_timeout: 120, outbound_timeout: 121, ft_chan: FT, op_chan: ORT, nsg_chan: SIP/NSG, gw_chan: SIP/GW
+  Given a call from Jean Bon <123456780> to 123456789
+  Given account code 0981000001019
+  Given header X-FreeTDM-CPC: ordinary
+  Given header X-FreeTDM-CLD-NADI: 3
+  Given header X-FreeTDM-CLG-NADI: 3
+  Given header X-FreeTDM-Screen: 3
+  Given header X-FreeTDM-Presentation: 0
+  Given header X-FreeTDM-GN: <null>
+  Given header X-FreeTDM-RDNIS: <null>
+  When redirecting from <null>
+  Then query MLIDB with 33123456780 and return account_code: 0981000001019, carrier_code: D200912010001.1, max_vno_calls: 100, vno_call_count: 100
+  Then hangup with cause 31
+  Given answered time 0
+  Then complete cdr <any> 480/LimitReached 0
+  Then done
+
+Scenario: Routag receives inexistant Carrier Code
+  Given ss7.MobileForcedRoutingAgi and inbound_timeout: 120, outbound_timeout: 121, ft_chan: FT, op_chan: ORT, nsg_chan: SIP/NSG, gw_chan: SIP/GW
+  Given a call from Jean Bon <123456780> to 123456789
+  Given account code 0981000001019
+  Given header X-FreeTDM-CPC: ordinary
+  Given header X-FreeTDM-CLD-NADI: 3
+  Given header X-FreeTDM-CLG-NADI: 3
+  Given header X-FreeTDM-Screen: 3
+  Given header X-FreeTDM-Presentation: 0
+  Given header X-FreeTDM-GN: <null>
+  Given header X-FreeTDM-RDNIS: <null>
+  When redirecting from <null>
+  Then query MLIDB with 33123456780 and return account_code: 0981000001019, carrier_code: D200912010001.1
+  Then set callerIdNum to +33123456780
+  Then add header P-Asserted-Identity: <tel:+33123456780>
+  Then add header X-AccountCode: 0981000001019
+  Then add header X-CarrierCode: D200912010001.1
+  Then cdr <any>/D200912010001.1 - e/0981000001019/+33123456780/+33123456780/ALLOWED/<any> -- i/<any>/33123456789
+  Then set P-Charging-Vector
+  Then dial channel SIP/GW with number 33123456789, timeout 120 and separator ,
+  Given release cause 1
+  Given dial status NOT_FOUND
+  Then hangup with cause 1
+  Given answered time 0
+  Then complete cdr <any> 404/NotFound 0
+  Then done

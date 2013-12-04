@@ -1,0 +1,15 @@
+Scenario: transitional, national
+  Given isdn.IsdnInboundAgi and inbound_timeout: 121, gw_channel_name: SIP/GW
+  Given a call from Jean Bon <000000000> to 123456789
+  Given account code 0991000001014
+  Then cdr <any>/D200911200001.1 - e/0991000001014/33000000000/Jean Bon -- i/<any>/33123456789 
+  Then set callerId to +33000000000 and Jean Bon
+  Then add header X-AccountCode: 0991000001014
+  Then add header X-CarrierCode: D200911200001.1
+  Then set P-Charging-Vector
+  Then dial channel SIP/GW with number 33123456789, timeout 121 and separator ,
+  Given release cause 16
+  Then hangup with cause 16
+  Given answered time 1234
+  Then complete cdr <any>/200_Answered/1234/D200911200001.1 - e/0991000001014/33000000000/Jean Bon -- i/<any>/33123456789 
+  Then done

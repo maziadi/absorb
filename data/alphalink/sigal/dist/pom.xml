@@ -1,0 +1,71 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<relativePath>../provision/</relativePath>
+		<groupId>com.initsys.sigal.build</groupId>
+		<artifactId>provision</artifactId>
+		<version>1.14.0-SNAPSHOT</version>
+	</parent>
+	<groupId>com.initsys.sigal</groupId>
+	<artifactId>distribution</artifactId>
+	<packaging>pom</packaging>
+	<name>Sigal Application Packager</name>
+	<version>1.14.0-SNAPSHOT</version>
+	<repositories>
+		<repository>
+			<id>OPS4J</id>
+			<url>http://repository.ops4j.org/maven2</url>
+		</repository>
+		<repository>
+			<id>com.springsource.repository.bundles.external</id>
+			<name>SpringSource Enterprise Bundle Repository
+        (External Bundles)</name>
+			<url>http://repository.springsource.com/maven/bundles/external</url>
+		</repository>
+	</repositories>
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<finalName>sigal-${project.version}</finalName>
+					<descriptors>
+						<descriptor>src/main/assembly/assembly.xml</descriptor>
+					</descriptors>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<!-- Bundles de l'application -->
+		<dependency>
+			<groupId>com.initsys</groupId>
+			<artifactId>as</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.initsys</groupId>
+			<artifactId>agent</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.initsys</groupId>
+			<artifactId>core</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.protobuf</groupId>
+			<artifactId>com.initsys.com.google.protobuf-java</artifactId>
+			<version>2.4.1</version>
+		</dependency>
+<!-- 
+		<dependency>
+			<groupId>org.ops4j.pax.confman</groupId>
+			<artifactId>pax-confman-propsloader</artifactId>
+			<version>0.2.2</version>
+		</dependency>
+ -->
+	</dependencies>
+</project>

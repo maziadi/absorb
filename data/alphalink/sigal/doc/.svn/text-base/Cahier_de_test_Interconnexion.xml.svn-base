@@ -1,0 +1,788 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<book>
+	<bookinfo>
+		<title>Cahier de test</title>
+		<subtitle>Interconnexion SIP</subtitle>
+		<author>
+			<firstname>Moutot</firstname>
+ 			<surname>Alexandre</surname>
+ 			<affiliation>
+				<orgname>INIT-SYS</orgname>
+			</affiliation>
+		</author>
+		<releaseinfo>1.0</releaseinfo>
+		<revhistory>
+			<revision>
+				<revnumber>1.0</revnumber>
+ 				<date>2013/07/26</date>
+ 				<author><surname>Moutot Alexandre</surname> </author>
+				<revdescription>
+					<para>Passage en DocBook</para>
+				</revdescription>
+			</revision>
+		</revhistory>
+	</bookinfo>
+	<chapter>
+		<title>Nomenclature</title>
+		<variablelist>
+			<varlistentry>
+				<term>ALPL</term>
+ 				<listitem>
+					<para>Opérateur Alphalink</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term>ORT</term>
+ 				<listitem>
+					<para>Opérateur tiers</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term>ORTT</term>
+ 				<listitem>
+					<para>Opérateur tiers de terminaison</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term>SVI</term>
+ 				<listitem>
+					<para>Serveur Vocal Interactif</para>
+				</listitem>
+			</varlistentry>
+		</variablelist>
+	</chapter>
+	<chapter>
+		<title>Contexte</title>
+		<para>
+			Ce document recense l'ensemble des tests à effectuer dans le cadre d'interconnexion d'ALPL avec un ORT. Ce document est composé de plusieurs sections de tests correspondantes à des utilisations différentes de l'interconnexion :			<itemizedlist>
+				<listitem>
+					<para>transit national émission</para>
+				</listitem>
+				<listitem>
+					<para>transit national réception</para>
+				</listitem>
+				<listitem>
+					<para>transit internationnal émission</para>
+				</listitem>
+				<listitem>
+					<para>transit internationnal réception</para>
+				</listitem>
+				<listitem>
+					<para>terminaison nationale émission</para>
+				</listitem>
+				<listitem>
+					<para>terminaison nationale réception</para>
+				</listitem>
+				<listitem>
+					<para>terminaison internationnale émission</para>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>Le référentiel utilisé dans tout le document est le référentiel ALPL. Une émission d'appel est un appel de ALPL vers ORT et une réception d'appel est un appel de ORT vers ALPL.</para>
+		<para>Pour diffusion à un ORT, il faut éditer le présent document pour laisser uniquement les sections correspondantes à la fonction de l'interconnexion.</para>
+	</chapter>
+	<chapter>
+		<title>Liste des tests</title>
+		<sect1>
+			<title>Transit national émission</title>
+			<para>Ces tests couvrent l'utilisation de l'interconnexion par ALPL pour joindre des destinations nationales via ORT.</para>
+			<sect2>
+				<title>Cas 8 : Test d'identification, de présentation et d'anonymat</title>
+				<sect3>
+					<title>Définition</title>
+					<variablelist>
+						<varlistentry>
+							<term>objectifs</term>
+ 							<listitem>
+								<para>Valider le bon fonctionnement de la transmission du numéro d'identification, du numéro de présentation et des informations d'anonymat.</para>
+							</listitem>
+						</varlistentry>
+						<varlistentry>
+							<term>acteurs</term>
+ 							<listitem>
+								<para>ALPL, ORT</para>
+							</listitem>
+						</varlistentry>
+					</variablelist>
+				</sect3>
+				<sect3>
+					<title>Déroulement</title>
+					<table>
+						<title>déroulement nominal</title>
+						<tgroup cols="4">
+							<colspec colwidth="1*"/>
+							<colspec colwidth="6*"/>
+							<colspec colwidth="10*"/>
+							<colspec colwidth="1*"/>
+							<thead>
+								<row>
+									<entry align="center">Id</entry>
+									<entry align="center">Démarche</entry>
+									<entry align="center">Comportement attendu</entry>
+									<entry align="center">Ok ?</entry>
+								</row>
+							</thead>
+							<tbody>
+								<row>
+									<entry align="center" morerows="2" valign="middle">1</entry>
+									<entry morerows="2" valign="middle">ALPL appelle avec un numéro d'identification et de présentation différent, via ORT un numéro collecté par ALPL sur une interconnexion tierce.</entry>
+									<entry>Numéro d'identification correspondant à celui attendu</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Numéro de présentation correspondant à celui attendu</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Commutateur d'anonymat désactivé</entry>
+									<entry/>
+								</row>
+							</tbody>
+						</tgroup>
+					</table>
+					<table>
+						<title>déroulement alternatif : anonymat</title>
+						<tgroup cols="4">
+							<colspec colwidth="1*"/>
+							<colspec colwidth="6*"/>
+							<colspec colwidth="10*"/>
+							<colspec colwidth="1*"/>
+							<thead>
+								<row>
+									<entry align="center">Id</entry>
+									<entry align="center">Démarche</entry>
+									<entry align="center">Comportement attendu</entry>
+									<entry align="center">Ok ?</entry>
+								</row>
+							</thead>
+							<tbody>
+								<row>
+									<entry align="center" morerows="2" valign="middle">1</entry>
+									<entry morerows="2" valign="middle">ALPL appelle avec un numéro d'identification et de présentation différent, l'anonymat demandé, via ORT un numéro collecté par ALPL sur une interconnexion tierce.</entry>
+									<entry>Numéro d'identification correspondant à celui attendu</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Numéro de présentation correspondant à celui attendu</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Commutateur d'anonymat activé</entry>
+									<entry/>
+								</row>
+							</tbody>
+						</tgroup>
+					</table>
+				</sect3>
+				<sect3>
+					<title>Exemples:</title>
+					<para>Emission d'appel de ALPL vers ALPL via ORT avec :</para>
+					<itemizedlist>
+						<listitem>
+							<para>numéro d'identification : +33970757075</para>
+						</listitem>
+						<listitem>
+							<para>numéro de présentation : +33970757076</para>
+						</listitem>
+						<listitem>
+							<para>numéro appelé : +33970759999</para>
+						</listitem>
+					</itemizedlist>
+					<para>Vérification sur les équipements collectant le numéro +33970759999 des comportements attendus.</para>
+				</sect3>
+			</sect2>
+		</sect1>
+		<sect1>
+			<title>Transit internationnal émission</title>
+			<para>Ces tests couvrent l'utilisation de l'interconnexion par ALPL pour joindre des destinations internationales via ORT.</para>
+			<sect2>
+				<title>Cas 1 : Etablissement normal d'appel</title>
+				<sect3>
+					<title>Définition</title>
+					<variablelist>
+						<varlistentry>
+							<term>objectifs</term>
+ 							<listitem>
+								<para>Valider le bon fonctionnement en cas d'établissement normal d'appel de ALPL vers un numéro ORTT via ORT.</para>
+							</listitem>
+						</varlistentry>
+						<varlistentry>
+							<term>acteurs</term>
+ 							<listitem>
+								<para>ALPL, ORT, ORTT</para>
+							</listitem>
+						</varlistentry>
+					</variablelist>
+				</sect3>
+				<sect3>
+					<title>Déroulement</title>
+					<table>
+						<title>déroulement nominal</title>
+						<tgroup cols="4">
+							<colspec colwidth="1*"/>
+							<colspec colwidth="6*"/>
+							<colspec colwidth="10*"/>
+							<colspec colwidth="1*"/>
+							<thead>
+								<row>
+									<entry align="center">Id</entry>
+									<entry align="center">Démarche</entry>
+									<entry align="center">Comportement attendu</entry>
+									<entry align="center">Ok ?</entry>
+								</row>
+							</thead>
+							<tbody>
+								<row>
+									<entry align="center" morerows="6" valign="middle">1</entry>
+									<entry morerows="3" valign="middle">ALPL appelle un numéro de ORTT via ORT. ORTT laisse sonner puis décroche. Après 1 minute, ALPL raccroche</entry>
+									<entry>ALPL entend la sonnerie avant que ORTT décroche</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Voix fonctionnelle dans les 2 sens pendant toute la durée de l'appel</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Après raccroché par ALPL, ORTT a bien sa communication interrompue</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Vérifications des durées facturées par ALPL, ORT et ORTT</entry>
+								</row>
+							</tbody>
+						</tgroup>
+					</table>
+					<table>
+						<title>déroulement alternatif 1 : ORTT raccroche</title>
+						<tgroup cols="4">
+							<colspec colwidth="1*"/>
+							<colspec colwidth="6*"/>
+							<colspec colwidth="10*"/>
+							<colspec colwidth="1*"/>
+							<thead>
+								<row>
+									<entry align="center">Id</entry>
+									<entry align="center">Démarche</entry>
+									<entry align="center">Comportement attendu</entry>
+									<entry align="center">Ok ?</entry>
+								</row>
+							</thead>
+							<tbody>
+								<row>
+									<entry align="center" morerows="2" valign="middle">1</entry>
+									<entry morerows="2" valign="middle">ALPL appelle un numéro de ORTT via ORT. ORTT laisse sonner puis décroche. Après 1 minute, ORTT raccroche</entry>
+									<entry>ALPL entend la sonnerie avant que ORTT décroche</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Voix fonctionnelle dans les 2 sens pendant toute la durée de l'appel</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Vérifications des durées facturées par ALPL, ORT et ORTT</entry>
+									<entry/>
+								</row>
+							</tbody>
+						</tgroup>
+					</table>
+					<table>
+						<title>déroulement alternatif 2 : appel de 10min</title>
+						<tgroup cols="4">
+							<colspec colwidth="1*"/>
+							<colspec colwidth="6*"/>
+							<colspec colwidth="10*"/>
+							<colspec colwidth="1*"/>
+							<thead>
+								<row>
+									<entry align="center">Id</entry>
+									<entry align="center">Démarche</entry>
+									<entry align="center">Comportement attendu</entry>
+									<entry align="center">Ok ?</entry>
+								</row>
+							</thead>
+							<tbody>
+								<row>
+									<entry align="center" morerows="3" valign="middle">1</entry>
+									<entry morerows="3" valign="middle">ALPL appelle un numéro de ORTT via ORT. ORTT laisse sonner puis décroche. Après 10 minutes, ALPL raccroche</entry>
+									<entry>ALPL entend la sonnerie avant que ORTT décroche</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Voix fonctionnelle dans les 2 sens pendant toute la durée de l'appel (début et fin)</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Après raccroché par ALPL, ORTT a bien sa communication interrompue</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Vérifications des durées facturées par ALPL, ORT et ORTT</entry>
+									<entry/>
+								</row>
+							</tbody>
+						</tgroup>
+					</table>
+					<table>
+						<title>déroulement alternatif 3 : appel longue durée (à définir)</title>
+						<tgroup cols="4">
+							<colspec colwidth="1*"/>
+							<colspec colwidth="6*"/>
+							<colspec colwidth="10*"/>
+							<colspec colwidth="1*"/>
+							<thead>
+								<row>
+									<entry align="center">Id</entry>
+									<entry align="center">Démarche</entry>
+									<entry align="center">Comportement attendu</entry>
+									<entry align="center">Ok ?</entry>
+								</row>
+							</thead>
+							<tbody>
+								<row>
+									<entry align="center" morerows="3" valign="middle">1</entry>
+									<entry morerows="3" valign="middle">ALPL appelle un numéro de ORTT via ORT. ORTT laisse sonner puis décroche. Après XXX minutes, ALPL raccroche</entry>
+									<entry>ALPL entend la sonnerie avant que ORTT décroche</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Voix fonctionnelle dans les 2 sens pendant toute la durée de l'appel (début et fin)</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Après raccroché par ALPL, ORTT a bien sa communication interrompue</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Vérifications des durées facturées par ALPL, ORT et ORTT</entry>
+									<entry/>
+								</row>
+							</tbody>
+						</tgroup>
+					</table>
+				</sect3>
+			</sect2>
+			<sect2>
+				<title>Cas 2 : Etablissement d'appel vers numéro avec pré-décroché</title>
+				<sect3>
+					<title>Définition</title>
+					<variablelist>
+						<varlistentry>
+							<term>objectifs</term>
+ 							<listitem>
+								<para>Valider le bon fonctionnement en cas d'établissement d'appel de ALPL vers ORTT via ORT d'un numéro avec pré-décroché.</para>
+							</listitem>
+						</varlistentry>
+						<varlistentry>
+							<term>acteurs</term>
+ 							<listitem>
+								<para>ALPL, ORT, ORTT</para>
+							</listitem>
+						</varlistentry>
+					</variablelist>
+				</sect3>
+				<sect3>
+					<title>Déroulement</title>
+					<table>
+						<title>déroulement nominal</title>
+						<tgroup cols="4">
+							<colspec colwidth="1*"/>
+							<colspec colwidth="6*"/>
+							<colspec colwidth="10*"/>
+							<colspec colwidth="1*"/>
+							<thead>
+								<row>
+									<entry align="center">Id</entry>
+									<entry align="center">Démarche</entry>
+									<entry align="center">Comportement attendu</entry>
+									<entry align="center">Ok ?</entry>
+								</row>
+							</thead>
+							<tbody>
+								<row>
+									<entry align="center" morerows="3" valign="middle">1</entry>
+									<entry morerows="3" valign="middle">ALPL appelle un numéro de ORTT ou du pré-décroché est activé, via ORT. ORTT laisse sonner puis décroche. Après 1 minute, ALPL raccroche</entry>
+									<entry>ALPL entend la message de pré-décroché avant que ORTT décroche.</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Voix fonctionnelle dans les 2 sens pendant toute la durée de l'appel</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Après raccroché par ALPL, ORTT a bien sa communication interrompue</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Vérifications des durées facturées par ALPL, ORT et ORTT</entry>
+									<entry/>
+								</row>
+							</tbody>
+						</tgroup>
+					</table>
+				</sect3>
+			</sect2>
+			<sect2>
+				<title>Cas 3 : Etablissement d'appel vers numéro occupé</title>
+				<sect3>
+					<title>Définition</title>
+					<variablelist>
+						<varlistentry>
+							<term>objectifs</term>
+ 							<listitem>
+								<para>Valider le bon fonctionnement en cas d'appel de ALPL vers ORTT via ORT d'un numéro occupé.</para>
+							</listitem>
+						</varlistentry>
+						<varlistentry>
+							<term>acteurs</term>
+ 							<listitem>
+								<para>ALPL, ORT, ORTT</para>
+							</listitem>
+						</varlistentry>
+					</variablelist>
+				</sect3>
+				<sect3>
+					<title>Déroulement</title>
+					<table>
+						<title>déroulement nominal</title>
+						<tgroup cols="4">
+							<colspec colwidth="1*"/>
+							<colspec colwidth="6*"/>
+							<colspec colwidth="10*"/>
+							<colspec colwidth="1*"/>
+							<thead>
+								<row>
+									<entry align="center">Id</entry>
+									<entry align="center">Démarche</entry>
+									<entry align="center">Comportement attendu</entry>
+									<entry align="center">Ok ?</entry>
+								</row>
+							</thead>
+							<tbody>
+								<row>
+									<entry align="center" morerows="1" valign="middle">1</entry>
+									<entry morerows="1" valign="middle">ALPL appelle un numéro occupé de ORTT, via ORT.</entry>
+									<entry>ALPL reçoit un 486 SIP</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Vérifications des durées facturées par ALPL, ORT et ORTT</entry>
+									<entry/>
+								</row>
+							</tbody>
+						</tgroup>
+					</table>
+				</sect3>
+			</sect2>
+			<sect2>
+				<title>Cas 4 : Etablissement d'appel vers numéro non attribué</title>
+				<sect3>
+					<title>Définition</title>
+					<variablelist>
+						<varlistentry>
+							<term>objectifs</term>
+ 							<listitem>
+								<para>Valider le bon fonctionnement en cas d'appel de ALPL vers ORTT via ORT d'un numéro non attribué.</para>
+							</listitem>
+						</varlistentry>
+						<varlistentry>
+							<term>acteurs</term>
+ 							<listitem>
+								<para>ALPL, ORT, ORTT</para>
+							</listitem>
+						</varlistentry>
+					</variablelist>
+				</sect3>
+				<sect3>
+					<title>Déroulement</title>
+					<table>
+						<title>déroulement nominal</title>
+						<tgroup cols="4">
+							<colspec colwidth="1*"/>
+							<colspec colwidth="6*"/>
+							<colspec colwidth="10*"/>
+							<colspec colwidth="1*"/>
+							<thead>
+								<row>
+									<entry align="center">Id</entry>
+									<entry align="center">Démarche</entry>
+									<entry align="center">Comportement attendu</entry>
+									<entry align="center">Ok ?</entry>
+								</row>
+							</thead>
+							<tbody>
+								<row>
+									<entry align="center" morerows="1" valign="middle">1</entry>
+									<entry morerows="1" valign="middle">ALPL appelle un numéro non attribué de ORTT, via ORT.</entry>
+									<entry>ALPL reçoit un 404 SIP</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Vérifications des durées facturées par ALPL, ORT et ORTT</entry>
+									<entry/>
+								</row>
+							</tbody>
+						</tgroup>
+					</table>
+				</sect3>
+			</sect2>
+			<sect2>
+				<title>Cas 5 : Test de DTMF</title>
+				<sect3>
+					<title>Définition</title>
+					<variablelist>
+						<varlistentry>
+							<term>objectifs</term>
+ 							<listitem>
+								<para>Valider le bon fonctionnement du DTMF en cas d'appel de ALPL vers ORTT via ORT.</para>
+							</listitem>
+						</varlistentry>
+						<varlistentry>
+							<term>acteurs</term>
+ 							<listitem>
+								<para>ALPL, ORT, ORTT</para>
+							</listitem>
+						</varlistentry>
+					</variablelist>
+				</sect3>
+				<sect3>
+					<title>Déroulement</title>
+					<table>
+						<title>déroulement nominal</title>
+						<tgroup cols="4">
+							<colspec colwidth="1*"/>
+							<colspec colwidth="6*"/>
+							<colspec colwidth="10*"/>
+							<colspec colwidth="1*"/>
+							<thead>
+								<row>
+									<entry align="center">Id</entry>
+									<entry align="center">Démarche</entry>
+									<entry align="center">Comportement attendu</entry>
+									<entry align="center">Ok ?</entry>
+								</row>
+							</thead>
+							<tbody>
+								<row>
+									<entry align="center" valign="middle">1</entry>
+									<entry valign="middle">ALPL appelle un SVI de ORTT, via ORT.</entry>
+									<entry>ALPL navigue dans le menu du SVI (si possible test des 12 touches)</entry>
+									<entry/>
+								</row>
+							</tbody>
+						</tgroup>
+					</table>
+				</sect3>
+			</sect2>
+			<sect2>
+				<title>Cas 6 : Test des codecs</title>
+				<sect3>
+					<title>Définition</title>
+					<variablelist>
+						<varlistentry>
+							<term>objectifs</term>
+ 							<listitem>
+								<para>Valider le bon fonctionnement en cas d'appel de ALPL vers ORTT via ORT avec les différents codecs activés sur l'interconnexion.</para>
+							</listitem>
+						</varlistentry>
+						<varlistentry>
+							<term>acteurs</term>
+ 							<listitem>
+								<para>ALPL, ORT, ORTT</para>
+							</listitem>
+						</varlistentry>
+					</variablelist>
+				</sect3>
+				<sect3>
+					<title>Déroulement</title>
+					<table>
+						<title>déroulement nominal</title>
+						<tgroup cols="4">
+							<colspec colwidth="1*"/>
+							<colspec colwidth="6*"/>
+							<colspec colwidth="10*"/>
+							<colspec colwidth="1*"/>
+							<thead>
+								<row>
+									<entry align="center">Id</entry>
+									<entry align="center">Démarche</entry>
+									<entry align="center">Comportement attendu</entry>
+									<entry align="center">Ok ?</entry>
+								</row>
+							</thead>
+							<tbody>
+								<row>
+									<entry align="center" morerows="3" valign="middle">1</entry>
+									<entry morerows="3" valign="middle">ALPL appelle un numéro de ORTT via ORT. ORTT laisse sonner puis décroche. Après 1 minute, ALPL raccroche</entry>
+									<entry>ALPL entend la sonnerie avant que ORTT décroche</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Voix fonctionnelle dans les 2 sens pendant toute la durée de l'appel</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Après raccroché par ALPL, ORTT a bien sa communication interrompue</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Vérifications des durées facturées par ALPL, ORT et ORTT</entry>
+									<entry/>
+								</row>
+							</tbody>
+						</tgroup>
+					</table>
+				</sect3>
+			</sect2>
+			<sect2>
+				<title>Cas 7 : Appel vers les DOM</title>
+				<sect3>
+					<title>Définition</title>
+					<variablelist>
+						<varlistentry>
+							<term>objectifs</term>
+ 							<listitem>
+								<para>Valider le bon fonctionnement en cas d'appel de ALPL vers ORTT via ORT d'un numéro des DOM</para>
+							</listitem>
+						</varlistentry>
+						<varlistentry>
+							<term>acteurs</term>
+ 							<listitem>
+								<para>ALPL, ORT, ORTT</para>
+							</listitem>
+						</varlistentry>
+					</variablelist>
+				</sect3>
+				<sect3>
+					<title>Déroulement</title>
+					<table>
+						<title>déroulement nominal</title>
+						<tgroup cols="4">
+							<colspec colwidth="1*"/>
+							<colspec colwidth="6*"/>
+							<colspec colwidth="10*"/>
+							<colspec colwidth="1*"/>
+							<thead>
+								<row>
+									<entry align="center">Id</entry>
+									<entry align="center">Démarche</entry>
+									<entry align="center">Comportement attendu</entry>
+									<entry align="center">Ok ?</entry>
+								</row>
+							</thead>
+							<tbody>
+								<row>
+									<entry align="center" morerows="3" valign="middle">1</entry>
+									<entry morerows="3" valign="middle">ALPL appelle un numéro de ORTT via ORT. ORTT laisse sonner puis décroche. Après 1 minute, ALPL raccroche</entry>
+									<entry>ALPL entend la sonnerie avant que ORTT décroche</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Voix fonctionnelle dans les 2 sens pendant toute la durée de l'appel</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Après raccroché par ALPL, ORTT a bien sa communication interrompue</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Vérifications des durées facturées par ALPL, ORT et ORTT</entry>
+									<entry/>
+								</row>
+							</tbody>
+						</tgroup>
+					</table>
+				</sect3>
+			</sect2>
+			<sect2>
+				<title>Cas 8 : Test d'identification, de présentation et d'anonymat</title>
+				<sect3>
+					<title>Définition</title>
+					<variablelist>
+						<varlistentry>
+							<term>objectifs</term>
+ 							<listitem>
+								<para>Valider le bon fonctionnement de la transmission du numéro d'identification, du numéro de présentation et des informations d'anonymat.</para>
+							</listitem>
+						</varlistentry>
+						<varlistentry>
+							<term>acteurs</term>
+ 							<listitem>
+								<para>ALPL, ORT, ORTT</para>
+							</listitem>
+						</varlistentry>
+					</variablelist>
+				</sect3>
+				<sect3>
+					<title>Déroulement</title>
+					<table>
+						<title>déroulement nominal</title>
+						<tgroup cols="4">
+							<colspec colwidth="1*"/>
+							<colspec colwidth="6*"/>
+							<colspec colwidth="10*"/>
+							<colspec colwidth="1*"/>
+							<thead>
+								<row>
+									<entry align="center">Id</entry>
+									<entry align="center">Démarche</entry>
+									<entry align="center">Comportement attendu</entry>
+									<entry align="center">Ok ?</entry>
+								</row>
+							</thead>
+							<tbody>
+								<row>
+									<entry align="center" morerows="2" valign="middle">1</entry>
+									<entry morerows="2" valign="middle">ALPL appelle avec un numéro d'identification et de présentation différent, un numéro de ORTT via ORT.</entry>
+									<entry>Numéro d'identification correspondant à celui attendu</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Numéro de présentation correspondant à celui attendu</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Anonymat désactivé</entry>
+									<entry/>
+								</row>
+							</tbody>
+						</tgroup>
+					</table>
+					<table>
+						<title>déroulement alternatif : anonymat</title>
+						<tgroup cols="4">
+							<colspec colwidth="1*"/>
+							<colspec colwidth="6*"/>
+							<colspec colwidth="10*"/>
+							<colspec colwidth="1*"/>
+							<thead>
+								<row>
+									<entry align="center">Id</entry>
+									<entry align="center">Démarche</entry>
+									<entry align="center">Comportement attendu</entry>
+									<entry align="center">Ok ?</entry>
+								</row>
+							</thead>
+							<tbody>
+								<row>
+									<entry align="center" morerows="2" valign="middle">1</entry>
+									<entry morerows="2" valign="middle">ALPL appelle avec un numéro d'identification et de présentation différent, l'anonymat demandé, un numéro de ORTT via ORT.</entry>
+									<entry>Numéro d'identification correspondant à celui attendu</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Numéro de présentation correspondant à celui attendu</entry>
+									<entry/>
+								</row>
+								<row>
+									<entry>Anonymat activé</entry>
+									<entry/>
+								</row>
+							</tbody>
+						</tgroup>
+					</table>
+				</sect3>
+			</sect2>
+		</sect1>
+	</chapter>
+</book>

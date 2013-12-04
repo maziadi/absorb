@@ -1,0 +1,15 @@
+task :default => ["architecture_logique.pdf"] do 
+end
+
+file "/Users/dom/Dropbox/Helene/architecture_logique.pdf" => ["architecture_logique.pdf"] do |t|
+  cp t.prerequisites.first, t.name
+end
+
+file "architecture_logique.pdf" => ["architecture_logique.xml"] + Dir["media/*"] do |t|
+  sh "dblatex -T db2latex --pdf #{t.prerequisites.first}"
+end
+
+rule '.pdf' => ['.graffle'] do |t|
+  system %{osascript tools/convert_graffle_to_pdf.scpt "`pwd`/#{t.source}" "`pwd`/#{t.name}"}
+end
+

@@ -1,0 +1,405 @@
+package com.initsys.sigal.protocol;
+
+message ResponseStatus {
+	enum ResponseStatusCode {
+		// query was succesfully handled
+		OK        = 1; 
+		
+		// an error occured, the optional message attribute 
+		// can contain more information 
+		ERROR     = 2;
+		
+		// query was successfully handled but no result was found
+		NOT_FOUND = 3;		
+	}
+	optional ResponseStatusCode     code = 1;
+	optional string              message = 2;
+}
+
+message RecordMetadata {
+  optional uint64 creation_date           = 1; // TODO: format OK ?
+  optional uint64 last_update_date        = 2; // TODO: format OK ?
+	
+}
+
+//
+// LIDB messages
+//
+
+enum Codec {
+	G711A = 0;
+	G711U = 1;
+	G729  = 2;
+}
+
+message LidbQueryRequest {
+  required uint32 version      = 1;
+  optional string number       = 2;
+  optional string account_code = 3;
+
+  extensions 1000 to 9999;  
+}
+
+message LidbQueryResponse {
+  required uint32 version                     = 1;
+  optional ResponseStatus status              = 2;
+  optional string number                      = 3;
+  optional string account_code                = 4;
+  optional string redirect_to                 = 5;
+  optional string subscriber_number           = 6;
+  optional uint32 max_calls                   = 7;
+  optional uint32 max_inbound_calls           = 8;
+  optional uint32 max_outbound_calls          = 9;
+  optional string inbound_numbering_plan      = 10;
+  optional string outbound_numbering_plan     = 11;
+  optional bool presentation                  = 12;  
+  optional string insee_code                  = 13;
+  optional bool locked                        = 14;
+  optional string carrier_code                = 15;
+  optional uint32 max_vno_calls               = 16;
+  
+  // partie HSS
+  optional string ip                          = 50;
+  optional uint32 port                        = 51;
+  optional string username                    = 52;
+  optional string password                    = 53;
+  optional bool nat                           = 54;
+  repeated Codec codec                        = 55;
+  optional bool trunk                         = 56;
+  optional bool fixed_cid                     = 57;
+  optional bool indication                    = 58;  
+  optional bool fax                           = 59;  
+  optional uint32 voicemail                   = 60;
+    
+  // partie autorisation
+  optional uint32 call_count                  = 100;
+  optional uint32 inbound_call_count          = 101;
+  optional uint32 outbound_call_count         = 102;
+  optional uint32 vno_call_count              = 103;
+  
+  extensions 1000 to 9999;  
+}
+
+// TODO: ne garder que ce qui est nécessaire pour les mises a jour
+// a partir d'un agent.s
+message LidbUpdateRequest {
+  required uint32 version                 = 1;
+  optional string number                  = 2;
+  optional string account_code            = 3;
+  optional string redirect_to             = 4;
+  optional string subscriber_number       = 5;
+  optional uint32 max_calls               = 6;
+  optional uint32 max_inbound_calls       = 7;
+  optional uint32 max_outbound_calls      = 8;
+  optional string inbound_numbering_plan  = 9;
+  optional string outbound_numbering_plan = 10;
+  optional bool presentation              = 11;  
+  optional string insee_code              = 12;
+  optional bool locked                    = 13;
+  optional string carrier_code            = 14;
+  
+  // partie HSS
+  optional string ip                      = 50;
+  optional uint32 port                    = 51;
+  optional string username                = 52;
+  optional string password                = 53;
+  optional bool nat                       = 54;
+  repeated Codec codec                    = 55;
+  optional bool trunk                     = 56;
+  optional bool fixed_cid                 = 57;
+  optional bool indication                = 58;  
+  
+  extensions 1000 to 9999;  
+}
+
+
+message LidbUpdateResponse {
+  required uint32 version                 = 1;
+  optional ResponseStatus status          = 2;
+}
+
+
+//
+// MLIDB messages
+//
+
+
+message MlidbQueryRequest {
+  required uint32 version                 = 1;
+  optional string msisdn                  = 2;
+  optional string account_code            = 3;
+
+  extensions 1000 to 9999;  
+}
+
+message MlidbQueryResponse {
+  required uint32 version                 = 1;
+  optional ResponseStatus status          = 2;
+  optional string account_code            = 3;
+  optional string msisdn                  = 4;
+  optional string carrier_code            = 5;
+  optional uint32 max_vno_calls           = 6;
+  optional uint32 vno_call_count          = 100;
+  
+  extensions 1000 to 9999;  
+}
+
+message MlidbUpdateRequest {
+  required uint32 version                 = 1;
+  optional string account_code            = 2;
+  optional string msisdn                  = 3;
+  optional string carrier_code            = 4;
+  
+  extensions 1000 to 9999;  
+}
+
+message MlidbUpdateResponse {
+  required uint32 version                 = 1;
+  optional ResponseStatus status          = 2;
+}
+
+
+//
+// EXDB messages
+//
+
+
+message ExdbQueryRequest {
+  required uint32 version      = 1;
+  optional string account_code = 2;
+
+  extensions 1000 to 9999;  
+}
+
+message ExdbQueryResponse {
+  required uint32 version                 = 1;
+  optional ResponseStatus status          = 2;
+  optional string account_code            = 3;
+  optional uint32 max_calls               = 4;
+  optional uint32 max_inbound_calls       = 5;
+  optional uint32 max_outbound_calls      = 6;
+  optional string inbound_numbering_plan  = 7;
+  optional string outbound_numbering_plan = 8;
+  optional bool locked                    = 9;
+  optional string carrier_code            = 10;
+  optional uint32 max_vno_calls           = 11;
+  optional string subscriber_number       = 12;
+  // option speciale pour envoyer de la merde a SFR SIP
+  // soit ne pas envoyer de numero d'identification
+  // en cas d'appel non-anonyme
+  optional bool weird_identity            = 13;
+
+  // partie HSS
+  repeated string ip                      = 50;
+  optional uint32 port                    = 51;
+  optional string username                = 52;
+  optional string password                = 53;
+  repeated Codec codec                    = 54;
+  
+    // partie autorisation
+  optional uint32 call_count              = 100;
+  optional uint32 inbound_call_count      = 101;
+  optional uint32 outbound_call_count     = 102;
+  optional uint32 vno_call_count          = 103;
+  
+  extensions 1000 to 9999;  
+}
+
+message ExdbUpdateRequest {
+  required uint32 version                 = 1;
+  optional string account_code            = 2;
+  optional uint32 max_calls               = 3;
+  optional uint32 max_inbound_calls       = 4;
+  optional uint32 max_outbound_calls      = 5;
+  optional string inbound_numbering_plan  = 6;
+  optional string outbound_numbering_plan = 7;
+  optional bool locked                    = 8;
+  optional string carrier_code            = 9;
+  optional string subscriber_number       = 10;
+  
+  // partie HSS
+  optional string ip                      = 50;
+  optional uint32 port                    = 51;
+  optional string username                = 52;
+  optional string password                = 53;
+  repeated Codec codec                    = 54;
+    
+  extensions 1000 to 9999;  
+}
+
+message ExdbUpdateResponse {
+  required uint32 version                 = 1;
+  optional ResponseStatus status          = 2;
+}
+
+
+//
+// EMDB messages
+//
+
+
+message EmdbQueryRequest {
+  required uint32 version      = 1;
+  optional string number       = 2;
+  optional string insee_code   = 3;
+
+  extensions 1000 to 9999;  
+}
+
+message EmdbQueryResponse {
+
+  required uint32 version                 = 1;
+  optional ResponseStatus status          = 2;
+  optional string number                  = 3;
+  optional string insee_code              = 4;
+  repeated string translation             = 5;
+  
+  extensions 1000 to 9999;  
+}
+
+message EmdbUpdateRequest {
+	required uint32 version                 = 1;
+	optional string insee_code              = 2;
+	repeated EmdbEntry entries              = 3;
+	
+	extensions 1000 to 9999;  	
+}
+
+enum EmdbDay {
+	SUNDAY         = 0;
+	MONDAY         = 1;
+	TUESDAY        = 2;
+	WEDNESDAY      = 3;
+	THURSDAY       = 4;
+	FRIDAY         = 5;
+	SATURDAY       = 6;
+	HOLIDAY        = 7;
+	AFTER_HOLIDAY  = 8;
+}
+
+message EmdbTime {
+	optional uint32 hour     = 1;
+	optional uint32 minute   = 2;
+	optional uint32 second   = 3;
+}
+
+message EmdbEntry {
+	optional string number                  = 1;
+	optional uint32 idx                     = 2;
+	optional EmdbDay day                    = 3;
+	optional EmdbTime begin_hour            = 4;
+	optional EmdbTime end_hour              = 5;
+	optional string translation             = 6;
+}
+
+message EmdbUpdateResponse {
+
+  	required uint32 version                 = 1;
+  	optional ResponseStatus status          = 2;
+  
+  	extensions 1000 to 9999;  
+}
+
+message EmdbListRequest {
+	required uint32 version                 = 1;
+	optional string insee_code              = 2;
+	repeated EmdbEntry entries              = 3;
+
+	extensions 1000 to 9999;  	
+}
+
+message EmdbListResponse {
+	required uint32 version                 = 1;
+  	optional ResponseStatus status          = 2;
+	optional string insee_code              = 3;
+	repeated EmdbEntry entries              = 4;
+
+	extensions 1000 to 9999;  	
+}
+
+
+//
+// NPDB messages
+//
+
+message NpdbQueryRequest {
+  required uint32 version      = 1;
+  optional string number       = 2;
+
+  extensions 1000 to 9999;  
+}
+
+message NpdbQueryResponse {
+  required uint32 version                 = 1;
+  optional ResponseStatus status          = 2;
+  optional string number                  = 3;
+  optional string prefix                  = 4;
+  
+  extensions 1000 to 9999;  
+}
+
+//
+// Call Detail Record message
+//
+message Cdr {
+  required uint32 version                 = 1;
+  optional bool complete                  = 2;
+  optional string node                    = 3; // noeud source du CDR
+  optional string icid                    = 4; // IMS charging identity
+  optional CallAddress calling            = 5;
+  optional CallAddress called             = 6;
+  optional uint64 begin_date              = 7; // TODO: format OK ?
+  optional uint32 duration                = 8;
+  optional uint32 billable_duration       = 9;
+  optional bool answered                  = 10;
+  optional string end_cause               = 11;
+  optional string message                 = 12;
+}
+
+message CallAddress {
+  required uint32 version                   = 1;
+  optional string carrier_code              = 2; 
+  optional string account_code              = 3;
+  optional string number                    = 4;
+  optional string name                      = 5;
+  optional string network                   = 6;
+  optional Screening screening              = 7;
+  optional AddressPresentation presentation = 8;
+  optional string effective_number          = 9;
+  optional string identity_number           = 10;
+  optional string effective_identity_number	= 11;
+}
+
+enum Screening {
+  RESERVED                                = 1;
+  USER_PROVIDED_SCREENED                  = 2;
+  NETWORK_PROVIDED                        = 3;
+}
+
+enum AddressPresentation {
+  ALLOWED                                 = 1;
+  RESTRICTED                              = 2;
+}
+
+//
+// Event message
+//
+enum SigalEventCategory {
+	CALL       = 1;
+}
+
+enum SigalEventCriticity {
+	TRACE = 1;
+	DEBUG = 2;
+	INFO  = 3;
+	WARN  = 4;
+	ERROR = 5;
+	FATAL = 6;
+}
+
+message SigalEvent {
+  required uint32 version                 = 1;
+  optional SigalEventCriticity criticity  = 2;
+  optional SigalEventCategory category    = 3;
+}
+

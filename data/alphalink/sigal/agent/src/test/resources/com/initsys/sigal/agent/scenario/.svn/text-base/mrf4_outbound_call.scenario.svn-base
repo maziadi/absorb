@@ -1,0 +1,224 @@
+Scenario: nominal, e164
+	Given mrf4.Mrf4OutboundAgi and outbound_timeout: 122, gw_channel_name: SIP/gw
+	Given a call from Jean Bon <+33000000000> to 33123456789 within D201001010001.1
+  Given header P-Asserted-Identity: <tel:+33987654321>
+  Given header Privacy: <null>
+	Given account code <null>
+	Given header X-AccountCode: 0991000001017
+	Given SIP DOMAIN 0990000000002.mrf-10.sip.openvno.net
+	Given icid abcdef1234567890
+	Then query EXDB with 0990000000002 returning out_plan: e164, in_plan: e164, carrier_code: vno.default, weird_identity: false
+	Then set callerId to +33000000000 and Jean Bon
+  Then add header P-Asserted-Identity: <tel:+33987654321>
+	Then add header X-AccountCode: 0990000000002
+	Then add header X-CarrierCode: D201001010001.1
+	Then cdr abcdef1234567890/D201001010001.1 - i/0991000001017/+33000000000/+33987654321/ALLOWED/Jean Bon -- e/0990000000002/33123456789 
+    Then set P-Charging-Vector
+	Then dial channel SIP/D201001010001 with number 33123456789, timeout 122 and separator ,
+  Given release cause 16
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr abcdef1234567890/200_Answered/1234/D201001010001.1 - i/0991000001017/+33000000000/+33987654321/ALLOWED/Jean Bon -- e/0990000000002/33123456789 
+	Then done
+
+Scenario: nominal, national
+	Given mrf4.Mrf4OutboundAgi and outbound_timeout: 122, gw_channel_name: SIP/gw
+	Given a call from Jean Bon <+33000000000> to 33123456789 within D201001010001.1
+  Given header P-Asserted-Identity: <tel:+33987654321>
+  Given header Privacy: <null>
+	Given account code <null>
+	Given header X-AccountCode: 0991000001017
+	Given SIP DOMAIN 0990000000002.mrf-100.sip.openvno.net
+	Given icid abcdef1234567890
+	Then query EXDB with 0990000000002 returning out_plan: national, in_plan: e164, carrier_code: vno.default, weird_identity: false
+	Then set callerId to 0000000000 and Jean Bon
+  Then add header P-Asserted-Identity: <tel:0987654321>
+	Then add header X-AccountCode: 0990000000002
+	Then add header X-CarrierCode: D201001010001.1
+	Then cdr abcdef1234567890/D201001010001.1 - i/0991000001017/0000000000/0987654321/ALLOWED/Jean Bon -- e/0990000000002/0123456789 
+    Then set P-Charging-Vector
+	Then dial channel SIP/D201001010001 with number 0123456789, timeout 122 and separator ,
+  Given release cause 16
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr abcdef1234567890/200_Answered/1234/D201001010001.1 - i/0991000001017/0000000000/0987654321/ALLOWED/Jean Bon -- e/0990000000002/0123456789 
+	Then done
+
+Scenario: nominal, e164plus
+	Given mrf4.Mrf4OutboundAgi and outbound_timeout: 122, gw_channel_name: SIP/gw
+	Given a call from Jean Bon <+33000000000> to 33123456789 within D201001010001.1
+  Given header P-Asserted-Identity: <tel:+33987654321>
+  Given header Privacy: <null>
+	Given account code <null>
+	Given header X-AccountCode: 0991000001017
+	Given SIP DOMAIN 0990000000002.mrf-10.sip.openvno.net
+	Given icid abcdef1234567890
+	Then query EXDB with 0990000000002 returning out_plan: e164plus, in_plan: e164, carrier_code: vno.default, weird_identity: false
+	Then set callerId to +33000000000 and Jean Bon
+  Then add header P-Asserted-Identity: <tel:+33987654321>
+	Then add header X-AccountCode: 0990000000002
+	Then add header X-CarrierCode: D201001010001.1
+	Then cdr abcdef1234567890/D201001010001.1 - i/0991000001017/+33000000000/+33987654321/ALLOWED/Jean Bon -- e/0990000000002/+33123456789 
+    Then set P-Charging-Vector
+	Then dial channel SIP/D201001010001 with number +33123456789, timeout 122 and separator ,
+  Given release cause 16
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr abcdef1234567890/200_Answered/1234/D201001010001.1 - i/0991000001017/+33000000000/+33987654321/ALLOWED/Jean Bon -- e/0990000000002/+33123456789 
+	Then done
+
+Scenario: nominal, e164 num as clgname
+	Given mrf4.Mrf4OutboundAgi and outbound_timeout: 122, gw_channel_name: SIP/gw
+	Given a call from 25467 <+33000000000> to 33123456789 within D201001010001.1
+  Given header P-Asserted-Identity: <tel:+33987654321>
+  Given header Privacy: <null>
+	Given account code <null>
+	Given header X-AccountCode: 0991000001017
+	Given SIP DOMAIN 0990000000002.mrf-10.sip.openvno.net
+	Given icid abcdef1234567890
+	Then query EXDB with 0990000000002 returning out_plan: e164, in_plan: e164, carrier_code: vno.default, weird_identity: false
+	Then set callerId to +33000000000 and +33000000000
+  Then add header P-Asserted-Identity: <tel:+33987654321>
+	Then add header X-AccountCode: 0990000000002
+	Then add header X-CarrierCode: D201001010001.1
+	Then cdr abcdef1234567890/D201001010001.1 - i/0991000001017/+33000000000/+33987654321/ALLOWED/+33000000000 -- e/0990000000002/33123456789 
+    Then set P-Charging-Vector
+	Then dial channel SIP/D201001010001 with number 33123456789, timeout 122 and separator ,
+  Given release cause 16
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr abcdef1234567890/200_Answered/1234/D201001010001.1 - i/0991000001017/+33000000000/+33987654321/ALLOWED/+33000000000 -- e/0990000000002/33123456789 
+	Then done
+
+Scenario: nominal, national num as clgname
+	Given mrf4.Mrf4OutboundAgi and outbound_timeout: 122, gw_channel_name: SIP/gw
+	Given a call from 34546 <+33000000000> to 33123456789 within D201001010001.1
+  Given header P-Asserted-Identity: <tel:+33987654321>
+  Given header Privacy: <null>
+	Given account code <null>
+	Given header X-AccountCode: 0991000001017
+	Given SIP DOMAIN 0990000000002.mrf-100.sip.openvno.net
+	Given icid abcdef1234567890
+	Then query EXDB with 0990000000002 returning out_plan: national, in_plan: e164, carrier_code: vno.default, weird_identity: false
+	Then set callerId to 0000000000 and 0000000000
+  Then add header P-Asserted-Identity: <tel:0987654321>
+	Then add header X-AccountCode: 0990000000002
+	Then add header X-CarrierCode: D201001010001.1
+	Then cdr abcdef1234567890/D201001010001.1 - i/0991000001017/0000000000/0987654321/ALLOWED/0000000000 -- e/0990000000002/0123456789 
+    Then set P-Charging-Vector
+	Then dial channel SIP/D201001010001 with number 0123456789, timeout 122 and separator ,
+  Given release cause 16
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr abcdef1234567890/200_Answered/1234/D201001010001.1 - i/0991000001017/0000000000/0987654321/ALLOWED/0000000000 -- e/0990000000002/0123456789 
+	Then done
+
+Scenario: e164 - privacy
+	Given mrf4.Mrf4OutboundAgi and outbound_timeout: 122, gw_channel_name: SIP/gw
+	Given a call from Jean Bon <+33000000000> to 33123456789 within D201001010001.1
+  Given header Privacy: id
+  Given header P-Asserted-Identity: <tel:+33987654321>
+	Given account code <null>
+	Given header X-AccountCode: 0991000001017
+	Given SIP DOMAIN 0990000000002.mrf-10.sip.openvno.net
+	Given icid abcdef1234567890
+	Then query EXDB with 0990000000002 returning out_plan: e164, in_plan: e164, carrier_code: vno.default, weird_identity: false
+	Then set callerId to +33000000000 and Jean Bon
+  Then add header Privacy: id
+  Then add header P-Asserted-Identity: <tel:+33987654321>
+	Then add header X-AccountCode: 0990000000002
+	Then add header X-CarrierCode: D201001010001.1
+	Then cdr abcdef1234567890/D201001010001.1 - i/0991000001017/+33000000000/+33987654321/RESTRICTED/Jean Bon -- e/0990000000002/33123456789 
+    Then set P-Charging-Vector
+	Then dial channel SIP/D201001010001 with number 33123456789, timeout 122 and separator ,
+  Given release cause 16
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr abcdef1234567890/200_Answered/1234/D201001010001.1 - i/0991000001017/+33000000000/+33987654321/RESTRICTED/Jean Bon -- e/0990000000002/33123456789 
+	Then done
+
+Scenario: e164 - privacy/no calling
+	Given mrf4.Mrf4OutboundAgi and outbound_timeout: 122, gw_channel_name: SIP/gw
+	Given a call from Anonymous <anonymous> to 33123456789 within D201001010001.1
+  Given header Privacy: id
+  Given header P-Asserted-Identity: <tel:+33987654321>
+	Given account code <null>
+	Given header X-AccountCode: 0991000001017
+	Given SIP DOMAIN 0990000000002.mrf-10.sip.openvno.net
+	Given icid abcdef1234567890
+	Then query EXDB with 0990000000002 returning out_plan: e164, in_plan: e164, carrier_code: vno.default, weird_identity: false
+	Then set callerId to anonymous and Anonymous
+  Then add header Privacy: id
+  Then add header P-Asserted-Identity: <tel:+33987654321>
+	Then add header X-AccountCode: 0990000000002
+	Then add header X-CarrierCode: D201001010001.1
+	Then cdr abcdef1234567890/D201001010001.1 - i/0991000001017/anonymous/+33987654321/RESTRICTED/Anonymous -- e/0990000000002/33123456789 
+    Then set P-Charging-Vector
+	Then dial channel SIP/D201001010001 with number 33123456789, timeout 122 and separator ,
+  Given release cause 16
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr abcdef1234567890/200_Answered/1234/D201001010001.1 - i/0991000001017/anonymous/+33987654321/RESTRICTED/Anonymous -- e/0990000000002/33123456789 
+	Then done
+
+Scenario: e164 - no identity given
+	Given mrf4.Mrf4OutboundAgi and outbound_timeout: 122, gw_channel_name: SIP/gw
+	Given a call from Jean Bon <+33000000000> to 33123456789 within D201001010001.1
+  Given header Privacy: <null>
+  Given header P-Asserted-Identity: <null>
+	Given account code <null>
+	Given header X-AccountCode: 0991000001017
+	Given SIP DOMAIN 0990000000002.mrf-10.sip.openvno.net
+	Given icid abcdef1234567890
+	Then query EXDB with 0990000000002 returning out_plan: e164, in_plan: e164, carrier_code: vno.default, weird_identity: false
+	Then hangup with cause 21
+	Given answered time 0
+	Then complete cdr <any>/403_MissingIdentity/0/<any> - i/<any>/<any>/<any> -- e/<any>/<any> 
+	Then done
+
+Scenario: e164plus, weird_identity
+	Given mrf4.Mrf4OutboundAgi and outbound_timeout: 122, gw_channel_name: SIP/gw
+	Given a call from Jean Bon <+33000000000> to 33123456789 within D201001010001.1
+  Given header P-Asserted-Identity: <tel:+33987654321>
+  Given header Privacy: <null>
+	Given account code <null>
+	Given header X-AccountCode: 0991000001017
+	Given SIP DOMAIN 0990000000002.mrf-10.sip.openvno.net
+	Given icid abcdef1234567890
+	Then query EXDB with 0990000000002 returning out_plan: e164plus, in_plan: e164, carrier_code: vno.default, weird_identity: true
+	Then set callerId to +33000000000 and Jean Bon
+	Then add header X-AccountCode: 0990000000002
+	Then add header X-CarrierCode: D201001010001.1
+	Then cdr abcdef1234567890/D201001010001.1 - i/0991000001017/+33000000000/+33987654321/ALLOWED/Jean Bon -- e/0990000000002/+33123456789 
+    Then set P-Charging-Vector
+	Then dial channel SIP/D201001010001 with number +33123456789, timeout 122 and separator ,
+  Given release cause 16
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr abcdef1234567890/200_Answered/1234/D201001010001.1 - i/0991000001017/+33000000000/+33987654321/ALLOWED/Jean Bon -- e/0990000000002/+33123456789 
+	Then done
+
+Scenario: e164plus, weird_identity, privacy
+	Given mrf4.Mrf4OutboundAgi and outbound_timeout: 122, gw_channel_name: SIP/gw
+	Given a call from Jean Bon <+33000000000> to 33123456789 within D201001010001.1
+  Given header P-Asserted-Identity: <tel:+33987654321>
+  Given header Privacy: id
+	Given account code <null>
+	Given header X-AccountCode: 0991000001017
+	Given SIP DOMAIN 0990000000002.mrf-10.sip.openvno.net
+	Given icid abcdef1234567890
+	Then query EXDB with 0990000000002 returning out_plan: e164plus, in_plan: e164, carrier_code: vno.default, weird_identity: true
+	Then set callerId to +33000000000 and Jean Bon
+  Then add header Privacy: id
+  Then add header P-Asserted-Identity: <tel:+33987654321>
+	Then add header X-AccountCode: 0990000000002
+	Then add header X-CarrierCode: D201001010001.1
+	Then cdr abcdef1234567890/D201001010001.1 - i/0991000001017/+33000000000/+33987654321/RESTRICTED/Jean Bon -- e/0990000000002/+33123456789 
+    Then set P-Charging-Vector
+	Then dial channel SIP/D201001010001 with number +33123456789, timeout 122 and separator ,
+  Given release cause 16
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr abcdef1234567890/200_Answered/1234/D201001010001.1 - i/0991000001017/+33000000000/+33987654321/RESTRICTED/Jean Bon -- e/0990000000002/+33123456789 
+	Then done
+

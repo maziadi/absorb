@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="**" kind="src" output="poms/compiled/target/classes" path="poms/compiled"/>
+	<classpathentry kind="src" output="core/target/classes" path="core/src/main/java"/>
+	<classpathentry kind="src" output="core/target/classes" path="core/target/generated-sources"/>
+	<classpathentry excluding="**" kind="src" output="core/target/classes" path="core/src/main/resources"/>
+	<classpathentry excluding="**" kind="src" output="core/target/classes" path="core"/>
+	<classpathentry kind="src" output="core/target/test-classes" path="core/src/test/java"/>
+	<classpathentry kind="src" output="as/target/classes" path="as/src/main/java"/>
+	<classpathentry excluding="**" kind="src" output="as/target/classes" path="as/src/main/resources"/>
+	<classpathentry excluding="**" kind="src" output="as/target/classes" path="as"/>
+	<classpathentry kind="src" output="as/target/test-classes" path="as/src/test/java"/>
+	<classpathentry excluding="**" kind="src" output="as/target/test-classes" path="as/src/test/resources"/>
+	<classpathentry kind="src" output="agent/target/classes" path="agent/src/main/java"/>
+	<classpathentry excluding="**" kind="src" output="agent/target/classes" path="agent/src/main/resources"/>
+	<classpathentry excluding="**" kind="src" output="agent/target/classes" path="agent"/>
+	<classpathentry kind="src" output="agent/target/test-classes" path="agent/src/test/java"/>
+	<classpathentry excluding="**" kind="src" output="agent/target/test-classes" path="agent/src/test/resources"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.4"/>
+	<classpathentry kind="con" path="org.maven.ide.eclipse.MAVEN2_CLASSPATH_CONTAINER"/>
+	<classpathentry kind="output" path="target/classes"/>
+</classpath>

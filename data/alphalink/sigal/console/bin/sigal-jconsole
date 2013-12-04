@@ -1,0 +1,4 @@
+#!/bin/bash
+
+export CLASSPATH=${CLASSPATH}:lib/jxl-2.6.11.jar
+jruby bin/sigal-console.rb $@

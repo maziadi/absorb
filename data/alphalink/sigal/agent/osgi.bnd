@@ -1,0 +1,12 @@
+Import-Package: *, \
+ org.osgi.service.cm, \
+ com.initsys.sigal, \
+ org.apache.activemq, \
+ org.apache.activemq.command, \
+ org.apache.activemq.pool, \
+ org.asteriskjava.fastagi, \
+ org.springframework.jms.connection, \
+ org.springframework.jms.core, \
+ org.springframework.jmx.export, \
+ org.springframework.jmx.support, \
+ org.springframework.scheduling.timer

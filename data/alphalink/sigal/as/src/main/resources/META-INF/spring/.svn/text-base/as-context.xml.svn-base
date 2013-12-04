@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:amq="http://activemq.apache.org/schema/core" xmlns:jms="http://www.springframework.org/schema/jms"
+	xmlns:ctx="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+  http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd
+  http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.5.xsd  
+  http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms-2.5.xsd
+  http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<ctx:property-placeholder properties-ref="cmProps" />
+ 
+ 	<bean id="destination" class="org.apache.activemq.command.ActiveMQQueue">
+		<constructor-arg value="${sigal.dbQueueName}" />
+	</bean>
+
+	<bean id="messageConverter" class="com.initsys.sigal.SigalMessageConverter"/>
+ 
+	<bean id="primaryJmsConnectionFactory" class="org.apache.activemq.pool.PooledConnectionFactory"
+		destroy-method="stop">
+		<property name="connectionFactory">
+			<bean class="org.apache.activemq.ActiveMQConnectionFactory">
+				<property name="brokerURL" value="${amq.primary.brokerUrl}" />
+				<property name="userName" value="${amq.primary.username}" />
+				<property name="password" value="${amq.primary.password}" />
+				<property name="clientID" value="${sigal.nodeName}" />
+			</bean>
+		</property>
+	</bean>
+
+	<bean id="secondaryJmsConnectionFactory" class="org.apache.activemq.pool.PooledConnectionFactory"
+		destroy-method="stop">
+		<property name="connectionFactory">
+			<bean class="org.apache.activemq.ActiveMQConnectionFactory">
+				<property name="brokerURL" value="${amq.secondary.brokerUrl}" />
+				<property name="userName" value="${amq.secondary.username}" />
+				<property name="password" value="${amq.secondary.password}" />
+				<property name="clientID" value="${sigal.nodeName}" />
+			</bean>
+		</property>
+	</bean>
+
+	<!-- Primary containers -->
+	<jms:listener-container connection-factory="primaryJmsConnectionFactory"
+		container-type="simple" message-converter="messageConverter" concurrency="2-2">
+		<jms:listener destination="${sigal.dbQueueName}.query"
+			selector="messageType = 'EMDB.QUERY.REQUEST'" ref="${service.emdb}"
+			method="onMessage" />
+		<jms:listener destination="${sigal.dbQueueName}.query"
+			selector="messageType = 'EXDB.QUERY.REQUEST'" ref="${service.exdb}"
+			method="onMessage" />
+		<jms:listener destination="${sigal.dbQueueName}.query"
+			selector="messageType = 'LIDB.QUERY.REQUEST'" ref="${service.lidb}"
+			method="onMessage" />
+		<jms:listener destination="${sigal.dbQueueName}.query"
+			selector="messageType = 'MLIDB.QUERY.REQUEST'" ref="${service.mlidb}"
+			method="onMessage" />
+		<jms:listener destination="${sigal.dbQueueName}.query"
+			selector="messageType = 'NPDB.QUERY.REQUEST'" ref="${service.npdb}"
+			method="onMessage" />
+	</jms:listener-container>
+
+	<jms:listener-container connection-factory="primaryJmsConnectionFactory"
+		container-type="simple" message-converter="messageConverter"
+		destination-type="topic">
+		<jms:listener destination="${sigal.cdrTopicName}" ref="callRegistryService"
+			method="onMessage" />
+	</jms:listener-container>
+
+	<!--  Secondary containers -->
+	<jms:listener-container connection-factory="secondaryJmsConnectionFactory"
+		container-type="simple" message-converter="messageConverter" concurrency="2-2">
+		<jms:listener destination="${sigal.dbQueueName}.query"
+			selector="messageType = 'EMDB.QUERY.REQUEST'" ref="${service.emdb}"
+			method="onMessage" />
+		<jms:listener destination="${sigal.dbQueueName}.query"
+			selector="messageType = 'EXDB.QUERY.REQUEST'" ref="${service.exdb}"
+			method="onMessage" />
+		<jms:listener destination="${sigal.dbQueueName}.query"
+			selector="messageType = 'LIDB.QUERY.REQUEST'" ref="${service.lidb}"
+			method="onMessage" />
+		<jms:listener destination="${sigal.dbQueueName}.query"
+			selector="messageType = 'MLIDB.QUERY.REQUEST'" ref="${service.mlidb}"
+			method="onMessage" />
+		<jms:listener destination="${sigal.dbQueueName}.query"
+			selector="messageType = 'NPDB.QUERY.REQUEST'" ref="${service.npdb}"
+			method="onMessage" />
+	</jms:listener-container>
+
+	<jms:listener-container connection-factory="secondaryJmsConnectionFactory"
+		container-type="simple" message-converter="messageConverter"
+		destination-type="topic">
+		<jms:listener destination="${sigal.cdrTopicName}" ref="callRegistryService"
+			method="onMessage" />
+	</jms:listener-container>
+
+	<!-- DAO setup -->
+
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driverClassName}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		<property name="testWhileIdle" value="true" />
+		<property name="validationQuery" value="SELECT 1" />
+		<property name="timeBetweenEvictionRunsMillis" value="300000" />
+		<property name="minIdle" value="1" />
+		<property name="initialSize" value="1" />
+		<property name="maxActive" value="10" />
+	</bean>
+
+	<tx:annotation-driven transaction-manager="txManager" />
+	<bean id="txManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="npdbDao" class="com.initsys.sigal.service.as.dao.NpdbDaoImpl">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="lidbDao" class="com.initsys.sigal.service.as.dao.LidbDaoImpl">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="mlidbDao" class="com.initsys.sigal.service.as.dao.MlidbDaoImpl">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="emdbDao" class="com.initsys.sigal.service.as.dao.EmdbDaoImpl">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+
+	<bean id="exdbDao" class="com.initsys.sigal.service.as.dao.ExdbDaoImpl">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<bean id="vnodbDao" class="com.initsys.sigal.service.as.dao.VnodbDaoImpl">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<!-- Services -->
+	<bean id="npdbService" class="com.initsys.sigal.service.as.DbBackedNpdbAsServiceImpl">
+		<property name="dao" ref="npdbDao" />
+	</bean>
+
+	<bean id="emdbService" class="com.initsys.sigal.service.as.DbBackedEmdbAsServiceImpl">
+		<property name="dao" ref="emdbDao" />
+	</bean>
+
+	<bean id="lidbService" class="com.initsys.sigal.service.as.DbBackedLidbAsServiceImpl">
+		<property name="lidbDao" ref="lidbDao" />
+		<property name="vnodbDao" ref="vnodbDao" />
+		<property name="callRegistry" ref="callRegistry" />
+	</bean>
+
+	<bean id="mlidbService" class="com.initsys.sigal.service.as.DbBackedMlidbAsServiceImpl">
+		<property name="mlidbDao" ref="mlidbDao" />
+		<property name="vnodbDao" ref="vnodbDao" />
+		<property name="callRegistry" ref="callRegistry" />
+	</bean>
+
+	<bean id="exdbService" class="com.initsys.sigal.service.as.DbBackedExdbAsServiceImpl">
+		<property name="exdbDao" ref="exdbDao" />
+		<property name="vnodbDao" ref="vnodbDao" />
+		<property name="callRegistry" ref="callRegistry" />
+	</bean>
+
+	<bean id="callRegistry" class="com.initsys.sigal.service.as.registry.CallRegistryImpl" />
+
+	<bean id="callRegistryService"
+		class="com.initsys.sigal.service.as.registry.CallRegistryServiceImpl">
+		<property name="callRegistry" ref="callRegistry" />
+		<property name="nodeName" value="${sigal.nodeName}" />
+		<property name="maxCallDuration" value="${sigal.maxCallDuration}" />
+	</bean>
+
+	<!-- Task scheduling -->
+	<bean id="timerFactory" class="org.springframework.scheduling.timer.TimerFactoryBean">
+		<property name="scheduledTimerTasks">
+			<list>
+				<bean id="scheduledRegistryStatus"
+					class="org.springframework.scheduling.timer.ScheduledTimerTask">
+					<property name="delay" value="60000" />
+					<property name="period" value="180000" />
+					<property name="fixedRate" value="true" />
+					<property name="timerTask">
+						<bean
+							class="org.springframework.scheduling.timer.MethodInvokingTimerTaskFactoryBean">
+							<property name="targetObject" ref="callRegistryService" />
+							<property name="targetMethod" value="dumpState" />
+						</bean>
+					</property>
+				</bean>
+				<bean id="scheduledCallCleanup"
+					class="org.springframework.scheduling.timer.ScheduledTimerTask">
+					<property name="delay" value="60000" />
+					<property name="period" value="300000" />
+					<property name="fixedRate" value="true" />
+					<property name="timerTask">
+						<bean
+							class="org.springframework.scheduling.timer.MethodInvokingTimerTaskFactoryBean">
+							<property name="targetObject" ref="callRegistryService" />
+							<property name="targetMethod" value="periodicCleanup" />
+						</bean>
+					</property>
+				</bean>			
+			</list>
+		</property>
+	</bean>
+
+
+	<!-- Management -->
+  <bean id="connectionPoolMBean" class="com.initsys.sigal.service.as.ConnectionPoolStatisticsImpl">
+    <constructor-arg ref="dataSource"/>
+  </bean>
+
+  <bean id="mBeanExporter" class="org.springframework.jmx.export.MBeanExporter"
+		lazy-init="false">
+
+    <property name="beans">
+      <map>
+        <entry key="sigal:name=dataSource" value-ref="connectionPoolMBean" />
+      </map>
+    </property>
+  </bean>
+</beans>

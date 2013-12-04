@@ -1,0 +1,15 @@
+K 10
+svn:ignore
+V 35
+runner
+
+target
+
+${project.basedir}
+
+K 13
+svn:mergeinfo
+V 79
+/sigal/branches/ignore_invalid_isup_parts:9498-9526
+/sigal/tags/1.9.4:9464-9497
+END

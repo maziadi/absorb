@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+  xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <parent>
+    <groupId>com.initsys</groupId>
+    <artifactId>sigal</artifactId>
+    <version>1.14.0-SNAPSHOT</version>
+  </parent>
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.initsys.sigal.build</groupId>
+  <artifactId>shared-plugin-settings</artifactId>
+
+  <name>sigal - plugin configuration</name>
+
+  <packaging>pom</packaging>
+
+  <modules>
+    <module>wrappers</module>
+    <module>compiled</module>
+  </modules>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.ops4j</groupId>
+          <artifactId>maven-pax-plugin</artifactId>
+          <!--
+            | enable improved OSGi compilation support for the bundle
+            life-cycle. | to switch back to the standard bundle
+            life-cycle, move this setting | down to the
+            maven-bundle-plugin section
+          -->
+          <extensions>true</extensions>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>maven-bundle-plugin</artifactId>
+          <version>1.4.3</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <dependencies>
+
+    <!-- Dependances pour les tests -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.5</version>
+      <type>jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymock</artifactId>
+      <version>2.4</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Pour jbehave -->
+    <dependency>
+      <groupId>org.jbehave</groupId>
+      <artifactId>jbehave-core</artifactId>
+      <version>2.3</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <!--
+          | dependency pom representing the global classpath of imported
+          bundles
+        -->
+        <type>pom</type>
+        <groupId>com.initsys.sigal.build</groupId>
+        <artifactId>provision</artifactId>
+        <version>1.14.0-SNAPSHOT</version>
+        <scope>provided</scope>
+        <optional>true</optional>
+      </dependency>
+      <dependency>
+        <groupId>org.osgi</groupId>
+        <artifactId>osgi_R4_core</artifactId>
+        <version>1.0</version>
+        <scope>provided</scope>
+        <optional>true</optional>
+      </dependency>
+      <dependency>
+        <groupId>org.osgi</groupId>
+        <artifactId>osgi_R4_compendium</artifactId>
+        <version>1.0</version>
+        <scope>provided</scope>
+        <optional>true</optional>
+      </dependency>
+
+    </dependencies>
+  </dependencyManagement>
+
+</project>

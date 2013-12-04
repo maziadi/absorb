@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<beans:beans xmlns="http://www.springframework.org/schema/osgi"
+	xmlns:osgix="http://www.springframework.org/schema/osgi-compendium"
+	xmlns:beans="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/osgi http://www.springframework.org/schema/osgi/spring-osgi.xsd 
+http://www.springframework.org/schema/osgi-compendium http://www.springframework.org/schema/osgi-compendium/spring-osgi-compendium-1.2.xsd 
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+	<osgix:cm-properties id="cmProps" persistent-id="sigal.as">
+		<beans:prop key="sigal.nodeName">test-nodename</beans:prop>
+		<beans:prop key="sigal.maxCallDuration">14400</beans:prop>
+	
+		<!-- ActiveMQ configuration -->
+		<beans:prop key="amq.primary.brokerUrl">failover:(tcp://localhost:61616)?randomize=false&amp;backup=true</beans:prop>
+		<beans:prop key="amq.primary.username">as</beans:prop>
+		<beans:prop key="amq.primary.password">manager</beans:prop>
+		<beans:prop key="amq.secondary.brokerUrl">failover:(tcp://localhost:61616)?randomize=false&amp;backup=true</beans:prop>
+		<beans:prop key="amq.secondary.username">as</beans:prop>
+		<beans:prop key="amq.secondary.password">manager</beans:prop>
+		
+		<!-- Service configuration -->
+		<beans:prop key="service.emdb">emdbService</beans:prop>
+		<beans:prop key="service.exdb">exdbService</beans:prop>
+		<beans:prop key="service.lidb">lidbService</beans:prop>
+		<beans:prop key="service.mlidb">mlidbService</beans:prop>
+		<beans:prop key="service.npdb">npdbService</beans:prop>
+		<beans:prop key="sigal.dbQueueName">sigal.db</beans:prop>
+		<beans:prop key="sigal.cdrTopicName">sigal.cdr.notification</beans:prop>
+		
+		<!-- Database configuration -->
+		<beans:prop key="jdbc.driverClassName">com.mysql.jdbc.Driver</beans:prop>
+		<beans:prop key="jdbc.url">jdbc:mysql://localhost/as</beans:prop>
+		<beans:prop key="jdbc.username">as</beans:prop>
+		<beans:prop key="jdbc.password">test1297</beans:prop>
+	</osgix:cm-properties>
+</beans:beans>

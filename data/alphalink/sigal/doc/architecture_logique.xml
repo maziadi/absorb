@@ -1,0 +1,1219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<book lang="fr" status="draft">
+  <bookinfo>
+    <title>Plaque <acronym>TOIP</acronym></title>
+
+    <subtitle>Architecture logique</subtitle>
+
+    <author>
+      <firstname>Dominique</firstname>
+
+      <surname>Broeglin</surname>
+
+      <affiliation>
+        <orgname>Init-SYS</orgname>
+      </affiliation>
+    </author>
+
+    <revhistory>
+      <revision>
+        <date>Mai 2009</date>
+
+        <author>
+          <surname>d.broeglin</surname>
+        </author>
+      </revision>
+
+      <revision>
+        <date>Fevrier 2012</date>
+
+        <author>
+          <surname>a.moutot</surname>
+        </author>
+      </revision>
+    </revhistory>
+  </bookinfo>
+
+  <chapter>
+    <title>Description</title>
+
+    <sect1>
+      <title>Vue d'ensemble</title>
+
+      <para>Le coeur du réseau est la partie du réseau <acronym>TOIP</acronym>
+      comprise entre les contrôleurs de bordure et les passerelles.</para>
+    </sect1>
+
+    <sect1>
+      <title>Contrôleurs de bordure</title>
+
+      <para>Le P-CSCF ou Proxy Call Session Control Function est le point
+      d'entrée de la plaque. Le P-CSCF est le seul serveur dont on doit donner
+      l'adresse au client pour qu'il puisse s'enregistrer. Il lui a été
+      adjoint des fonctionnalités de gestion du NAT ainsi que la gestion de
+      l'enregistrement par soucis de simplicité par rapport à l'architecture
+      IMS.</para>
+
+      <para>Deux type d'instances logicielles existent selon le type de
+      client.</para>
+
+      <para>Le client opérateur sera de préférence orienté vers une instance
+      P-CSCF de classe 4 afin d'avoir une interconnexion « brute » telle que
+      le souhaite généralement un opérateur.</para>
+
+      <para>Un client de type utilisateur final sera orienté vers une instance
+      P-CSCF de classe 5 afin de disposer de la gestion des numéros d'urgence
+      ainsi que d'éventuels services à valeur ajoutée dédiés à son
+      profil.</para>
+
+      <para>Le P-CSCF a une capacité de traitement d'appels scalable
+      (séparation des fonctionnalités sur plusieurs hôtes) pour pouvoir en
+      principe atteindre plusieurs milliers d'appels simultanés.</para>
+
+      <para>Le P-CSCF devant être redondé rapidement, il dispositif de
+      réplication de la table des enregistrements vers son serveur de secours
+      (base MySQL).</para>
+
+      <para>Le P-CSCF taggue les paquets en entrée afin que les équipements de
+      la plaque VOIP puissent appliquer des règles sur les appels.</para>
+
+      <sect2>
+        <title>Le P-CSCF de classe 4</title>
+
+        <para>Le P-CSCF de classe 4 route les appels vers un MRF de classe 4
+        après avoir identifié l'initiateur dans ses tables et tagué la
+        signalisation de façon compréhensible par la plaque afin que le MRF de
+        classe 4 puisse identifier l'émetteur (facturation et services
+        personnalisés).</para>
+
+        <para>Un client considéré comme étant de classe 5 ne pourra acheminer
+        d'appel via le P-CSCF de classe 4. Ce serveur ne peut être utilisé que
+        par un client considéré comme opérateur par l'ARCEP. Le P-CSCF de
+        classe 4 fonctionne grâce à OpenSips 1.4.</para>
+
+        <para>Ne véhiculant aucun flux média, il a une capacité en termes
+        d'appels simultanés élevés (de l'ordre du millier).</para>
+      </sect2>
+
+      <sect2>
+        <title>Le P-CSCF de classe 5</title>
+
+        <para>Le P-CSCF de classe 5 route les appels vers un MRF de classe 5
+        après avoir identifié l'initiateur dans ses tables et tagué la
+        signalisation de façon compréhensible par la plaque afin que le MRF de
+        classe 5 puisse identifier l'émetteur (facturation et services
+        personnalisés). Un client disposant d'un compte de classe 4 ne pourra
+        acheminer d'appel via le P-CSCF de classe 5.</para>
+      </sect2>
+
+      <sect2>
+        <title>Résilience : SIPA</title>
+
+        <para>Pour assurer la résilience, un logiciel fait maison est utilisé
+        pour que le système soit le plus simple. Son fonctionnement consiste à
+        monitorer un service, sur une IP de service, et en cas d'échecs
+        répétés (nombre configurable) de basculer le routage de toutes les ips
+        de service de la première machine vers la seconde.</para>
+      </sect2>
+
+      <sect2>
+        <title>Evolution</title>
+
+        <para>Actuellement, nous fonctionnons sur une lenny 32b avec un
+        opensips obsolète. ?media-proxy?</para>
+
+        <para>Nous avons un soucis pour répliquer les enregistrements
+        (rubyrep) et donc un risque en cas de bascule de pcscf de ne plus
+        avoir les utilisateurs enregistrés et donc des problèmes
+        d'aboutissement des appels entrants.</para>
+
+        <para>Le provisioning des pcscf-c4 n'est pas automatisé.</para>
+
+        <para>sécurité des authentifications registrar</para>
+
+        <para>registrar utilisés pour : nat, terminaison</para>
+
+        <sect3>
+          <title>V2.1 MAJ</title>
+
+          <itemizedlist>
+            <listitem>
+              <para>Passage en squeeze 64b</para>
+            </listitem>
+
+            <listitem>
+              <para>MAJ opensips 1.4 -&gt; opensips 1.7</para>
+            </listitem>
+          </itemizedlist>
+        </sect3>
+      </sect2>
+
+      <sect2>
+        <title>Cas particuliers</title>
+
+        <sect3>
+          <title>Centrex-1-cbv1</title>
+
+          <para>Ce centrex historique est mutualisé. Il est donc nécessaire
+          d'opérer à une manipulation pour obtenir le bon account code. Le
+          centrex envoit un code client de la forme XXXYYY qui permet
+          d'obtenir l'account code : 0990000XXX900.</para>
+        </sect3>
+
+        <sect3>
+          <title>mgcf-isdn-3-cbv1 : gateway Dialogic</title>
+
+          <para>Les gateways Dialogic utilisées pour fournir l'actuel T38
+          (solution de backup) ne sont permettre pas d'ajouter le champs
+          X-AccountCode, il est donc mis dans l'User Part de l'URI.</para>
+        </sect3>
+      </sect2>
+    </sect1>
+
+    <sect1>
+      <title>Passerelles</title>
+
+      <para>Les interconnections avec les réseaux TDM sont appelés MGCF (Média
+      Gateway Controller Function)</para>
+
+      <sect2>
+        <title>MGCF SS7</title>
+
+        <para>Le MGCF SS7 sert d'interconnexion avec les réseaux TDM utilisant
+        la signalisation SS7. Il est équipé d'une carte Sangoma A108 8 E1.
+        Wanpipe pilote la carte Sangoma.</para>
+
+        <para>La signalisation SS7 est gérée par NSG (Netborder SS7 Gateway)
+        de Sangoma qui fait directement du SIP avec des X-Headers pour la
+        gestion du SS7.</para>
+
+        <para>La signalisation SIP et les traitements média sont aussi gérés
+        par Asterisk 1.8.x qui est nécessaire encore aujourd'hui pour
+        continuer à utiliser l'agent SIGAL.</para>
+
+        <sect3>
+          <title>Evolution</title>
+
+          <para></para>
+
+          <sect4>
+            <title>V2.x Scalabilité et résilience</title>
+
+            <para><itemizedlist>
+                <listitem>
+                  <para>Suppression des Asterisk et création de icscf-ss7 avec
+                  ?YiPsI?</para>
+                </listitem>
+
+                <listitem>
+                  <para>Failover sur les SCSCF ou sipa-scscf :/</para>
+                </listitem>
+              </itemizedlist></para>
+          </sect4>
+        </sect3>
+      </sect2>
+
+      <sect2>
+        <title>MGCF ISUP</title>
+
+        <para>Le MGCF ISUP sert d'interconnexion avec les réseaux TDM
+        utilisant la signalisation ISUP. Il est équipé d'une carte Sangoma
+        A108 permettant d'interconnecter jusqu'à 8 E1 (de 30 communications
+        chacun) soit une capacité physique maximale de 240 appels
+        simultanés.</para>
+
+        <para>Wanpipe pilote la carte Sangoma.</para>
+
+        <para>La signalisation SIP et les traitements média sont gérés par
+        Asterisk 1.6.x</para>
+
+        <sect3>
+          <title>Evolution</title>
+
+          <sect4>
+            <title>V2.1 MAJ</title>
+
+            <itemizedlist>
+              <listitem>
+                <para>Passage en squeeze 64b</para>
+              </listitem>
+
+              <listitem>
+                <para>Maj Asterisk 1.6.x -&gt; 1.8.x</para>
+              </listitem>
+            </itemizedlist>
+          </sect4>
+        </sect3>
+      </sect2>
+    </sect1>
+
+    <sect1>
+      <title>Routeur d'appels</title>
+
+      <para></para>
+
+      <sect2>
+        <title>S-CSCF : Routeur coeur</title>
+
+        <para>Les routeurs d'appels en coeur de plaque VOIP sont les
+        S-CSCF.</para>
+
+        <para>S-CSCF est l'acronyme de Serving Call Server Controller
+        Function. En fonction des tags ajoutés à la signalisation par le
+        P-CSCF (ou les équipements d'interconnexion comme les MGCF) et le
+        préfixe du numéro, les appels seront routés vers une destination
+        plutot qu'une autre. Le S-CSCF route tous les appels qu'ils soient
+        émis ou reçus d'un compte de classe 4 ou 5.</para>
+
+        <sect3>
+          <title>Evolution</title>
+
+          <para></para>
+
+          <sect4>
+            <title></title>
+
+            <itemizedlist>
+              <listitem>
+                <para>Passage en squeeze 64b</para>
+              </listitem>
+
+              <listitem>
+                <para>Suppression de l'opensips de la v1</para>
+              </listitem>
+
+              <listitem>
+                <para>MAJ ROUTAG (cipango+sipatra déployé dans un
+                jetty)</para>
+              </listitem>
+
+              <listitem>
+                <para>MAJ AMQ v 5.3.1 -&gt; v 5.6.x</para>
+              </listitem>
+            </itemizedlist>
+          </sect4>
+        </sect3>
+      </sect2>
+
+      <sect2>
+        <title>I-CSCF : Routeur périphérique</title>
+
+        <para>Les I-CSCF dans leur première version auront pour rôle de de
+        router les appels du coeur vers les P-CSCF-C4 ou l'inverse en gérant
+        les services associés aux interconnexions comme le faisaient
+        auparavant les MRF-C4.</para>
+
+        <para>Ces routeurs fonctionneront sur cipango avec sipatra et
+        intégreront les fonctionnalités des agents sigal des mrf.</para>
+
+        <sect3>
+          <title>Evolution</title>
+
+          <para>Ces équipements seront amener à évoluer pour pouvoir remplacer
+          les actuels mrf-c5 en assurant le transcodage en le déléguant
+          (modification du SDP ou routage vers un proxy de transcodage)</para>
+
+          <para>Une version sera développer pour retirer les asterisk des
+          mgcf-ss7. Il pourra être envisager dans cette même tranche de
+          modéliser les préfixes pour ne plus avoir à faire systématiquement
+          de la configuration sur les mgcf-ss7 pour gérer les préfixes de
+          routage et de portabilité.</para>
+        </sect3>
+      </sect2>
+    </sect1>
+
+    <sect1>
+      <title>Serveurs de traitement média</title>
+
+      <para>Les serveurs de traîtement média sont appelés MRF. Ces serveurs
+      sont pilotés par un agent qui gère également la génération de CDR</para>
+
+      <para>Ils servent actuellement essentiellement au transcodage entre
+      codecs audio (g729 et g711 généralement).</para>
+
+      <para>Ces serveurs peuvent permettre à terme l'intégration de services
+      supplémentaires.</para>
+
+      <sect2>
+        <title>MRF de classe 4</title>
+
+        <para>Le MRF de classe 4 identifie les comptes émetteurs de l'appel et
+        les routent vers le S-CSCF en y ajoutant un tag CarrierCode après
+        avoir éventuellement transcodé le flux audio RTP.</para>
+
+        <para>Il est dédié aux appels en provenance ou à destination d'un
+        compte de type classe 4 (opérateur). C'est le second serveur traversé
+        par la signalisation après le PCSCF.</para>
+      </sect2>
+
+      <sect2>
+        <title>MRF de classe 5</title>
+
+        <para>Le MRF de classe 5 identifie les comptes émetteurs de l'appel et
+        les routent vers le S-CSCF en y ajoutant un tag CarrierCode après
+        avoir éventuellement transcodé le flux audio RTP.</para>
+
+        <para>Il est dédié aux appels en provenance ou à destination d'un
+        compte de type classe 5 (client final). C'est le second serveur
+        traversé par la signalisation après le PCSCF.</para>
+      </sect2>
+
+      <sect2>
+        <title>Evolution</title>
+
+        <para>Nous abusons aujourd'hui de mrf et cela à un coup de passer par
+        de tels machines si nous ne souhaitons pas effectuer de modifications
+        sur le flux media. L'objectif est donc de réduire les cas
+        d'utilisation de mrf. A terme le seul cas d'utilisation de ces
+        machines qui subsistera sera le fait de masquer les ips de nos
+        opérateurs de transit voix à nos clients et de jouer les films. Les
+        autres rôles joués aujourd'hui par les MRF (routage, CDR, transcodage,
+        différents services voix) seront assurés par les I-CSCF.</para>
+
+        <sect3>
+          <title>V 2.1 MAJ</title>
+
+          <itemizedlist>
+            <listitem>
+              <para>Passage en squeeze 64b</para>
+            </listitem>
+
+            <listitem>
+              <para>Maj Callweaver 1.4.x -&gt; Asterisk 1.8.x</para>
+            </listitem>
+          </itemizedlist>
+        </sect3>
+
+        <sect3>
+          <title>V 2.x Scalabilité et résilience</title>
+
+          <itemizedlist>
+            <listitem>
+              <para>Implémentation de YiPsI des MRF à base de
+              cipango+sipatra+sigal</para>
+            </listitem>
+
+            <listitem>
+              <para>Failover sur les SCSCF ou sipa-scscf :/</para>
+            </listitem>
+          </itemizedlist>
+        </sect3>
+      </sect2>
+    </sect1>
+  </chapter>
+
+  <chapter>
+    <title>Réseau</title>
+
+    <para><mediaobject>
+        <imageobject>
+          <imagedata fileref="media/ReseauIntercoFt.pdf" />
+        </imageobject>
+      </mediaobject><mediaobject>
+        <imageobject>
+          <imagedata fileref="media/ReseauIntercoFtVirtualise.pdf" />
+        </imageobject>
+      </mediaobject><mediaobject>
+        <imageobject>
+          <imagedata fileref="media/DiagrammeDeploiementIntercoFt.pdf" />
+        </imageobject>
+      </mediaobject><mediaobject>
+        <imageobject>
+          <imagedata fileref="media/DiagrammeDeploiementIntercoFtCluster.pdf" />
+        </imageobject>
+      </mediaobject></para>
+  </chapter>
+
+  <chapter>
+    <title>Cas d'utilisation</title>
+
+    <para></para>
+  </chapter>
+
+  <chapter>
+    <title>Signalisation</title>
+
+    <sect1>
+      <title>Signalisation SIP</title>
+
+      <para>Le protcole SIP est utilisé pour la signalisation des appels en
+      coeur de réseau. La <xref linkend="fig_vue_ensemble_sip" /> donne une
+      vue d'ensemble de l'architecture SIP.</para>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="media/VueGeneraleSip.pdf"
+                     id="fig_vue_ensemble_sip" />
+        </imageobject>
+      </mediaobject>
+
+      <sect2>
+        <title>Identification d'un compte ou d'une interconnexion</title>
+
+        <para>Un compte ou une interconnexion sont idéntifés par un
+        <foreignphrase lang="en">account code</foreignphrase> de la forme
+        <code>^099[0-9]{10}$</code>.</para>
+
+        <para>Les identifiants de comptes sont de la forme
+        <code>^0990[0-9]{9}$</code> alors que ceux d'une interconnexion sont
+        de la forme <code>^0991[0-9]{9}$</code>.</para>
+
+        <sect3>
+          <title>Cas particulier de la migration depuis les anciens
+          identifiants de compte</title>
+
+          <para>L'ancienne convention d'identification des comptes reposait
+          sur six chiffres dont les trois premiers identifiaient le client et
+          les trois suivants un compte du client ou un site du client. Hors,
+          aucune différence n'a été faite entre les clients directs ou les
+          revendeurs. Cette convention dépend donc de chaque cas particulier.
+          Les anciens numéros on été intégrés aux nouveaux de la manière
+          suivante: <code>0990000 + &lt;ancien identifiant&gt;</code>.</para>
+        </sect3>
+      </sect2>
+
+      <sect2>
+        <title>Choix du <foreignphrase>carrier</foreignphrase></title>
+
+        <para>Un <foreignphrase>carrier</foreignphrase> correspond à un
+        ensemble de règles de routage (cf. <xref linkend="routage" />).
+        Lorsqu'un appel traverse un routeur d'appel le choix du
+        <foreignphrase>carrier</foreignphrase> détermine la manière dont il
+        sera routé aussi bien en terme de destination, de répartition de
+        charge que de récupération sur erreur. Le contrôleur de bordure peu
+        décider du <foreignphrase>carrier</foreignphrase> qui sera utilisé
+        pour router un appel qu'il émet en ajoutant l'entête SIP
+        <property>X-CarrierCode</property>. La valeur de l'entête correspond
+        au nom du <foreignphrase>carrier</foreignphrase> dans les bases de
+        données de routage.</para>
+      </sect2>
+
+      <sect2>
+        <title>Carrier pour les appels d'urgence</title>
+
+        <para>Le routage des appels d'urgence est fait hors du routage normal
+        des appels pour des raisons de sécurité et d'allocations de resources.
+        Le <foreignphrase>carrier</foreignphrase> utilisé pour router les
+        appels d'urgence est <code>emergency</code>. Ces appels sont routés
+        avec des failover supplémentaires indépendants des autres routages.
+        ??? Ha bon ???</para>
+      </sect2>
+
+      <sect2>
+        <title>Interfaces entre éléments SIP</title>
+
+        <sect3>
+          <title>Interface entre MRF<subscript>4</subscript> et PCSCF</title>
+
+          <para><remark>TODO</remark></para>
+        </sect3>
+
+        <sect3>
+          <title>Interface entre MRF<subscript>5</subscript> et PCSCF</title>
+
+          <para><remark>TODO</remark></para>
+        </sect3>
+
+        <sect3>
+          <title>Interface entre PCSCF et MRF<subscript>4</subscript></title>
+
+          <para><remark>TODO</remark></para>
+        </sect3>
+
+        <sect3>
+          <title>Interface entre PCSCF et MRF<subscript>5</subscript></title>
+
+          <para><remark>TODO</remark></para>
+        </sect3>
+
+        <sect3>
+          <title>Interface entre MRF et SCSCF</title>
+
+          <sect4>
+            <title>Interface entre MRF<subscript>4</subscript> et
+            SCSCF</title>
+
+            <para><remark>TODO</remark></para>
+          </sect4>
+
+          <sect4>
+            <title>Interface entre MRF<subscript>5</subscript> et
+            SCSCF</title>
+
+            <para><remark>TODO</remark></para>
+          </sect4>
+        </sect3>
+
+        <sect3>
+          <title>Interface entre SCSCF et MRF</title>
+
+          <para>La partie hôte de l'URI SIP de la méthode INVITE est de la
+          forme: <code>[0-9]{13}\.[a-z0-9-]+\.sip\.openvno\.net</code>.</para>
+
+          <sect4>
+            <title>Interface entre SCSCF et
+            MRF<subscript>4</subscript></title>
+
+            <para><remark>TODO</remark></para>
+          </sect4>
+
+          <sect4>
+            <title>Interface entre SCSCF et
+            MRF<subscript>5</subscript></title>
+
+            <para><remark>TODO</remark></para>
+          </sect4>
+        </sect3>
+
+        <sect3>
+          <title>Interface entre MGCF et SCSCF</title>
+
+          <para></para>
+
+          <sect4>
+            <title>Interface entre MGCF SS7 et SCSCF</title>
+
+            <para><remark>TODO</remark></para>
+          </sect4>
+
+          <sect4>
+            <title>Interface entre MGCF ISDN et SCSCF</title>
+
+            <para><remark>TODO</remark></para>
+          </sect4>
+        </sect3>
+
+        <sect3>
+          <title>Interface entre SCSCF et MGCF</title>
+
+          <para>La partie hôte de l'URI SIP de la méthode INVITE est de la
+          forme: <code>[0-9]{13}\.[a-z0-9-]+\.sip\.openvno\.net</code></para>
+
+          <sect4>
+            <title>Interface entre SCSCF et MGCF SS7</title>
+
+            <para><remark>TODO</remark></para>
+          </sect4>
+
+          <sect4>
+            <title>Interface entre SCSCF et MGCF ISDN</title>
+
+            <para><remark>TODO</remark></para>
+
+            <para><remark></remark></para>
+          </sect4>
+        </sect3>
+
+        <sect3>
+          <title>Interface techniques des MGCF</title>
+
+          <para>Cette section décrit les spécificités des interfaces
+          techniques entre les AGI des MGCF et Asterisk</para>
+
+          <sect4>
+            <title>Interface entre MGCF SS7 et Asterisk</title>
+
+            <para>Sur un appel entrant, le plan de numérotation Asterisk
+            fournit à l'AGI le champs accountCode qui doit contenir la
+            référence de l'interconnexion.</para>
+
+            <para><remark>TODO</remark></para>
+          </sect4>
+
+          <sect4>
+            <title>Interface entre MGCF ISDN et Asterisk</title>
+
+            <para><remark>TODO</remark></para>
+          </sect4>
+        </sect3>
+      </sect2>
+
+      <sect2>
+        <title>Exemples</title>
+
+        <para>Exemple de l'établissement d'un appel dont l'initiateur s'est
+        préalablement enregistré</para>
+
+        <figure>
+          <title></title>
+
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="???" />
+            </imageobject>
+          </mediaobject>
+        </figure>
+      </sect2>
+    </sect1>
+
+    <sect1>
+      <title>Signalisation SIGAL</title>
+
+      <para>SIGAL est le protocole utilisé pour la supervision et le contrôle
+      du coeur de réseau TOIP. Il s'agit d'un protocole basé sur l'échange de
+      messages textes entre les diférents éléments du réseau. Ces messages
+      peuvent être utilisés pour l'échange d'informations de routage, la
+      demande d'informations sur une ligne, la translation des numéros
+      d'urgence, la collecte d'informations de taxation, etc. La <xref
+      linkend="fig_vue_ensemble_sigal" /> donne une vue d'ensemble de
+      l'architecture Sigal</para>
+
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="media/VueGeneraleSigal.pdf"
+                     id="fig_vue_ensemble_sigal" />
+        </imageobject>
+      </mediaobject>
+
+      <para>Les composants Sigal utilisent une infrastructure d'échange de
+      message asynchrone. Cette infrastructure est basée sur les protocoles
+      Openwire et STOMP fournis par ActiveMQ.</para>
+
+      <sect2>
+        <title>Topics et Queues</title>
+
+        <para>Les échanges Sigal utilisent les queues et topics suivants:
+        <glosslist>
+            <glossentry>
+              <glossterm><varname>sigal.db.query</varname></glossterm>
+
+              <glossdef>
+                <para>Queue utilisée pour les requêtes aux bases de données.
+                Les messages doivent être marqués avec la propriété
+                <property>messageType</property> qui doit contenir le type du
+                message de requête (&lt;nom de la base de
+                données&gt;.QUERY.REQUEST).</para>
+              </glossdef>
+            </glossentry>
+
+            <glossentry>
+              <glossterm>sigal.db.update</glossterm>
+
+              <glossdef>
+                <para>Queue utilisée pour les mises à jours des bases de
+                données. Les messages doivent être marqués avec la propriété
+                <property>messageType</property> qui doit contenir le type du
+                message de requête (&lt;nom de la base de
+                données&gt;.UPDATE.REQUEST).</para>
+              </glossdef>
+            </glossentry>
+
+            <glossentry>
+              <glossterm>sigal.cdr</glossterm>
+
+              <glossdef>
+                <para>Queue utilisée pour la transmission des CDR.</para>
+              </glossdef>
+            </glossentry>
+
+            <glossentry>
+              <glossterm>sigal.db.notification.update</glossterm>
+
+              <glossdef>
+                <para>Topic utilisé pour la notification des mises à jour de
+                la base de données. Les messages doivent être marqués avec la
+                propriété <property>messageType</property> qui doit contenir
+                le type du message de requête (&lt;nom de la base de
+                données&gt;.UPDATE.REQUEST).</para>
+              </glossdef>
+            </glossentry>
+          </glosslist></para>
+      </sect2>
+    </sect1>
+
+    <sect1>
+      <title></title>
+
+      <para></para>
+    </sect1>
+  </chapter>
+
+  <chapter id="routage">
+    <title>Routage</title>
+
+    <para>Le routage sur la plaque voix est assuré par les S-CSCF. Le routage
+    consiste à acheminer des appels vers des comptes C4 et C5. Le choix des
+    routes se fait sur 2 critères:</para>
+
+    <para>- le plan de routage : carrier</para>
+
+    <para>- le numéro de destination</para>
+
+    <para>Lorsqu'un appel doit être routé vers un compte particulier, il est
+    routé vers un groupe de machines exploitées par le compte : trunk
+    group.</para>
+
+    <sect1>
+      <title>Plan de routage</title>
+
+      <para>Tous les comptes déployés sur notre plaque sont associés à un plan
+      de routage. Les appels émis depuis compte sont acheminés dans le plan de
+      routage du compte. Il existe tout de même 2 exceptions :</para>
+
+      <para>- les numéros d'urgence (cf numéros d'urgence)</para>
+
+      <para>- les numéros taggués FAX (cf numéros de fax)</para>
+
+      <para>Les plans de routage ont une réference unique qui est du format
+      D[0-9]{12}.[1-9] où D[0-9]{12} est la réference de déploiement du VNO à
+      qui appartient le plan de routage.</para>
+    </sect1>
+
+    <sect1>
+      <title>Route et routage</title>
+
+      <para>A partir du numéro de destination, une recherche est effectuée
+      dans la base de données des routes pour trouver tous les préfixes qui
+      correpondent (dans le scope du plan de routage). Ensuite seules les
+      routes les plus longues sont conservées. Les routes avec un poids de 0,
+      celles vers l'equipement source de l'appel et celles dont la résolution
+      de nom de la destination échoue sont automatiquement exclues.</para>
+
+      <para>Lorsqu'il y a plusieurs routes de trouvées (ou plusieurs machines
+      dans un des trunk group de destination), les poids sont utilisés pour
+      choisir celle qui sera utilisée; les autres routes seront conservées
+      pour le failover.</para>
+
+      <para>Au cas où aucune route n'est trouvée, une erreur 404 est
+      renvoyée.</para>
+    </sect1>
+
+    <sect1>
+      <title>Failover</title>
+
+      <para>Du failover est effectué en cas de retour 408 ou 5xx.</para>
+
+      <para>Pour le failover, les routes trouvées ayant été conservées et
+      celle utilisée supprimée de la liste, on exploite à nouveau les poids
+      pour choisir la route a utiliser et on conserve les autres au cas ou on
+      devrait faire du failover.</para>
+    </sect1>
+
+    <sect1>
+      <title>Trunk group</title>
+
+      <para>Dans le cas d'une route à destination d'un compte exploité par
+      plusieurs équipements, afin de regrouper ces équipements sous une seule
+      entité, nous utilisons la notion de trunk group. Cette notion permet de
+      diminuer le nombre d'entrées dans la table routag.</para>
+
+      <para>Lors du calcul des routes (récupération des routes pour
+      acheminement de l'appel), la route trouvée est décomposée en autant de
+      routes que d'équipements dans le trunk group de destination. Lors de
+      cette décomposition le poids de chaque route va être le produit du poids
+      de la route trouvée et du poids du membre du trunk group.</para>
+    </sect1>
+
+    <sect1>
+      <title>Numéros de fax (taggués fax)</title>
+
+      <para>Lorsqu'un appel est émis par un compte avec en CID un numéro
+      taggué FAX, il est acheminé dans le plan de routage D[0-9]{12}.5 ou
+      D[0-9]{12} est la réference du VNO à qui appartient le compte voix (ie:
+      retrouver à partir du plan de routage associé au compte
+      D[0-9]{10}.[1-9]).</para>
+    </sect1>
+
+    <sect1>
+      <title>Numéros d'urgence</title>
+
+      <para>Il existe un plan de routage unique pour l'acheminement des
+      numéros d'urgence : emergency.</para>
+    </sect1>
+  </chapter>
+
+  <chapter>
+    <title>Plan de numérotation</title>
+
+    <para>Les plans de numérotations du routage des appels ne doivent pas être
+    confondus avec les plans de numérotation associés aux contrôleurs de
+    bordures ou aux passerelles. Il reprend les règles de numérotation dans le
+    coeur du réseau. Tous les numéros sur la plaque sont normalisés en E164.
+    Ainsi tout le routage s'effectue en E164. Nous avons quelques préfixes
+    particuliers qui sont des exceptions et commencent par des 0.</para>
+
+    <sect1>
+      <title>Numéros de tests : 011</title>
+
+      <para>TODO : Système de test des C4 ...</para>
+    </sect1>
+
+    <sect1>
+      <title>Numéros courts : 015</title>
+
+      <para>Lorsqu'un appel est émis vers un numéro court, le préfixe 015 est
+      ajouté. Ainsi il est aisé de router les appels vers les numéros courts
+      vers un compte qui sait acheminé ce type de traffic (ex: interco
+      FT).</para>
+    </sect1>
+
+    <sect1>
+      <title>Films : 016</title>
+
+      <para>Lorsqu'un compte à la signalisation désactivée, plutôt que de
+      recevoir des signalisations d'erreurs, il entend un film.
+      L'implémentation de ce système passe par un appel vers un 016xxx. Ils
+      sont acheminés vers les MRF qui possèdent les films à jouer dans ce
+      cas.</para>
+    </sect1>
+
+    <sect1>
+      <title>Messagerie Vocale : 017</title>
+
+      <para>La route 017 a pour destination les équipements VOICEMAIL.</para>
+
+      <para>Lorsqu'un numéro associé à un compte C5 a la messagerie d'activée
+      (immédiatement ou au bout du temps défini), le MRF en charge du
+      traitement de l'appel a la responsabilité de transferer l'appel vers la
+      messagerie. Pour transferer un appel vers la messagerie, il va effectué
+      un appel vers les SCSCF avec pour destination : 017 + &lt;numéro au
+      format national&gt;. Alors l'appelant arrivera sur la messagerie du
+      numéro qu'il cherchait à joindre.</para>
+
+      <para>Lorsqu'un client utilise son compte C5 et compose le numéro
+      spécial : 33888 (avec le profil E164. 888 avec le profil national), si
+      le numéro appelant est bien un numéro rattaché au compte C5 passant
+      l'appel, sinon une erreur sera renvoyée, le MRF routera l'appel vers la
+      messagerie en effectuant un appel vers les SCSCF avec pour destination
+      017888. Alors le client arrivera sur sa messagerie vocale (ie: la
+      messagerie vocale du numéro utilisé en CID num).</para>
+    </sect1>
+  </chapter>
+
+  <chapter>
+    <title>Voicemail</title>
+
+    <para>TODO : pour joindre voicemail de l'exterieur, il faut avoir dans le
+    routage un numéro qui est routé vers les équipements voicemail en
+    re-ecrivant la destination en 889.</para>
+
+    <para>exemple:</para>
+
+    <para>33811178888 : strip de 11 et rewrite_prefix 889 routé vers les
+    machines voicemail</para>
+  </chapter>
+
+  <chapter>
+    <title>Bases de données</title>
+
+    <sect1>
+      <title>Numéros d'urgence (<acronym>ENDB</acronym>)</title>
+
+      <para>La base de données de translation des numéros d'urgence est
+      composée de deux tables : emergency_translation qui contient les
+      translations de numéros à effectuer en fonction du code INSEE, du numéro
+      d'urgence appelé, du jour de la semaine (ou férié) et de l'heure.<table>
+          <title>Colonnes de la table emergency_translation</title>
+
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry align="center">Nom</entry>
+
+                <entry align="center">Type</entry>
+
+                <entry align="center">Description</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry>insee_code</entry>
+
+                <entry>char(5)</entry>
+
+                <entry>Le code INSEE pour lequel la translation est
+                faite.</entry>
+              </row>
+
+              <row>
+                <entry>number</entry>
+
+                <entry>varchar(6)</entry>
+
+                <entry>Représente le numéro à translater.</entry>
+              </row>
+
+              <row>
+                <entry>day</entry>
+
+                <entry>int(1)</entry>
+
+                <entry>Représente le jour de la semaine. La valeur 0
+                correspond à un jour férié. Les valeurs de 1 à 7 correspondent
+                au jours de dimanche à samedi.</entry>
+              </row>
+
+              <row>
+                <entry>begin_hour</entry>
+
+                <entry>time</entry>
+
+                <entry>Heure de début pour cette translation.</entry>
+              </row>
+
+              <row>
+                <entry>end_hour</entry>
+
+                <entry>time</entry>
+
+                <entry>Heure de fin pour cette translation.</entry>
+              </row>
+
+              <row>
+                <entry>idx</entry>
+
+                <entry>int(2)</entry>
+
+                <entry>Numéro d'ordre de la translation. Lorsque plusieurs
+                translations pour existent pour les mêmes (insee_code, number,
+                day, begin_hour, end_hour) elles sont essayées successivement
+                dans l'ordre imposé par idx.</entry>
+              </row>
+
+              <row>
+                <entry>translated_number</entry>
+
+                <entry>varchar(15)</entry>
+
+                <entry>Le numéro vers lequel le numéro d'urgence est
+                translaté.</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table><table>
+          <title>Colonnes de la table emergeny_holidays</title>
+
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry align="center">Nom</entry>
+
+                <entry align="center">Type</entry>
+
+                <entry align="center">Description</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry>day</entry>
+
+                <entry>date</entry>
+
+                <entry>Date du jour férié.</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table></para>
+    </sect1>
+
+    <sect1>
+      <title>Portage des numéros (<acronym>NPDB</acronym>)</title>
+
+      <para><mediaobject>
+          <imageobject>
+            <imagedata fileref="media/DiagrammeDeploiementIntercoFt.pdf" />
+          </imageobject>
+        </mediaobject></para>
+    </sect1>
+
+    <sect1>
+      <title>Portage des numéros (<acronym>NPDB</acronym>)</title>
+
+      <para></para>
+    </sect1>
+
+    <sect1>
+      <title>Informations des lignes (<acronym>LIDB</acronym>)</title>
+
+      <para></para>
+    </sect1>
+
+    <sect1>
+      <title>Informations des interconnexions (EXDB)</title>
+
+      <para></para>
+    </sect1>
+
+    <sect1>
+      <title>Routage (<acronym>Routag</acronym>)</title>
+
+      <para><table>
+          <title>Colonnes de la table routag</title>
+
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry align="center">Nom</entry>
+
+                <entry align="center">Type</entry>
+
+                <entry align="center">Description</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry>carrier_code</entry>
+
+                <entry>varchar(15)</entry>
+
+                <entry>Plan de routage de la route</entry>
+              </row>
+
+              <row>
+                <entry>prefix_min</entry>
+
+                <entry>varchar(17)</entry>
+
+                <entry>borne inférieure de la route</entry>
+              </row>
+
+              <row>
+                <entry>prefix_max</entry>
+
+                <entry>varchar(17)</entry>
+
+                <entry>borne supérieure de la route</entry>
+              </row>
+
+              <row>
+                <entry>weight</entry>
+
+                <entry>int(3)</entry>
+
+                <entry>poids de la route</entry>
+              </row>
+
+              <row>
+                <entry>strip</entry>
+
+                <entry>int(2)</entry>
+
+                <entry>strip de la destination</entry>
+              </row>
+
+              <row>
+                <entry>rewrite_prefix</entry>
+
+                <entry>varchar(16)</entry>
+
+                <entry>ré-écriture du préfixe de la destination</entry>
+              </row>
+
+              <row>
+                <entry>destination_code</entry>
+
+                <entry>varchar(15)</entry>
+
+                <entry>account_code du compte vers lequel on route</entry>
+              </row>
+
+              <row>
+                <entry>trunk_group_id</entry>
+
+                <entry>int(10) unsigned</entry>
+
+                <entry>clé etrangère de la table trunk group</entry>
+              </row>
+
+              <row>
+                <entry>update_date</entry>
+
+                <entry>timestamp</entry>
+
+                <entry>Update date :)</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table></para>
+    </sect1>
+
+    <sect1>
+      <title>Trunk group (<acronym>Routag</acronym>)</title>
+
+      <para><table>
+          <title>Colonnes de la table trunk_group</title>
+
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry align="center">Nom</entry>
+
+                <entry align="center">Type</entry>
+
+                <entry align="center">Description</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry>trunk_group_id</entry>
+
+                <entry>int(10) unsigned</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>host</entry>
+
+                <entry>varchar(64)</entry>
+
+                <entry>nom de host (ex: mrf-4-c4.sip.openvno.net)</entry>
+              </row>
+
+              <row>
+                <entry>weight</entry>
+
+                <entry>int(3)</entry>
+
+                <entry>poids de l'entrée</entry>
+              </row>
+
+              <row>
+                <entry>update_date</entry>
+
+                <entry>timestamp</entry>
+
+                <entry>Update date :</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table></para>
+    </sect1>
+  </chapter>
+
+  <glossary>
+    <glossdiv>
+      <title>Glossaire</title>
+
+      <glossentry>
+        <glossterm>I-CSCF</glossterm>
+
+        <glossdef>
+          <para>Interrogating Call Session Control Function</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>P-CSCF</glossterm>
+
+        <glossdef>
+          <para>Proxy Call Session Control Function</para>
+        </glossdef>
+      </glossentry>
+
+      <glossentry>
+        <glossterm>S-CSCF</glossterm>
+
+        <glossdef>
+          <para>Serving Call Session Control Function</para>
+        </glossdef>
+      </glossentry>
+    </glossdiv>
+  </glossary>
+</book>

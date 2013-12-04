@@ -1,0 +1,1933 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
+<article>
+  <articleinfo>
+    <title>Plaque VOIP V2 Tests Cases</title>
+
+    <author>
+      <surname>MOUTOT Alexandre</surname>
+    </author>
+
+    <revhistory>
+      <revision>
+        <date>2010/01/20</date>
+
+        <revdescription>
+          <para>Passage en DocBook</para>
+        </revdescription>
+      </revision>
+    </revhistory>
+  </articleinfo>
+
+  <section>
+    <title>Tests Cases</title>
+
+    <section>
+      <title>Case 1 : register UAC</title>
+
+      <section>
+        <title>Définition</title>
+
+        <variablelist>
+          <varlistentry>
+            <term>nom</term>
+
+            <listitem>
+              <para>register UAC</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+
+        <variablelist>
+          <varlistentry>
+            <term>objectifs</term>
+
+            <listitem>
+              <para>valider le bon fonctionnement de l'enregistrement</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+
+        <variablelist>
+          <varlistentry>
+            <term>résumé</term>
+
+            <listitem>
+              <para>Les UAC exploitant des comptes voix de type registrar
+              doivent pouvoir s'enregistrer</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+
+        <variablelist>
+          <varlistentry>
+            <term>acteurs</term>
+
+            <listitem>
+              <para>UAC, P-CSCF</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </section>
+
+      <section>
+        <title>Déroulements</title>
+
+        <table>
+          <title>déroulement nominal</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry align="center" morerows="6" valign="middle">1</entry>
+
+                <entry morerows="6" valign="middle">l'utilisateur initialise
+                l'UAC (démarrage, validation de conf, ...)</entry>
+
+                <entry>l'UAC envoie un paquet REGISTER au P-CSCF</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>le P-CSCF envoie un paquet 401 UNAUTHORIZED à
+                l'UAC</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>l'UAC envoie un paquet REGISTER avec challenge au
+                P-CSCF</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>le P-CSCF envoie un paquet 200 OK à l'UAC</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>l'UAC se voit enregistré</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>une entrée correspondant a l'UAC se trouve dans la
+                table location du P-CSCF</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+
+        <table>
+          <title>déroulement alternatif (UAC natté)</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry align="center" morerows="7" valign="middle">1</entry>
+
+                <entry morerows="7" valign="middle">l'utilisateur initialise
+                l'UAC (démarrage, validation de conf, ...)</entry>
+
+                <entry>l'UAC envoie un paquet REGISTER au P-CSCF</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>le P-CSCF envoie un paquet 401 UNAUTHORIZED à
+                l'UAC</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>l'UAC envoie un paquet REGISTER avec challenge au
+                P-CSCF</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>le P-CSCF envoie un paquet 200 OK à l'UAC</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>l'UAC se voit enregistré</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>une entrée correspondant a l'UAC se trouve dans la
+                table location du P-CSCF</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>des paquets sont émis régulièrement du P-CSCF vers
+                l'UAC (KeepAlive)</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </section>
+
+      <section>
+        <title>Exemples</title>
+
+        <para><orderedlist numeration="arabic">
+            <listitem>
+              <para>connecter <emphasis role="strong">teltestnat</emphasis> au
+              reseau (cf <ulink
+              url="http://intranet/documentation/InfrastructureDeTestPlaqueVoipV2">InfrastructureDeTestPlaqueVoipV2</ulink>)</para>
+            </listitem>
+
+            <listitem>
+              <para>vérifier sur le téléphone qu'il affiche bien <emphasis
+              role="strong">teltestnat</emphasis></para>
+            </listitem>
+
+            <listitem>
+              <para>tester un double enregistrement et de faire les Case 2 et
+              3 dans cette situation</para>
+            </listitem>
+          </orderedlist>mais aussi:</para>
+
+        <para><orderedlist numeration="arabic">
+            <listitem>
+              <para>revalider la configuration en mettant un Aunthenticate ID
+              différent (UID &amp; AID mismatch)</para>
+            </listitem>
+
+            <listitem>
+              <para>revalider la configuration en mettant un User ID
+              inexistant (bad username)</para>
+            </listitem>
+
+            <listitem>
+              <para>revalider la configuration en mettant un mauvais password
+              ID (bad password)</para>
+            </listitem>
+          </orderedlist>Pour le déroulement nominal, tout refaire avec
+        <emphasis role="strong">teltestmaquette</emphasis> et un compte
+        authentifié</para>
+      </section>
+    </section>
+
+    <section>
+      <title>Case 2 : Call from UAC with voip account</title>
+
+      <section>
+        <title>Définitions</title>
+
+        <para><variablelist>
+            <varlistentry>
+              <term>nom</term>
+
+              <listitem>
+                <para>Call from UAC with voip account</para>
+              </listitem>
+            </varlistentry>
+          </variablelist><variablelist>
+            <varlistentry>
+              <term>objectifs</term>
+
+              <listitem>
+                <para>Passer un appel d'un UAC avec un compte voix</para>
+              </listitem>
+            </varlistentry>
+          </variablelist><variablelist>
+            <varlistentry>
+              <term>acteurs</term>
+
+              <listitem>
+                <para>Utilisateur, UAC, P-CSCF, MRFC5, S-CSCF, AS, AMq</para>
+              </listitem>
+            </varlistentry>
+          </variablelist></para>
+      </section>
+
+      <section>
+        <title>Déroulements</title>
+
+        <table>
+          <title>déroulement nominal (compte TI ou I)</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry align="center" morerows="8" valign="middle">1</entry>
+
+                <entry morerows="8" valign="middle">L'utilisateur émet un
+                appel avec l'UAC</entry>
+
+                <entry>l'UAC envoie un paquet INVITE au P-CSCF avec URI:
+                &lt;num&gt;@&lt;p-cscf&gt; et CONTACT:
+                &lt;UAC_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le P-CSCF envoie un paquet INVITE a un MRFC5 avec
+                X-AccountCode et URI: &lt;num&gt;@&lt;mrfc5&gt; et CONTACT:
+                &lt;UAC_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le MRF envoie un paquet INVITE a un S-CSCF avec
+                X-CarrierCode et URI: &lt;num&gt;@&lt;s-cscf&gt; et CONTACT:
+                &lt;MRF_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le S-CSCF envoie un paquet INVITE vers un équipement
+                avec URI:
+                &lt;num&gt;@&lt;AccountCode&gt;.&lt;domain&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le P-CSCF envoie un paquet 180 Ringing à l'UAC avec
+                CONTACT: &lt;MRF_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>L'utilisateur entend une tonalité normale</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le correspondant doit voir le CID de l'utilisateur
+                s'affiché</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry align="center" morerows="2" valign="middle">2</entry>
+
+                <entry morerows="2" valign="middle">Le correspondant
+                décroche</entry>
+
+                <entry>le P-CSCF envoie un paquet 200 OK à l'UAC avec CONTACT:
+                &lt;MRF_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>le P-CSCF envoie un paquet ACK au MRF avec URI:
+                &lt;MRF_contact&gt; et CONTACT: &lt;UAC_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>La communication est établie dans les deux sens</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry align="center">3</entry>
+
+                <entry>L'utilisateur et le correspondant attendent une minute
+                en communication</entry>
+
+                <entry></entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry align="center" morerows="4" valign="middle">4</entry>
+
+                <entry morerows="4" valign="middle">L'appelant
+                raccroche</entry>
+
+                <entry>L'UAC envoie un paquet BYE au P-CSCF avec URI:
+                &lt;MRF_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le P-CSCF envoie un paquet 200 OK à l'UAC</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Communication terminée aux 2 extremitées</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause:
+                ANSWER</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause:
+                ANSWER</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+
+        <table>
+          <title>déroulement alternatif 1 (compte RTI ou RI (avec
+          NAT))</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry align="center" morerows="10" valign="middle">1</entry>
+
+                <entry morerows="10" valign="middle">L'utilisateur émet un
+                appel avec l'UAC</entry>
+
+                <entry>l'UAC envoie un paquet INVITE au P-CSCF avec URI:
+                &lt;num&gt;@&lt;p-cscf&gt; et CONTACT:
+                &lt;UAC_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le P-CSCF envoi un paquet 407!? PROXY AUTHENTICATION
+                REQUIRED avec Proxy-Authenticate</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>l'UAC envoie un paquet INVITE au P-CSCF avec URI:
+                &lt;num&gt;@&lt;p-cscf&gt; et CONTACT: &lt;UAC_contact&gt;et
+                PROXY-AUTHORIZATION</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le P-CSCF envoie un paquet INVITE a un MRFC5 avec
+                X-AccountCode et URI: &lt;num&gt;@&lt;mrfc5&gt; et CONTACT:
+                &lt;UAC_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le MRF envoie un paquet INVITE a un S-CSCF avec
+                X-CarrierCode et URI: &lt;num&gt;@&lt;s-cscf&gt; et CONTACT:
+                &lt;MRF_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le S-CSCF envoie un paquet INVITE vers un équipement
+                avec URI:
+                &lt;num&gt;@&lt;AccountCode&gt;.&lt;domain&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le P-CSCF envoie un paquet 180 Ringing à l'UAC</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>L'utilisateur entend une tonalité normale</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le correspondant doit voir le CID de l'utilisateur
+                s'affiché</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry align="center" morerows="2" valign="middle">2</entry>
+
+                <entry morerows="2" valign="middle">Le correspondant
+                décroche</entry>
+
+                <entry>le P-CSCF envoie un paquet 200 OK à l'UAC avec CONTACT:
+                &lt;MRF_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>le P-CSCF envoie un paquet ACK au MRF avec URI:
+                &lt;MRF_contact&gt; et CONTACT: &lt;UAC_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>La communication est établie dans les deux sens</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry align="center">...</entry>
+
+                <entry>...</entry>
+
+                <entry>...</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+
+        <table>
+          <title>déroulement alternatif 2 (le correspondant raccroche) (compte
+          TI ou I)</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry>...</entry>
+
+                <entry>...</entry>
+
+                <entry>...</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry align="center" morerows="4" valign="middle">4</entry>
+
+                <entry morerows="4" valign="middle">Le correspondant
+                raccroche</entry>
+
+                <entry>Le P-CSCF envoie un paquet BYE à l'UAC avec URI:
+                &lt;MRF_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>L'UAC envoie un paquet 200 OK au P-CSCF</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Communication terminée aux 2 extremitées</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause:
+                ANSWER</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause:
+                ANSWER</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+
+        <table>
+          <title>déroulement alternatif 3 (occupation) (compte TI ou
+          I)</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry align="center" morerows="8" valign="middle">1</entry>
+
+                <entry morerows="8" valign="middle">L'utilisateur émet un
+                appel avec l'UAC</entry>
+
+                <entry>l'UAC envoie un paquet INVITE au P-CSCF avec URI:
+                &lt;num&gt;@&lt;p-cscf&gt; et CONTACT:
+                &lt;UAC_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le P-CSCF envoie un paquet INVITE a un MRFC5 avec
+                X-AccountCode et URI: &lt;num&gt;@&lt;mrfc5&gt; et CONTACT:
+                &lt;UAC_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le MRF envoie un paquet INVITE a un S-CSCF avec
+                X-CarrierCode et URI: &lt;num&gt;@&lt;s-cscf&gt; et CONTACT:
+                &lt;MRF_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le S-CSCF envoie un paquet INVITE vers un équipement
+                avec URI:
+                &lt;num&gt;@&lt;AccountCode&gt;.&lt;domain&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>le P-CSCF envoie un paquet 486 BUSY HERE à
+                l'UAC</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause: BUSY</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause: BUSY</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+
+        <table>
+          <title>déroulement alternatif 4 (non trouvé) (compte TI ou
+          I)</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry align="center" morerows="8" valign="middle">1</entry>
+
+                <entry morerows="8" valign="middle">L'utilisateur émet un
+                appel avec l'UAC</entry>
+
+                <entry>l'UAC envoie un paquet INVITE au P-CSCF avec URI:
+                &lt;num&gt;@&lt;p-cscf&gt; avec CONTACT:
+                &lt;UAC_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le P-CSCF envoie un paquet INVITE a un MRFC5 avec
+                X-AccountCode et URI: &lt;num&gt;@&lt;mrfc5&gt; et CONTACT:
+                &lt;UAC_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le MRF envoie un paquet INVITE a un S-CSCF avec
+                X-CarrierCode et URI: &lt;num&gt;@&lt;s-cscf&gt; et CONTACT:
+                &lt;MRF_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le S-CSCF envoie un paquet INVITE vers un équipement
+                avec URI:
+                &lt;num&gt;@&lt;AccountCode&gt;.&lt;domain&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et :node: renseigné</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>le P-CSCF envoie un paquet 404 NOT FOUND à
+                l'UAC</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause: CONGESTION
+                !?</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause: CONGESTION
+                !?</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+
+        <table>
+          <title>déroulement alternatif 5 (numéro erroné) (compte TI ou
+          I)</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry align="center" morerows="1" valign="middle">1</entry>
+
+                <entry morerows="1" valign="middle">L'utilisateur émet un
+                appel avec l'UAC (pas de num)</entry>
+
+                <entry>l'UAC envoie un paquet INVITE au P-CSCF avec URI:
+                @&lt;p-cscf&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>le P-CSCF envoie un paquet 484 ADDRESS INCOMPLETE à
+                l'UAC</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+
+        <table>
+          <title>déroulement alternatif 6 (annulation) (compte TI ou
+          I)</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry align="center" morerows="5" valign="middle">1</entry>
+
+                <entry morerows="5" valign="middle">L'utilisateur émet un
+                appel avec l'UAC</entry>
+
+                <entry>l'UAC envoie un paquet INVITE au P-CSCF avec URI:
+                &lt;num&gt;@&lt;p-cscf&gt; et CONTACT:
+                &lt;UAC_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le P-CSCF envoie un paquet INVITE a un MRFC5 avec
+                X-AccountCode et URI: &lt;num&gt;@&lt;mrfc5&gt; et CONTACT:
+                &lt;UAC_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le MRF envoie un paquet INVITE a un S-CSCF avec
+                X-CarrierCode et URI: &lt;num&gt;@&lt;s-cscf&gt; et CONTACT:
+                &lt;MRF_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+              </row>
+
+              <row>
+                <entry>Le S-CSCF envoie un paquet INVITE vers un équipement
+                avec URI:
+                &lt;num&gt;@&lt;AccountCode&gt;.&lt;domain&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry align="center" morerows="4" valign="middle">2</entry>
+
+                <entry morerows="4" valign="middle">L'appelant
+                raccroche</entry>
+
+                <entry>L'UAC envoie un paquet CANCEL au P-CSCF avec URI:
+                &lt;num&gt;@&lt;p-cscf&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le P-CSCF envoie un paquet 200 Canceling à
+                l'UAC</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le S-CSCF envoie un paquet CANCEL vers un
+                équipement</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause:
+                CANCEL</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause:
+                CANCEL</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </section>
+
+      <section>
+        <title>Exemples</title>
+
+        <para><orderedlist>
+            <listitem>
+              <para>Tester d'appeler avec un compte I </para>
+            </listitem>
+
+            <listitem>
+              <para>Tester d'appeler avec un compte I non provisionné 407 puis
+              403</para>
+            </listitem>
+
+            <listitem>
+              <para>Tester d'appeler avec un compte R erroné</para>
+            </listitem>
+
+            <listitem>
+              <para>Tester avec un compte utilisant le profil national</para>
+            </listitem>
+
+            <listitem>
+              <para>Tester avec un compte de type T</para>
+            </listitem>
+
+            <listitem>
+              <para>Tester de saturer le nombre de communications
+              simultanées</para>
+            </listitem>
+
+            <listitem>
+              <para>Tester d'appeler des numeros d'urgence</para>
+            </listitem>
+          </orderedlist></para>
+      </section>
+    </section>
+
+    <section>
+      <title>Case 3 : Call to UAC with voip account</title>
+
+      <section>
+        <title>Définitions</title>
+
+        <para><variablelist>
+            <varlistentry>
+              <term>nom</term>
+
+              <listitem>
+                <para>Call to UAC with voip account</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>objectifs</term>
+
+              <listitem>
+                <para>Passer un appel vers un UAC avec un compte voix (TI, I,
+                RTI ou RI)</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>acteurs</term>
+
+              <listitem>
+                <para>Utilisateur, UAC, P-CSCF, MRFC5, S-CSCF, AS, AMq</para>
+              </listitem>
+            </varlistentry>
+          </variablelist></para>
+      </section>
+
+      <section>
+        <title>Déroulements</title>
+
+        <table>
+          <title>déroulement nominal</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry align="center" morerows="8" valign="middle">1</entry>
+
+                <entry morerows="8" valign="middle">Un appel est emis vers un
+                numéro associé à un UAC</entry>
+
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le S-CSCF envoie un paquet INVITE vers un MRF avec URI:
+                &lt;num&gt;@&lt;AccountCode&gt;.&lt;domain&gt; et
+                X-CarrierCode et X-AccountCode (src)</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le MRF envoie un paquet INVITE vers un PCSCF-C5 avec
+                URI: &lt;num&gt;@&lt;p-cscf&gt; et X-AccountCode (dst)</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le PCSCF envoie un paquet INVITE vers l'UAC avec URI:
+                &lt;num&gt;@&lt;UAC&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>L'UAC émet une sonnerie normale</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le P-CSCF envoie un paquet 180 Ringing au MRF avec
+                CONTACT: &lt;UAC_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>L'utilisateur entend une tonalité normale</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le correspondant doit voir le CID de l'utilisateur
+                s'affiché</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry align="center" valign="middle">2</entry>
+
+                <entry valign="middle">Le correspondant décroche</entry>
+
+                <entry>le P-CSCF envoie un paquet 200 OK au MRF avec CONTACT:
+                &lt;UAC_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry align="center">3</entry>
+
+                <entry>L'utilisateur attends une minute en
+                communication</entry>
+
+                <entry></entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry align="center" morerows="4" valign="middle">4</entry>
+
+                <entry morerows="4" valign="middle">L'appelant
+                raccroche</entry>
+
+                <entry>Le P-CSCF envoie un paquet BYE à l'UAC avec URI:
+                &lt;MRF_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>L'UAC envoie un paquet 200 OK au P-CSCF</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Communication terminée aux 2 extremitées</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause:
+                ANSWER</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause:
+                ANSWER</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+
+        <table>
+          <title>déroulement alternatif 1 (le correspondant raccroche)</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry align="center">...</entry>
+
+                <entry>...</entry>
+
+                <entry>...</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry align="center" morerows="4" valign="middle">4</entry>
+
+                <entry morerows="4" valign="middle">Le correspondant
+                raccroche</entry>
+
+                <entry>L'UAC envoie un paquet BYE au P-CSCF avec URI:
+                &lt;MRF_contact&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le P-CSCF envoie un paquet 200 OK à l'UAC</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Communication terminée aux 2 extremitées</entry>
+
+                <entry>4</entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause:
+                ANSWER</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause:
+                ANSWER</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+
+        <table>
+          <title>déroulement alternatif 2 (4xx envoyé par l'UAC, exemple avec
+          404)</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry align="center" morerows="9" valign="middle">1</entry>
+
+                <entry morerows="9" valign="middle">Un appel est emis vers un
+                numéro associé à un UAC</entry>
+
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le S-CSCF envoie un paquet INVITE vers un MRF avec URI:
+                &lt;num&gt;@&lt;AccountCode&gt;.&lt;domain&gt; et
+                X-CarrierCode et X-AccountCode (src)</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le MRF envoie un paquet INVITE vers un PCSCF-C5 avec
+                URI: &lt;num&gt;@&lt;p-cscf&gt; et X-AccountCode (dst)</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le PCSCF envoie un paquet INVITE vers l'UAC avec URI:
+                &lt;num&gt;@&lt;UAC&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>L'UAC envoie un paquet 404 NOT FOUND au PCSCF</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le P-CSCF envoie un paquet 404 NOT FOUND au MRF</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le MRF envoie un paquet 404 NOT FOUND au SCSCF</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause: CONGESTION
+                !?</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause: CONGESTION
+                !?</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+
+        <table>
+          <title>déroulement alternatif 3 (annulation)</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry align="center" morerows="9" valign="middle">1</entry>
+
+                <entry morerows="9" valign="middle">Un appel est emis vers un
+                numéro associé à un UAC</entry>
+
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le S-CSCF envoie un paquet INVITE vers un MRF avec URI:
+                &lt;num&gt;@&lt;AccountCode&gt;.&lt;domain&gt; et
+                X-CarrierCode et X-AccountCode (src)</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le MRF envoie un paquet INVITE vers un PCSCF-C5 avec
+                URI: &lt;num&gt;@&lt;p-cscf&gt; et X-AccountCode (dst)</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le PCSCF envoie un paquet INVITE vers l'UAC avec URI:
+                &lt;num&gt;@&lt;UAC&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le SCSCF envoie un paquet CANCEL au MRF</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le P-CSCF envoie un paquet CANCEL a l'UAC</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le MRF envoie un paquet CANCELING au SCSCF</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause:
+                CANCEL</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause:
+                CANCEL</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+
+        <table>
+          <title>déroulement alternatif 3 (injoignable par le PCSCF (plus
+          enregistre))</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry align="center" morerows="7" valign="middle">1</entry>
+
+                <entry morerows="7" valign="middle">Un appel est emis vers un
+                numéro associé à un UAC</entry>
+
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le S-CSCF envoie un paquet INVITE vers un MRF avec URI:
+                &lt;num&gt;@&lt;AccountCode&gt;.&lt;domain&gt; et
+                X-CarrierCode et X-AccountCode (src)</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le MRF envoie un paquet INVITE vers un PCSCF-C5 avec
+                URI: &lt;num&gt;@&lt;p-cscf&gt; et X-AccountCode (dst)</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le PCSCF envoie un paquet 480 TEMPORARILY UNAVAILABLE
+                au MRF</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le MRF envoie un paquet 480 TEMPORARILY UNAVAILABLE au
+                SCSCF</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause: CONGESTION
+                !?</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause: CONGESTION
+                !?</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+
+        <table>
+          <title>déroulement alternatif 4 (injoignable par le PCSCF (ne repond
+          plus))</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry align="center" morerows="7" valign="middle">1</entry>
+
+                <entry morerows="7" valign="middle">Un appel est emis vers un
+                numéro associé à un UAC</entry>
+
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le S-CSCF envoie un paquet INVITE vers un MRF avec URI:
+                &lt;num&gt;@&lt;AccountCode!?&gt;.&lt;domain&gt; et
+                X-CarrierCode et X-AccountCode (src)</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: false, :icid: renseigné et pas de
+                :end_cause:</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le MRF envoie un paquet INVITE vers un PCSCF-C5 avec
+                URI: &lt;num&gt;@&lt;p-cscf&gt; et X-AccountCode (dst)</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Le PCSCF envoie pleins de paquets INVITE vers l'UAC
+                avec URI: &lt;num&gt;@&lt;UAC&gt;</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un élément de la plaque envoie un Cancel qui se propage
+                vers les autres equipements</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause: CANCEL
+                !?</entry>
+
+                <entry></entry>
+              </row>
+
+              <row>
+                <entry>Un nouveau CDR est présent dans la queue des CDR avec
+                :complete: true, :icid: renseigné et :end_cause: CANCEL
+                !?</entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </section>
+
+      <section>
+        <title>Exemples</title>
+
+        <para><orderedlist>
+            <listitem>
+              <para>Tester d'appeler un compte I</para>
+            </listitem>
+
+            <listitem>
+              <para>Tester d'appeler un compte I ou R non joignable</para>
+            </listitem>
+
+            <listitem>
+              <para>Tester d'appeler un compte R non enregistré</para>
+            </listitem>
+
+            <listitem>
+              <para>Tester d'appeler un compte utilisant le profil
+              national</para>
+            </listitem>
+
+            <listitem>
+              <para>Tester d'appeler un compte de type T</para>
+            </listitem>
+
+            <listitem>
+              <para>Tester de saturer le nombre de communications
+              simultanées</para>
+            </listitem>
+          </orderedlist></para>
+      </section>
+    </section>
+
+    <section>
+      <!--Structure a recopier pour creer des nouveaux cas-->
+
+      <title>Case X : ...</title>
+
+      <section>
+        <title>Définitions</title>
+
+        <para><variablelist>
+            <varlistentry>
+              <term>nom</term>
+
+              <listitem>
+                <para></para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>objectifs</term>
+
+              <listitem>
+                <para></para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>acteurs</term>
+
+              <listitem>
+                <para></para>
+              </listitem>
+            </varlistentry>
+          </variablelist></para>
+      </section>
+
+      <section>
+        <title>Déroulements</title>
+
+        <table>
+          <title>déroulement nominal</title>
+
+          <tgroup cols="4">
+            <colspec colwidth="1*" />
+
+            <colspec colwidth="6*" />
+
+            <colspec colwidth="10*" />
+
+            <colspec colwidth="1*" />
+
+            <thead>
+              <row>
+                <entry align="center">Id</entry>
+
+                <entry align="center">Démarche</entry>
+
+                <entry align="center">Comportement attendu</entry>
+
+                <entry align="center">Ok ?</entry>
+              </row>
+            </thead>
+
+            <tbody>
+              <row>
+                <entry></entry>
+
+                <entry>L'utilisateur émet un appel avec l'UAC</entry>
+
+                <entry></entry>
+
+                <entry></entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </table>
+      </section>
+
+      <section>
+        <title>Exemples</title>
+
+        <para></para>
+      </section>
+    </section>
+  </section>
+
+  <section>
+    <title>Références</title>
+
+    <itemizedlist>
+      <listitem>
+        <para><ulink
+        url="http://en.wikipedia.org/wiki/Use_case">http://en.wikipedia.org/wiki/Use_case</ulink></para>
+      </listitem>
+    </itemizedlist>
+  </section>
+</article>

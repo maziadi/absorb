@@ -1,0 +1,1278 @@
+Scenario: nominal national
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Foo <0123456788> to 0987654321
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456788 and Foo
+	Then query LIDB with 33123456788 and return account_code: 099001, subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+	Then add header P-Asserted-Identity: <tel:+33123456788>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: my_carrier
+	Then cdr <any>/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33987654321, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+	Then done
+
+Scenario: nominal - old (given account code)
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+	Then done
+
+Scenario: nominal avec indication
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+	Then done
+
+Scenario: nominal avec indication et + devant le numero appele
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to +33000000000
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+	Then done
+
+Scenario: nominal sans indication
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: false, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , g
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+	Then done
+
+Scenario: callerID sans +
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <33123456789> to 33000000000
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+	Then done
+
+Scenario: numero non alloue avec indication
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+	Then done
+
+Scenario: numero alloue occupe sans indication
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: false, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , g
+	Given release cause 17
+	Given dial status BUSY
+	Then dial announce SIP/GW with prefix 016, number 0486, timeout 123 and separator ,
+  Given release cause 16
+	Given dial status ANSWER
+	Then complete cdr <any>/486_BusyHere/0/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+	Then done
+
+Scenario: numero alloue occupe avec indication
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator ,
+  Given release cause 17
+  Given dial status BUSY
+  Then hangup with cause 17
+  Given answered time 0
+	Then complete cdr <any>/486_BusyHere/0/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+	Then done
+
+Scenario: limites atteintes avec indication
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, max_calls: 2, call_count: 2
+	Then set callerId to +33123456789 and Jean Bon
+  Given header Privacy: <null>
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then hangup with cause 31
+	Given answered time 0
+	Then complete cdr <any>/480_LimitReached/0/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+	Then done
+
+Scenario: limites atteintes sans indication
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: false, max_calls: 2, call_count: 2
+	Then set callerId to +33123456789 and Jean Bon
+  Given header Privacy: <null>
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-CarrierCode: D200912010001.1
+	Then dial announce SIP/GW with prefix 016, number 0480, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+	Then complete cdr <any>/480_LimitReached/0/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+	Then done
+
+Scenario: compte locked avec indication
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, locked: true
+	Then set callerId to +33123456789 and Jean Bon
+  Given header Privacy: <null>
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then hangup with cause 31
+	Given answered time 0
+	Then complete cdr <any>/480_LimitReached/0/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+	Then done
+
+Scenario: compte locked sans indication
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000 within D200912010001.1
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: false, locked: true
+	Then set callerId to +33123456789 and Jean Bon
+  Given header Privacy: <null>
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-CarrierCode: D200912010001.1
+	Then dial announce SIP/GW with prefix 016, number 0480, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+	Then complete cdr <any>/480_LimitReached/0/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/33000000000
+	Then done
+
+Scenario: numero court 118xyz in_plan national
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <0123456789> to 118123
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: national, trunk: true
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/015118123
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 015118123, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/015118123
+	Then done
+
+Scenario: numero court 10xy in_plan national
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <0123456789> to 1012
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: national, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: national, trunk: true
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/0151012
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 0151012, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/0151012
+	Then done
+
+Scenario: numero court 3bpq in_plan national
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <0123456789> to 3123
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: national, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: national, trunk: true
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/0153123
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 0153123, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/0153123
+	Then done
+
+Scenario: numero court 118xyz in_plan e164
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33118123
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/015118123
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 015118123, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/015118123
+	Then done
+
+Scenario: numero court 10xy in_plan e164
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 331012
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/0151012
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 0151012, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/0151012
+	Then done
+
+Scenario: numero court 3bpq in_plan e164
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 333123
+	Given account code <null>
+	Given header X-AccountCode: 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/0153123
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 0153123, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/Jean Bon -- i/<any>/0153123
+	Then done
+
+Scenario: national - Malformed CID
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Foo <000000000000000000> to 0987654321
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+  Then add header Privacy: id
+	Then set callerId to +33123456789 and Foo
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: my_carrier
+	Then cdr <any>/my_carrier - e/099001/+33123456789/Foo -- i/<any>/33987654321
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33987654321, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/my_carrier - e/099001/+33123456789/Foo -- i/<any>/33987654321
+	Then done
+
+Scenario: international - Malformed CID
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Foo <+330000000000000000> to 33987654321
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+  Then add header Privacy: id
+	Then set callerId to +33123456789 and Foo
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: my_carrier
+	Then cdr <any>/my_carrier - e/099001/+33123456789/Foo -- i/<any>/33987654321
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33987654321, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/my_carrier - e/099001/+33123456789/Foo -- i/<any>/33987654321
+	Then done
+
+Scenario: test d'appel vers un numero d'urgence en national
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW, emergency_numbers: 15,17,18,112,115,119,116000
+	Given a call from Foo <0123456700> to 115
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+	Then set callerId to +33123456700 and Foo
+	Then query LIDB with 33123456700 and return account_code: 099001, insee_code: 75001
+  Given header Privacy: <null>
+	Then add header P-Asserted-Identity: <tel:+33123456700>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: emergency
+	Then query EMDB with 115/75001 and return 33123456115
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33123456115, timeout 123 and separator , g
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234 - e/099001/+33123456700/Foo/my_carrier -- i/<any>/33115/emergency
+	Then done
+
+Scenario: Test d'un appel vers un numero d'urgence en national avec un mauvais CID
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW, emergency_numbers: 15,17,18,112,115,119,116000
+	Given a call from Foo <0123456700> to 115
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456700 and Foo
+	Then query LIDB with 33123456700 and return account_code: 099002
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: emergency
+	Then query EMDB with 115/75001 and return 33123456115
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33123456115, timeout 123 and separator , g
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234 - e/099001/+33123456700/Foo/my_carrier -- i/<any>/33115/emergency
+	Then done
+
+Scenario: Test d'un appel vers un numero d'urgence en national avec un mauvais CID - pas d'account_code trouve
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW, emergency_numbers: 15,17,18,112,115,119,116000
+	Given a call from Foo <0123456700> to 115
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456700 and Foo
+	Then query LIDB with 33123456700 and find nothing
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: emergency
+	Then query EMDB with 115/75001 and return 33123456115
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33123456115, timeout 123 and separator , g
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234 - e/099001/+33123456700/Foo/my_carrier -- i/<any>/33115/emergency
+	Then done
+
+Scenario: Test d'un appel vers un numero d'urgence en e.164
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW, emergency_numbers: 15,17,18,112,115,119,116000
+	Given a call from Foo <+33123456700> to 115
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456700 and Foo
+	Then query LIDB with 33123456700 and return account_code:099001, insee_code: 75001
+	Then add header P-Asserted-Identity: <tel:+33123456700>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: emergency
+	Then query EMDB with 115/75001 and return 33123456115
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33123456115, timeout 123 and separator , g
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234 - e/099001/+33123456700/Foo/my_carrier -- i/<any>/115/emergency
+	Then done
+
+Scenario: Test d'un appel vers un numero d'urgence en e.164 - bis
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW, emergency_numbers: 15,17,18,112,115,119,116000
+	Given a call from Foo <+33123456700> to 115
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456700 and Foo
+	Then query LIDB with 33123456700 and return account_code:099001, insee_code: 75002
+	Then add header P-Asserted-Identity: <tel:+33123456700>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: emergency
+	Then query EMDB with 115/75002 and return 33123456115
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33123456115, timeout 123 and separator , g
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234 - e/099001/+33123456700/Foo/my_carrier -- i/<any>/115/emergency
+	Then done
+
+Scenario: Test d'un appel vers un numero d'urgence en e164 avec un mauvais CID
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW, emergency_numbers: 15,17,18,112,115,119,116000
+	Given a call from Foo <+33123456700> to 115
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456700 and Foo
+	Then query LIDB with 33123456700 and return account_code: 099002
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: emergency
+	Then query EMDB with 115/75001 and return 33123456115
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33123456115, timeout 123 and separator , g
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234 - e/099001/+33123456700/Foo/my_carrier -- i/<any>/115/emergency
+	Then done
+
+Scenario: Test d'un appel vers un numero d'urgence en e164 avec un mauvais CID - pas d'account_code trouve
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW, emergency_numbers: 15,17,18,112,115,119,116000
+	Given a call from Foo <+33123456700> to 115
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: e164, in_plan: e164, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456700 and Foo
+	Then query LIDB with 33123456700 and find nothing
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: emergency
+	Then query EMDB with 115/75001 and return 33123456115
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33123456115, timeout 123 and separator , g
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234 - e/099001/+33123456700/Foo/my_carrier -- i/<any>/115/emergency
+	Then done
+
+Scenario: nominal, avec identification
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/+33123456789/ALLOWED/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/+33123456789/ALLOWED/Jean Bon -- i/<any>/33000000000 
+	Then done
+
+Scenario: avec identification, plan de numerotation national
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <0123456789> to 0200000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: national, in_plan: national, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: national, in_plan: national, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/+33123456789/ALLOWED/Jean Bon -- i/<any>/33200000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33200000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/+33123456789/ALLOWED/Jean Bon -- i/<any>/33200000000 
+	Then done
+
+Scenario: from subscriber_number
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456790> to 33000000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456790 and Jean Bon
+	Then query LIDB with 33123456790 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456790>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/ALLOWED/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/ALLOWED/Jean Bon -- i/<any>/33000000000 
+	Then done
+
+Scenario: from numero n'apartenant pas au compte
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and find nothing
+	Then add header P-Asserted-Identity: <tel:+33123456790>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/+33123456790/ALLOWED/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/+33123456790/ALLOWED/Jean Bon -- i/<any>/33000000000 
+	Then done
+
+Scenario: from numero apartenant a un autre compte
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456788> to 33000000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456788 and Jean Bon
+	Then query LIDB with 33123456788 and return account_code: 0990000001098, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456791
+	Then add header P-Asserted-Identity: <tel:+33123456790>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456788/+33123456790/ALLOWED/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456788/+33123456790/ALLOWED/Jean Bon -- i/<any>/33000000000 
+	Then done
+
+Scenario: numero invalide national
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <000000000000000000> to 0200000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: national, in_plan: national, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then add header Privacy: id
+	Then set callerId to +33123456790 and Jean Bon
+	Then query LIDB with 33123456790 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456790>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/RESTRICTED/Jean Bon -- i/<any>/33200000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33200000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/RESTRICTED/Jean Bon -- i/<any>/33200000000 
+	Then done
+
+Scenario: numero invalide international
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+3300000000000000> to 33000000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then add header Privacy: id
+	Then set callerId to +33123456790 and Jean Bon
+	Then query LIDB with 33123456790 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456790>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/RESTRICTED/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/RESTRICTED/Jean Bon -- i/<any>/33000000000 
+	Then done
+
+Scenario: numero invalide ne contenant pas que des chiffres
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+3312345678a> to 33000000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then add header Privacy: id
+	Then set callerId to +33123456790 and Jean Bon
+	Then query LIDB with 33123456790 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456790>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/RESTRICTED/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/RESTRICTED/Jean Bon -- i/<any>/33000000000 
+	Then done
+
+Scenario: From numero surtaxe (089...)
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <0890000000> to 0200000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: national, in_plan: national, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then add header Privacy: id
+	Then set callerId to +33123456790 and Jean Bon
+	Then query LIDB with 33123456790 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456790>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/RESTRICTED/Jean Bon -- i/<any>/33200000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33200000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/RESTRICTED/Jean Bon -- i/<any>/33200000000 
+	Then done
+
+Scenario: From numero surtaxe (3389...)
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <33890000000> to 33200000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then add header Privacy: id
+	Then set callerId to +33123456790 and Jean Bon
+	Then query LIDB with 33123456790 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456790>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/RESTRICTED/Jean Bon -- i/<any>/33200000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33200000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/RESTRICTED/Jean Bon -- i/<any>/33200000000 
+	Then done
+
+Scenario: From numero surtaxe (003389...)
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <0033890000000> to 33200000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then add header Privacy: id
+	Then set callerId to +33123456790 and Jean Bon
+	Then query LIDB with 33123456790 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456790>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/RESTRICTED/Jean Bon -- i/<any>/33200000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33200000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/RESTRICTED/Jean Bon -- i/<any>/33200000000 
+	Then done
+
+Scenario: avec identification, from: account code
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <0990000001099> to 33000000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456790 and Jean Bon
+	Then query LIDB with 33123456790 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456790>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/ALLOWED/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/ALLOWED/Jean Bon -- i/<any>/33000000000 
+	Then done
+
+Scenario: avec identification, fixed_cid inactive numero d'appelant inconnu
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001, fixed_cid: false
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and find nothing
+	Then add header P-Asserted-Identity: <tel:+33123456790>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/+33123456790/ALLOWED/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/+33123456790/ALLOWED/Jean Bon -- i/<any>/33000000000 
+	Then done
+
+Scenario: avec identification, fixed_cid inactive numero d'appelant connu
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001, fixed_cid: false
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/+33123456789/ALLOWED/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/+33123456789/ALLOWED/Jean Bon -- i/<any>/33000000000 
+	Then done
+
+Scenario: avec identification, fixed_cid active
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001, fixed_cid: true
+  Given header Privacy: <null>
+	Then set callerId to +33123456790 and Jean Bon
+	Then query LIDB with 33123456790 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456790>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/ALLOWED/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/ALLOWED/Jean Bon -- i/<any>/33000000000 
+	Then done
+
+Scenario: avec identification, from anonymous
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+  Given a call from Jean Bon <anonymous> to 33000000000
+  Given account code 0990000001099
+  Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+  Then add header Privacy: id
+  Then set callerId to +33123456790 and Jean Bon
+	Then query LIDB with 33123456790 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+  Then add header P-Asserted-Identity: <tel:+33123456790>
+  Then add header X-AccountCode: 0990000001099
+  Then add header X-CarrierCode: D200912010001.1
+  Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/RESTRICTED/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+  Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+  Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456790/+33123456790/RESTRICTED/Jean Bon -- i/<any>/33000000000 
+  Then done
+
+Scenario: avec identification, from anonymous - bis
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+  Given a call from Anonymous <+33123456789> to 33000000000
+  Given account code 0990000001099
+  Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+  Then add header Privacy: id
+  Then set callerId to +33123456789 and Anonymous
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+  Then add header P-Asserted-Identity: <tel:+33123456789>
+  Then add header X-AccountCode: 0990000001099
+  Then add header X-CarrierCode: D200912010001.1
+  Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/+33123456789/RESTRICTED/Anonymous -- i/<any>/33000000000
+  Then set P-Charging-Vector
+  Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+  Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/+33123456789/RESTRICTED/Anonymous -- i/<any>/33000000000 
+  Then done
+
+Scenario: avec identification, header privacy: id
+  Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+  Given a call from Jean Bon <+33123456789> to 33000000000
+  Given account code 0990000001099
+  Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: id
+	Then add header Privacy: id
+  Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/+33123456789/RESTRICTED/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/+33123456789/RESTRICTED/Jean Bon -- i/<any>/33000000000 
+	Then done
+
+Scenario: avec identification, apel avec prefix 3651
+  Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+  Given a call from Jean Bon <0123456789> to 36510200000000
+  Given account code 0990000001099
+  Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: national, in_plan: national, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then add header Privacy: id
+  Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/+33123456789/RESTRICTED/Jean Bon -- i/<any>/33200000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33200000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/+33123456789/RESTRICTED/Jean Bon -- i/<any>/33200000000
+	Then done
+
+Scenario: avec identification, header privacy: none
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Jean Bon <+33123456789> to 33000000000
+	Given account code 0990000001099
+	Then query LIDB by account_code with 0990000001099 returning subscriber_number: 33123456790, out_plan: e164, in_plan: e164, trunk: true, carrier_code: D200912010001.1, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456789 and Jean Bon
+	Then query LIDB with 33123456789 and return account_code: 0990000001099, out_plan: e164, in_plan: e164, trunk: true, subscriber_number: 33123456790
+	Then add header P-Asserted-Identity: <tel:+33123456789>
+	Then add header X-AccountCode: 0990000001099
+	Then add header X-CarrierCode: D200912010001.1
+	Then cdr <any>/D200912010001.1 - e/0990000001099/+33123456789/+33123456789/ALLOWED/Jean Bon -- i/<any>/33000000000
+  Then set P-Charging-Vector
+	Then dial channel SIP/GW with number 33000000000, timeout 123 and separator , 
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/D200912010001.1 - e/0990000001099/+33123456789/+33123456789/ALLOWED/Jean Bon -- i/<any>/33000000000 
+	Then done
+
+Scenario: avec un niveau de failover - timeout et peer inconu - devrait etre le meme cas que 408
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW1,SIP/GW2
+	Given a call from Foo <0123456788> to 0987654321
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456788 and Foo
+	Then query LIDB with 33123456788 and return account_code: 099001, subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+	Then add header P-Asserted-Identity: <tel:+33123456788>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: my_carrier
+	Then cdr <any>/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+  Then set P-Charging-Vector
+  Then rand 0 with 2 gateways
+	Then dial channel SIP/GW1 with number 33987654321, timeout 123 and separator ,
+	Given release cause 111
+	Given dial status CHANUNAVAIL
+	Then dial channel SIP/GW2 with number 33987654321, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+	Then done
+
+Scenario: avec un niveau de failover - timeout et peer inconu - annulation apres avoir reussi le fail-over
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW1,SIP/GW2
+	Given a call from Foo <0123456788> to 0987654321
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456788 and Foo
+	Then query LIDB with 33123456788 and return account_code: 099001, subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+	Then add header P-Asserted-Identity: <tel:+33123456788>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: my_carrier
+	Then cdr <any>/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+  Then set P-Charging-Vector
+  Then rand 0 with 2 gateways
+	Then dial channel SIP/GW1 with number 33987654321, timeout 123 and separator ,
+	Given release cause 111
+	Given dial status CHANUNAVAIL
+	Then dial channel SIP/GW2 with number 33987654321, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1
+	Then complete cdr <any>/200_Answered/1/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+	Then done
+
+Scenario: avec un niveau de failover - 408
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW1,SIP/GW2
+	Given a call from Foo <0123456788> to 0987654321
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456788 and Foo
+	Then query LIDB with 33123456788 and return account_code: 099001, subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+	Then add header P-Asserted-Identity: <tel:+33123456788>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: my_carrier
+	Then cdr <any>/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+  Then set P-Charging-Vector
+  Then rand 0 with 2 gateways
+	Then dial channel SIP/GW1 with number 33987654321, timeout 123 and separator ,
+	Given release cause 18
+	Given dial status CHANUNAVAIL
+	Then dial channel SIP/GW2 with number 33987654321, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+	Then done
+
+Scenario: failover echoue
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW1,SIP/GW2
+	Given a call from Foo <0123456788> to 0987654321
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456788 and Foo
+	Then query LIDB with 33123456788 and return account_code: 099001, subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+	Then add header P-Asserted-Identity: <tel:+33123456788>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: my_carrier
+	Then cdr <any>/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+  Then set P-Charging-Vector
+  Then rand 0 with 2 gateways
+	Then dial channel SIP/GW1 with number 33987654321, timeout 123 and separator ,
+	Given release cause 18
+	Given dial status CHANUNAVAIL
+	Then dial channel SIP/GW2 with number 33987654321, timeout 123 and separator ,
+	Given release cause 18
+	Given dial status CHANUNAVAIL
+  Then hangup with cause 19
+  Given answered time 0
+  Then complete cdr <any> 480/NoGatewayAvailable 0
+	Then done
+
+Scenario: avec plusieurs niveaux de failover - 500 a 504
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW1,SIP/GW2,SIP/GW3,SIP/GW4,SIP/GW5,SIP/GW6
+	Given a call from Foo <0123456788> to 0987654321
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456788 and Foo
+	Then query LIDB with 33123456788 and return account_code: 099001, subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+	Then add header P-Asserted-Identity: <tel:+33123456788>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: my_carrier
+	Then cdr <any>/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+  Then set P-Charging-Vector
+  Then rand 0 with 6 gateways
+	Then dial channel SIP/GW1 with number 33987654321, timeout 123 and separator ,
+	Given release cause 38
+	Given dial status CHANUNAVAIL
+  Then rand 0 with 5 gateways
+	Then dial channel SIP/GW2 with number 33987654321, timeout 123 and separator ,
+	Given release cause 29
+	Given dial status CHANUNAVAIL
+  Then rand 0 with 4 gateways
+	Then dial channel SIP/GW3 with number 33987654321, timeout 123 and separator ,
+	Given release cause 27
+	Given dial status CHANUNAVAIL
+  Then rand 0 with 3 gateways
+	Then dial channel SIP/GW4 with number 33987654321, timeout 123 and separator ,
+	Given release cause 34
+	Given dial status CHANUNAVAIL
+  Then rand 0 with 2 gateways
+	Then dial channel SIP/GW5 with number 33987654321, timeout 123 and separator ,
+	Given release cause 102
+	Given dial status CHANUNAVAIL
+	Then dial channel SIP/GW6 with number 33987654321, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+	Then done
+
+Scenario: avec un niveau de failover - code par défaut pour la plage 5XX
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW1,SIP/GW2
+	Given a call from Foo <0123456788> to 0987654321
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456788 and Foo
+	Then query LIDB with 33123456788 and return account_code: 099001, subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+	Then add header P-Asserted-Identity: <tel:+33123456788>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: my_carrier
+	Then cdr <any>/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+  Then set P-Charging-Vector
+  Then rand 0 with 2 gateways
+	Then dial channel SIP/GW1 with number 33987654321, timeout 123 and separator ,
+	Given release cause 34
+	Given dial status CHANUNAVAIL
+	Then dial channel SIP/GW2 with number 33987654321, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+	Then done
+
+Scenario: avec un niveau de failover - le probing a detecte que routag ne repond pas
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW1,SIP/GW2
+	Given a call from Foo <0123456788> to 0987654321
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456788 and Foo
+	Then query LIDB with 33123456788 and return account_code: 099001, subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+	Then add header P-Asserted-Identity: <tel:+33123456788>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: my_carrier
+	Then cdr <any>/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+  Then set P-Charging-Vector
+  Then rand 0 with 2 gateways
+	Then dial channel SIP/GW1 with number 33987654321, timeout 123 and separator ,
+	Given release cause 20
+	Given dial status CHANUNAVAIL
+	Then dial channel SIP/GW2 with number 33987654321, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+	Then done
+
+Scenario: loadbalancing, tirage de la premiere gateways
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW1,SIP/GW2
+	Given a call from Foo <0123456788> to 0987654321
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456788 and Foo
+	Then query LIDB with 33123456788 and return account_code: 099001, subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+	Then add header P-Asserted-Identity: <tel:+33123456788>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: my_carrier
+	Then cdr <any>/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+  Then set P-Charging-Vector
+  Then rand 0 with 2 gateways
+	Then dial channel SIP/GW1 with number 33987654321, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+	Then done
+
+Scenario: loadbalancing, tirage de la seconde gateways
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW1,SIP/GW2
+	Given a call from Foo <0123456788> to 0987654321
+	Given account code <null>
+	Given header X-AccountCode: 099001
+	Then query LIDB by account_code with 099001 returning subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+  Given header Privacy: <null>
+	Then set callerId to +33123456788 and Foo
+	Then query LIDB with 33123456788 and return account_code: 099001, subscriber_number: 33123456789, out_plan: national, in_plan: national, trunk: true, carrier_code: my_carrier, indication: true, insee_code: 75001
+	Then add header P-Asserted-Identity: <tel:+33123456788>
+	Then add header X-AccountCode: 099001
+	Then add header X-CarrierCode: my_carrier
+	Then cdr <any>/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+  Then set P-Charging-Vector
+  Then rand 1 with 2 gateways
+	Then dial channel SIP/GW2 with number 33987654321, timeout 123 and separator ,
+  Given release cause 16
+  Given dial status ANSWER
+  Then hangup with cause 16
+  Given answered time 1234
+	Then complete cdr <any>/200_Answered/1234/my_carrier - e/099001/+33123456788/Foo -- i/<any>/33987654321
+	Then done
+
+Scenario: LIDB returns nothing when querying with AccountCode
+	Given mrf5.Mrf5InboundAgi and inbound_timeout: 123, gw_channel_name: SIP/GW
+	Given a call from Foo <0123456788> to 0987654321
+	Given account code 0990000001099
+  Given header Privacy: <null>
+	Then query LIDB by account_code with 0990000001099 and find nothing
+  Then hangup with cause 21
+  Given answered time 0
+  Then complete cdr <any> 403/AccountNotFound 0
+  Then done
