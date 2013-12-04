@@ -1,0 +1,72 @@
+#!/usr/bin/env ruby
+require 'cmdparse2'
+require 'lib/lisos/visp'
+
+cmd = CmdParse::CommandParser.new(true,false)
+cmd.program_name = "lisos-configurator"
+cmd.options = CmdParse::OptionParserWrapper.new do |opt|
+  opt.separator "Global options:"
+  opt.on( '-d', '--directory <DIRECTORY>',
+         'Test file creation on local directory' ) { |directory| $directory = directory }
+end
+
+cmd.add_command(CmdParse::HelpCommand::new)
+
+isolate = CmdParse::Command.new( 'isolate', false )
+isolate.short_desc = "Create a routing table"
+isolate.description = "Create a routing table"
+isolate.options = CmdParse::OptionParserWrapper.new do |opt|
+  opt.separator "Isolate options:"
+  opt.on( '-i', '--id <ID>',
+         'Specifie table id' ) { |id| $id = id }
+  opt.on( '-t', '--table <TABLE>',
+         'Specifie table name' ) { |table| $table = table }
+end
+isolate.set_execution_block do |args|
+  Lisos.add_table($table, $id)
+end
+cmd.add_command(isolate)
+
+l2tpd = CmdParse::Command.new( 'l2tpd', false )
+l2tpd.short_desc =  "Configure l2tp.conf, and add peers"
+cmd.add_command(l2tpd)
+l2tpd.description = "Configure l2tp.conf"
+l2tpd.options = CmdParse::OptionParserWrapper.new do |opt|
+  opt.separator "l2tpd options:"
+  opt.on( '-l', '--listen-addr <IP>',
+         'Specifie the listen-addr' ) { |ip| $ip = ip }
+  opt.on( '-p', '--peer <PEER>',
+         'Specifie the peer' )        { |peer| $peers << peer }
+  opt.on( '-s', '--secret <SECRET>',
+         'Specifie the secret' )      { |secret| $secrets << secret }
+end
+
+# Initialize l2tpd
+$peers   = []
+$secrets = []
+$hash_peers = {}
+
+def l2tp_data 
+size = $peers.size.to_i - 1
+if $peers.size == $secrets.size
+  (0..size).each do |n| 
+    $hash_peers[$peers[n]] = $secrets[n]
+  end
+elsif $secrets.size == 1
+  (0..size).each do |n| 
+    $hash_peers[$peers[n]] = $secrets[0]
+  end
+else
+  (0..size).each do |n| 
+    $hash_peers[$peers[n]] = nil
+  end
+end
+end
+l2tpd.set_execution_block do |args|
+  l2tp_data
+  Lisos.l2tpd($ip, $hash_peers)
+end
+
+cmd.parse
+
+

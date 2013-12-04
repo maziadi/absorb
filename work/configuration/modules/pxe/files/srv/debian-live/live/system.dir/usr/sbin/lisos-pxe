@@ -1,0 +1,75 @@
+#!/usr/bin/ruby
+
+require 'augeas'
+require 'yaml'
+require 'open-uri'
+
+
+def get_cmdline(pattern)
+  cmdline=File::new("/proc/cmdline", "r").readlines[0].split(" ")
+  cmdline.each do |item|
+    arg = item.split("=")
+    return arg[1] if (arg[0]==pattern)
+  end
+  return nil
+end
+
+iface = get_cmdline("interface") || "eth0"
+
+network = `ip addr show dev #{iface}`.strip
+
+mac = network[/link\/ether (([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2})/,1]
+
+if !File::file?("/etc/lisos/infra.yaml")
+  puts "You need a infra.yaml file for autoinstall"
+  exit 0
+end
+
+
+allinfra=YAML::load(open("/etc/lisos/infra.yaml"))
+infra=allinfra[mac.upcase] || allinfra[mac.downcase]
+
+if !infra.nil?
+
+  if !(infra.include?("version") and infra.include?("name") and infra.include?("host"))
+    puts "You need to define version, name and host"
+    exit 0 
+  end
+
+
+	partition1=""
+	partition2=""
+	email=""
+	tty=""
+	password=""
+	device="/dev/hda"
+	post_install="reboot"
+  kernelopt=""
+  server = ""
+	
+	device="#{infra["device"]}" if infra.include?("device")
+	partition1="-1 #{infra["partition1"]}" if infra.include?("partition1")
+	partition2="-2 #{infra["partition2"]}" if infra.include?("partition2")
+	post_install="#{infra["post_install"]}" if infra.include?("post_install")
+	password="-p #{infra["password"]}" if infra.include?("password")
+	tty="-t #{infra["tty"]}" if infra.include?("tty")
+	email="-e #{infra["email"]}" if infra.include?("email")
+  kernelopt=" -k #{infra["kernelopt"]}" if infra.include?("kernelopt")
+  server = "-s #{infra["server"]}" if infra.include?("server")
+
+	cmd = "lisos-install -v #{infra["version"]} -n #{infra["name"]} -h #{infra["host"]} -c -d #{device} -b #{device} #{email} #{tty} #{password} #{partition1} #{partition2} #{kernelopt} #{server}"
+	puts cmd
+  system cmd
+	exitStatus=$?
+        if exitStatus!=0
+		post_install="wait"
+	end
+
+	case post_install
+		when "reboot"
+			system "reboot"
+		when "halt"
+			system "halt"
+	end
+end
+

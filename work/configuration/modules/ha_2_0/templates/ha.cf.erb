@@ -1,0 +1,29 @@
+debugfile       /var/log/ha-debug
+logfacility     syslog
+debug           <%= debug_level %>
+keepalive       5
+warntime        10
+deadtime        30
+initdead        120
+<% if ha_serial -%>
+baud            19200
+serial          /dev/ttyS0
+<% end -%>
+<% if ha_deadping -%>
+deadping <%= ha_deadping_time %>
+<% end -%>
+<% ha_ucasts.each do |ucast| -%>
+ucast <%= ucast %>
+<% end -%>
+<% ha_bcasts.each do |bcast| -%>
+bcast <%= bcast %>
+<% end -%>
+<% ha_mcasts.each do |mcast| -%>
+mcast <%= mcast %>
+<% end -%>
+auto_failback   <%= ha_auto_failback %>
+<% if ha_crm -%>
+crm on
+autojoin any
+<% end -%>
+<%= ha_nodes.collect { |name| "node    #{name}" }.join("\n")  %>

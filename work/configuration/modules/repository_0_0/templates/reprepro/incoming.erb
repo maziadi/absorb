@@ -1,0 +1,9 @@
+<%  repository_debian.each do |name| -%>
+Name: <%= name %>
+IncomingDir: incoming/<%= name %>
+TempDir: /tmp
+Allow: <%= name %>
+Default: <%= name %>
+
+<% end %>
+

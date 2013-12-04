@@ -1,0 +1,19 @@
+/var/log/mongodb/mongodb.log {
+  missingok
+  compress
+  daily
+  rotate 30
+  postrotate
+    /bin/kill -SIGUSR1 `cat /var/lib/mongodb/mongod.lock`
+  endscript
+}
+
+/var/log/mongodb/mongodb-arbiter.log {
+  missingok
+  compress
+  daily
+  rotate 30
+  postrotate
+    /bin/kill -SIGUSR1 `cat /var/lib/mongodb-arbiter/mongod.lock`
+  endscript
+}

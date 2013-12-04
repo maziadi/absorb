@@ -1,0 +1,4 @@
+check process messenger
+  with pidfile "/var/run/<%= app_name %>/messenger.rb.pid"
+  start program = "/bin/su - <%= app_name %> -c 'RAILS_ENV=<%= environment %> bundle exec script/messenger start --piddir /var/run/<%= app_name %>'" 
+  stop program = "/bin/su - <%= app_name %> -c 'RAILS_ENV=<%= environment %> bundle exec script/messenger stop --piddir /var/run/<%= app_name %>'"

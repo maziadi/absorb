@@ -1,0 +1,21 @@
+--- wanpipe/samples/wanrouter	2008-08-01 15:00:00.000000000 +0200
++++ wanpipe/samples/wanrouter	2012-02-21 13:03:08.350191044 +0100
+@@ -44,6 +44,18 @@
+ # Dec 15, 1996	Gene Kozin	Initial version based on Sangoma's WANPIPE(tm)
+ # ============================================================================
+ 
++### BEGIN INIT INFO
++# Provides:          wanrouter
++# Required-Start:    $remote_fs
++# Required-Stop:     $remote_fs
++# Should-Start:      $syslog $network
++# Should-Stop:       $syslog $network dahdi
++# Default-Start:     2 3 4 5
++# Default-Stop:      0 1 6
++# Short-Description: Wanpipe WAN Router
++# Description:       Controls the wanpipe WAN Router
++### END INIT INFO
++
+ ####### FUNCTION DEFINITIONS #################################################
+ 
+ 

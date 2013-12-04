@@ -1,0 +1,84 @@
+#!/bin/bash
+ISCSIADM="/usr/bin/iscsiadm"
+#MAX_SECTORS="64"
+#NR_REQUESTS="512"
+#SCHEDULER="deadline"
+#BLOCKDEV="4096"
+MAX_SECTORS="512"
+NR_REQUESTS="128"
+SCHEDULER="cfq"
+BLOCKDEV="256"
+PORTAL="<%= xen_2_0_portal %>"
+
+usage () {
+   echo "Script destiné a monter une target iscsi depuis les san"
+   echo "usage $0 -h target [-c] [-d]"
+   echo "  -c : connect"
+   echo "  -d : disconnect"
+}
+
+discover_iqn () {
+    targets=$($ISCSIADM -m discovery -t st -p $PORTAL | grep -o -E "iqn.*$hostname.*$")
+    if [ $? -ne 0 ]
+    then
+       echo "la target $hostname n'existe pas"
+       exit -2
+    fi
+}
+
+connect () {
+    discover_iqn
+    for target in $targets
+    do
+      $ISCSIADM -m node -T $target -p $PORTAL -l
+    done
+    for device in /sys/block/sd*
+    do
+        echo $MAX_SECTORS > $device/queue/max_sectors_kb
+        echo $NR_REQUESTS > $device/queue/nr_requests
+        echo $SCHEDULER > $device/queue/scheduler
+    done
+
+    devices=$($ISCSIADM -m discovery -t st -p $PORTAL | grep -o -E "$hostname.*$")
+    for device in $devices
+    do
+      until [ -b /dev/iscsi_$device ]
+      do
+          sleep 1
+      done
+      /sbin/blockdev --setra $BLOCKDEV $device
+    done
+}
+
+disconnect () {
+    discover_iqn
+    for target in $targets
+    do
+      $ISCSIADM -m node -T $target -p $PORTAL -u
+    done
+}
+
+
+while getopts :h:cd opt
+do
+    case ${opt} in
+        h)  hostname=${OPTARG}
+        ;;
+        d)  disconnect
+        ;;
+        c)  connect
+        ;;
+        '?')  echo "${0} : option ${OPTARG} is not valid" >&2
+            usage
+            exit -1
+        ;;
+    esac
+done
+
+if [ -z $2 ]
+then
+  usage
+  exit -3
+fi
+
+exit 0

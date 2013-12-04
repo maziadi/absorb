@@ -1,0 +1,5 @@
+check process delayed_job_taxman
+  with pidfile "/srv/taxman/tmp/pids/delayed_job.pid"
+  start program = "/bin/su - taxman -c 'RAILS_ENV=<%= taxman_env %> /srv/taxman/script/delayed_job start'" 
+  stop program = "/bin/su - taxman -c 'RAILS_ENV=<%= taxman_env %> /srv/taxman/script/delayed_job stop'" 
+  alert <%= monit_conf_alert_email %>

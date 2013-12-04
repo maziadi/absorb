@@ -1,0 +1,36 @@
+# Instead of skip-networking the default is now to listen only on
+# localhost which is more compatible and is not less secure.
+[mysqld]
+<% if mysql_bind_address %>
+bind-address    = <%= mysql_bind_address %>
+<% end %>
+
+# * Fine Tuning
+key_buffer		= <%= mysql_key_buffer -%>M
+max_allowed_packet	= 16M
+thread_stack		= <%= mysql_thread_stack -%>K
+thread_cache_size	= 8
+
+query_cache_limit       = <%= mysql_query_cache_limit -%>M
+query_cache_size        = <%= mysql_query_cache_size -%>M
+
+#
+# * Logging and Replication
+#
+<% if mysql_log -%>
+log		= /var/log/mysql/mysql.log
+<% end -%>
+<% if mysql_logbin -%>
+log_bin			= /var/log/mysql/mysql-bin.log
+<% end -%>
+<% if mysql_expire_logs_days -%>
+expire_logs_days	= 10
+<% end -%>
+<% if mysql_max_binlog_size -%>
+max_binlog_size         = 100M
+<% end -%>
+
+
+[isamchk]
+key_buffer		= <%= isamchk_key_buffer -%>M
+

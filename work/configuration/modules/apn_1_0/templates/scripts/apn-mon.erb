@@ -1,0 +1,143 @@
+#!/usr/bin/env ruby
+          
+require 'getoptlong'
+require 'sequel'
+require 'date'
+          
+PG_IP="<%= virtual_ip %>"
+PG_DB="<%= db_name %>"
+PG_USER="<%= db_user %>"
+PG_PWD="<%= db_passwd %>"
+RT_PRIMARY="<%= pasdaran_ip %>"
+RT_CUTOFF="<%= basij_ip %>"
+          
+DB = Sequel.connect("postgres://#{PG_IP}/#{PG_DB}", :user=>PG_USER, :password=>PG_PWD)
+          
+def get_ip_from_number(number)
+  sql = "select value as ip from radreply where left(username,11) = '#{number}' limit 1;"
+  DB[sql].each do |value|
+    return value[:ip]
+  end  
+  raise "This number doesn't exist !"
+end       
+          
+def get_number_from_ip(ip)
+  sql = "select left(username,11) as number from radreply where value = '#{ip}';"
+  DB[sql].each do |value|
+    return value[:number]
+  end  
+  raise "This ip address doesn't exist !"
+end       
+          
+def ip_toi(ip)
+  ipaddr = ip.split(".")
+  ip_int = sprintf("%x",(ipaddr[1].to_i & 3) * 65536 + ipaddr[2].to_i * 255 + ipaddr[3].to_i)
+  return ip_int
+end       
+          
+def get_counters(ip)
+  liste = Hash::new
+  eval(`echo "#{ip};F;0;0;0" | netcat #{RT_PRIMARY} 2403`).each do |ip,value|
+    ip_int = ip_toi(ip)
+    liste[ip_int] ||= Hash::new
+    liste[ip_int][:fairuse] = value
+    liste[ip_int][:roaming] = false
+  end  
+  liste = get_roaming(liste)
+  if liste[ip_toi(ip)][:roaming]
+    quotas = `echo "#{ip};C;0;0;0" | netcat #{RT_CUTOFF} 2403`
+    liste[ip_toi(ip)][:roaming_80] = quotas.split(";")[1].chomp
+    liste[ip_toi(ip)][:roaming_100] = quotas.split(";")[2].chomp
+  end  
+  return liste
+end       
+          
+def get_roaming(liste)
+  `echo "0.0.0.0;G;0;0;0" | netcat #{RT_PRIMARY} 2403`.each do |ip|
+    liste[ip_toi(ip)] ||= Hash::new
+    liste[ip_toi(ip)][:roaming] = true
+  end  
+  return liste
+end 
+
+def get_public_ip(ip)
+  `echo "#{ip};I;;;" | netcat #{RT_PRIMARY} 2403`
+end
+
+def get_by_ip(ip)
+  ipaddr = ip.split(".")
+  ip_int = sprintf("%d",(ipaddr[1].to_i & 3)).to_i
+  ipaddr[1] = (ip_int + 64).to_s
+  ip1 = ipaddr.join(".")
+  ipaddr[1] = (ip_int + 68).to_s
+  ip2 = ipaddr.join(".")
+  DB["select acctstarttime,acctstoptime,callingstationid,framedipaddress,visprefrt,comment from rtvisp right join (select * from radreply join radacct on radreply.username = radacct.username where radreply.value = '#{ip1}' or radreply.value = '#{ip2}' order by radacctid desc limit 1) as radinfo on rtvisp.visprefsi = radinfo.visprefsi"].each do |value|
+    if value[:acctstarttime].nil?
+      puts "Ligne #{get_number_from_ip(ip)} - Adresses IPs #{ip1} ou #{ip2}"
+      puts "  Déconnecté depuis : #{DateTime.parse(value[:acctstoptime].to_s).strftime("%d/%m/%Y %T")}"
+      puts "  FRD: #{value[:visprefrt]} (#{value[:comment]})"
+    else
+      puts "Ligne #{value[:callingstationid]} - Adresse IP #{value[:framedipaddress]}"
+      liste = get_counters(value[:framedipaddress])
+      puts "  Connecté depuis : #{DateTime.parse(value[:acctstarttime].to_s).strftime("%d/%m/%Y %T")}"
+      puts "  Adresse IP publique : #{get_public_ip(ip)}"
+      puts "  Roaming: #{liste[ip_toi(ip)][:roaming]}"
+      puts "  FRD: #{value[:visprefrt]} (#{value[:comment]})"
+      puts "  Etat des compteurs :"
+      puts "    Fairuse restant : #{liste[ip_toi(ip)][:fairuse]} (#{liste[ip_toi(ip)][:fairuse].to_i / (1024 * 1024)}Mo)"
+      if liste[ip_toi(ip)][:roaming]
+        puts "    Roaming restant (80%): #{liste[ip_toi(ip)][:roaming_80]} (#{liste[ip_toi(ip)][:roaming_80].to_i / (1024 * 1024)}Mo)"
+        puts "    Roaming restant (100%): #{liste[ip_toi(ip)][:roaming_100]} (#{liste[ip_toi(ip)][:roaming_100].to_i / (1024 * 1024)}Mo)"
+      end
+    end
+    return true
+  end  
+  raise "This address is not provisionned !"
+end 
+
+#  db["select acctstarttime,acctstoptime,callingstationid,framedipaddress from radreply join radacct on radreply.username = radacct.username where callingstationid = '#{number}' order by radacctid desc limit 1;"].each do |value|
+       
+opts = GetoptLong.new(
+  [ '--help', '-h', GetoptLong::NO_ARGUMENT ],
+  [ '--number', '-n', GetoptLong::OPTIONAL_ARGUMENT ],
+  [ '--address', '-a', GetoptLong::OPTIONAL_ARGUMENT ],
+  [ '--all', GetoptLong::NO_ARGUMENT ]
+)      
+       
+opts.each do |opt, arg|
+  case opt
+    when '--help'
+      puts "apn-mon [OPTION] ...
+       
+-h, --help:
+   show help
+       
+--number 336xxxxxxxx, -n 336xxxxxxxx:
+   phone number
+       
+--address ipaddress:
+   ip address of the account
+       
+--all  
+   display information about connected mobiles
+" 
+      exit
+    when '--number'
+      get_by_ip(get_ip_from_number(arg))
+    when '--address'
+      get_by_ip(arg)
+    when '--all'
+      liste = eval(`echo "0.0.0.0;F;0;0;0" | netcat #{RT_PRIMARY} 2403`)
+      if ! liste.is_a?(Fixnum)
+        liste.each do |ip,value|
+          get_by_ip(ip)
+        end
+      else
+        if liste == 0
+          puts "Aucun mobile connecté"
+        else
+          raise "Error getting connected mobiles !"
+        end
+      end
+  end
+end 

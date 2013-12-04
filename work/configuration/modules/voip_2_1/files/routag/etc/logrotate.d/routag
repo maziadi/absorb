@@ -1,0 +1,10 @@
+/var/log/jetty/out.log
+{
+	rotate 5
+	daily
+  copytruncate
+	missingok
+  dateext
+	notifempty
+	compress
+}

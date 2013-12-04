@@ -1,0 +1,111 @@
+#!/bin/bash
+#
+# CRON
+# Check for ACCT STOP unsent reports after 24h and try to send them
+# Can be manually called, with nodelay option
+#
+
+. /opt/local/bin/lib-apn.sh
+
+logger_tag="report-unsent"
+
+# exit if not executed on primary
+ip a | grep <%= virtual_ip %> >/dev/null
+if [ "$?" == "1" ]; then exit 0; fi
+
+delay="on"
+if [ "$1" == "nodelay" ]; then
+  delay="off"
+fi
+
+function getref() {
+# $1 : msisdn
+  local ref=""
+  ref=$(su - postgres -c "psql -1 -d <%= db_name %> -c \"SELECT ref FROM refmsisdn WHERE refmsisdn.msisdn = '$1';\" -h <%= virtual_ip %>" | sed 's/ //g' | head -n 3 | tail -1)
+  echo "$ref"
+}
+
+function getip() {
+# $1 : username
+  local ip=""
+  ip=$(su - postgres -c "psql -1 -d <%= db_name %> -c \"SELECT value FROM radreply WHERE radreply.username = '$1' AND radreply.attribute = 'Framed-IP-Address';\" -h <%= virtual_ip %>" | sed 's/ //g' | head -n 3 | tail -1)
+  echo "$ip"
+}
+
+# resend unsent reports to TAXATION for stopped sessions older than 24h
+fic=$(mktemp)
+if [ "$delay" == "on" ]; then
+  sql="SELECT radacct.radacctid, radacct.acctsessionid, radacct.acctuniqueid, radacct.username, radacct.groupname, radacct.realm, radacct.nasipaddress, radacct.nasportid, radacct.nasporttype, radacct2.acctstarttime, radacct.acctstoptime, radacct.acctsessiontime, radacct.acctauthentic, radacct.connectinfo_start, radacct.connectinfo_stop, radacct.acctinputoctets, radacct.acctoutputoctets, radacct.calledstationid, radacct.callingstationid, radacct.acctterminatecause, radacct.servicetype, radacct.xascendsessionsvrkey, radacct.framedprotocol, radacct.framedipaddress, radacct.acctstartdelay, radacct.acctstopdelay, radacct.sent, radacct.mcc, radacct.timezone FROM radacct INNER JOIN (SELECT acctstarttime, acctsessionid FROM radacct WHERE acctstarttime IS NOT NULL) AS radacct2 ON radacct.acctsessionid = radacct2.acctsessionid WHERE radacct.acctstoptime < (now() - Interval '24 hour') AND radacct.acctstoptime IS NOT NULL and radacct.sent = 'f';"
+else
+  sql="SELECT radacct.radacctid, radacct.acctsessionid, radacct.acctuniqueid, radacct.username, radacct.groupname, radacct.realm, radacct.nasipaddress, radacct.nasportid, radacct.nasporttype, radacct2.acctstarttime, radacct.acctstoptime, radacct.acctsessiontime, radacct.acctauthentic, radacct.connectinfo_start, radacct.connectinfo_stop, radacct.acctinputoctets, radacct.acctoutputoctets, radacct.calledstationid, radacct.callingstationid, radacct.acctterminatecause, radacct.servicetype, radacct.xascendsessionsvrkey, radacct.framedprotocol, radacct.framedipaddress, radacct.acctstartdelay, radacct.acctstopdelay, radacct.sent, radacct.mcc, radacct.timezone FROM radacct INNER JOIN (SELECT acctstarttime, acctsessionid FROM radacct WHERE acctstarttime IS NOT NULL) AS radacct2 ON radacct.acctsessionid = radacct2.acctsessionid WHERE radacct.acctstoptime IS NOT NULL and radacct.sent = 'f';"
+fi
+su - postgres -c "psql -1 -d <%= db_name %> -c \"$sql\" -h <%= virtual_ip %>" | grep -v "^[[:space:]]\+radacctid" | grep -v "^-" | grep -v "^(.*row" | grep -v "^$" > $fic
+while read line
+do
+  found="Le voisin est un animal nuisible assez proche de l'homme - Pierre Desproges"
+
+  id=$(echo $line | cut -d'|' -f1 | sed 's/ //g')
+  sessionid=$(echo $line | cut -d'|' -f2 | sed 's/ //g')
+  username=$(echo $line | cut -d'|' -f4 | sed 's/ //g')
+  msisdn=$(echo $username | cut -c1-11)
+  ref=$(getref $msisdn)
+  ip=$(getip $username)
+  rx=$(echo $line | cut -d'|' -f16 | sed 's/ //g')
+  tx=$(echo $line | cut -d'|' -f17 | sed 's/ //g')
+  starttime=$(echo $line | cut -d'|' -f10)
+  stoptime=$(echo $line | cut -d'|' -f11)
+  dateiso=$(echo $starttime${local_timezone}| sed 's/ /T/g')$(date +%z)
+  codemcc=$(echo $line | cut -d'|' -f28 | sed 's/ //g')
+  sessiontime=$(echo $line | cut -d'|' -f12 | sed 's/ //g')
+  timezone=$(echo $line | cut -d'|' -f29 | sed 's/ //g')
+
+  logger -t ${logger_tag} "[$ref-$sessionid] unsend session"
+  logger -t ${logger_tag} "[$ref-$sessionid] try to send report"
+  if [ ${#bodymail} == 0 ]; then
+    dt=$(date +%F+%R)
+    bodymail="At $dt, >24h unsend session(s) !\n"
+  fi
+  bodymail="$bodymail\nsession id: $sessionid"
+  bodymail="$bodymail\nstart time: $starttime"
+  bodymail="$bodymail\nstop time: $stoptime"
+  bodymail="$bodymail\nusername: $username"
+  bodymail="$bodymail\nmsisdn: $msisdn"
+  bodymail="$bodymail\nclient: $ref"
+  bodymail="$bodymail\nip: $ip"
+  bodymail="$bodymail\nmcc: $codemcc"
+  bodymail="$bodymail\ntime zone: $timezone"
+
+  # try to send report
+  timezone=0x80fd # forced (BUG TAXATION)
+  response=$(curl --silent --connect-timeout $timeout1 --max-time $timeout2 --write-out "%{http_code}" -d ref=$ref -d mcc=$codemcc -d rx=$rx -d tx=$tx -d date=$dateiso -d timezone=$timezone -L "http://${tax_server}/report" 2>/dev/null)
+  curlcode=$?
+  case "$curlcode" in
+    0)
+      taxhttpcode=$(echo $response | sed 's/ /\n/g' | tail -1)
+      ;;
+    7)
+      taxhttpcode=106 # disconnected
+      ;;
+    28)
+      taxhttpcode=118 # operation timeout
+      ;;
+    *)
+      taxhttpcode=418 # yes, I am a teapot
+      ;;
+  esac
+  if [ "$taxhttpcode" == "200" ]; then
+    req="UPDATE radacct SET sent = true WHERE radacct.acctsessionid = '$sessionid';"
+    su - postgres -c "psql -1 -d <%= db_name %> -c \"$req\" -h <%= virtual_ip %> -U <%= db_user %>" >/dev/null
+    logger -t ${logger_tag} "[$ref-$sessionid] TAXATION response : $taxhttpcode ($curlcode), report sent"
+    bodymail="$bodymail\n\t-> Ok, report sent by myself !\n"
+  else
+    bodymail="$bodymail\n\tCan not send the report (TAXATION server response: $taxhttpcode) !\n"
+    logger -t ${logger_tag} "[$ref-$sessionid] TAXATION response : $taxhttpcode ($curlcode), reporting failed"
+  fi
+
+done < $fic
+rm $fic
+
+[ ${#found} != 0 ] && echo -e $bodymail
+
+exit 0

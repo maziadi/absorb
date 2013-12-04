@@ -1,0 +1,1 @@
+KERNEL=="br*", SUBSYSTEM=="net", RUN+="/opt/local/bin/ovs-udev %k"

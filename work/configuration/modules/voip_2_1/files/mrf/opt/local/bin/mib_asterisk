@@ -1,0 +1,141 @@
+#!/bin/bash
+
+# Version for asterisk 1.8.8.0
+
+PATH=/bin:/sbin:/usr/bin:/usr/sbin
+PLACE=".1.3.6.1.3.1.10025.1"
+REQ="$2"
+
+ASTERISK=/usr/sbin/asterisk
+SUDO=/usr/bin/sudo
+ECHO=/bin/echo
+EXPR=/usr/bin/expr
+WC=/usr/bin/wc
+GREP=/bin/grep
+UNIQ=/usr/bin/uniq
+SED=/bin/sed
+SORT=/usr/bin/sort
+LSOF=/usr/bin/lsof
+PIDOF=/bin/pidof
+AWK=/usr/bin/awk
+
+[ -x $ASTERISK -a -x $SUDO -a -x $ECHO -a -x $EXPR -a -x $WC -a -x $GREP -a -x $UNIQ -a -x $SED -a -x $SORT -a -x $LSOF -a -x $PIDOF -a -x $AWK ] || exit 1
+
+function sip_show_channels() {
+  SIPSHOWCHANNELS=`$SUDO $ASTERISK -rnx 'sip show channels'`
+  [ -n "$SIPSHOWCHANNELS" ] || SIPSHOWCHANNELS=0
+  export SIPSHOWCHANNELS
+}
+
+function show_channels_concise() {
+  SHOWCHANNELSCONCISE="`$SUDO $ASTERISK -rnx 'core show channels concise'`"
+  [ -n "$SHOWCHANNELSCONCISE" ] || SHOWCHANNELSCONCISE=0
+  export SHOWCHANNELSCONCISE
+}
+
+function nb_channels() {
+  [ -z "$SHOWCHANNELSCONCISE" ] && show_channels_concise
+  NBCHANNELS=`$ECHO "$SHOWCHANNELSCONCISE" | $WC -l`
+  [ -n "$NBCHANNELS" ] || NBCHANNELS=0
+  export NBCHANNELS
+}
+
+function nb_calls() {
+  [ -z "$NBCHANNELS" ] && nb_channels
+  NBCALLS=`$EXPR $NBCHANNELS / 2`
+  [ -n "$NBCALLS" ] || NBCALLS=0
+  export NBCALLS
+}
+
+function list_calls() {
+  [ -z "$SHOWCHANNELSCONCISE" ] && show_channels_concise
+  LISTCALLS=`$ECHO "$SHOWCHANNELSCONCISE" | $GREP '^SIP/09900' | $SED 's#^SIP/0990000\([0-9]\{6\}\).*$#\1#g' | $SORT  | $UNIQ -c | $SORT -n`
+  [ -n "$LISTCALLS" ] || LISTCALLS=0
+  export LISTCALLS 
+}
+
+function nb_laposte() {
+  [ -z "$LISTCALLS" ] && list_calls
+  NBLAPOSTE=`$ECHO "$LISTCALLS" | $GREP 068006 | $AWK '{print $1}'`
+  [ -n "$NBLAPOSTE" ] || NBLAPOSTE=0
+  export NBLAPOSTE
+}
+
+function nb_fd() {
+  NBFD=`$SUDO $LSOF -p $($PIDOF asterisk) | $GREP -v 'mem.*REG' | $WC -l`
+  [ -n "$NBFD" ] || NBFD=0
+  export NBFD
+}
+
+function nb_g729() {
+  [ -z "$SIPSHOWCHANNELS" ] && sip_show_channels
+  NBG729=`$ECHO "$SIPSHOWCHANNELS" | $GREP -i 'g729' | $WC -l`
+  [ -n "$NBG729" ] || NBG729=0
+  export NBG729
+}
+
+function nb_alaw() {
+  [ -z "$SIPSHOWCHANNELS" ] && sip_show_channels
+  NBALAW=`$ECHO "$SIPSHOWCHANNELS" | $GREP -i 'alaw' | $WC -l`
+  [ -n "$NBALAW" ] || NBALAW=0
+  export NBALAW
+}
+
+function nb_ulaw() {
+  [ -z "$SIPSHOWCHANNELS" ] && sip_show_channels
+  NBULAW=`$ECHO "$SIPSHOWCHANNELS" | $GREP -i 'ulaw' | $WC -l`
+  [ -n "$NBULAW" ] || NBULAW=0
+  export NBULAW
+}
+
+# MAIN
+
+if [ "$1" = "-s" ]; then
+   $ECHO $* >> /tmp/passtest.log
+   exit 0
+fi
+
+# 1.1 nb_channels
+# 1.2 nb_calls
+# 2 nb_laposte
+# 3 nb_fd
+# 4.1 nb_g729
+# 4.2 nb_alaw
+# 4.3 nb_ulaw
+
+
+if [ "$1" = "-n" ]; then
+   case "$REQ" in
+     $PLACE)      RET=$PLACE.1.1 ;;
+     $PLACE.1)    RET=$PLACE.1.1 ;;
+     $PLACE.1.1)  RET=$PLACE.2.1 ;;
+     $PLACE.2)    RET=$PLACE.2.1 ;;
+     $PLACE.2.1)  RET=$PLACE.4.1 ;;
+     $PLACE.4)    RET=$PLACE.4.1 ;;
+     $PLACE.4.1)  RET=$PLACE.5.1 ;;
+     $PLACE.5)    RET=$PLACE.5.1 ;;
+     $PLACE.5.1)  RET=$PLACE.6.1 ;;
+     $PLACE.6)    RET=$PLACE.6.1 ;;
+     $PLACE.6.1)  RET=$PLACE.7.1 ;;
+     $PLACE.7)    RET=$PLACE.7.1 ;;
+     $PLACE.7.1)  RET=$PLACE.8 ;;
+  *)           exit 0 ;;
+   esac
+else
+   case "$REQ" in
+     $PLACE)    exit 0 ;;
+     *)         RET=$REQ ;;
+   esac
+fi
+
+$ECHO "$RET"
+case "$RET" in
+   $PLACE.1.1) $ECHO "integer"; nb_channels; $ECHO "$NBCHANNELS"; exit 0 ;;
+   $PLACE.2.1) $ECHO "integer"; nb_calls;    $ECHO "$NBCALLS";    exit 0 ;;
+   $PLACE.4.1) $ECHO "integer"; nb_fd;       $ECHO "$NBFD";       exit 0 ;;
+   $PLACE.5.1) $ECHO "integer"; nb_g729;     $ECHO "$NBG729";     exit 0 ;;
+   $PLACE.6.1) $ECHO "integer"; nb_alaw;     $ECHO "$NBALAW";     exit 0 ;;
+   $PLACE.7.1) $ECHO "integer"; nb_ulaw;     $ECHO "$NBULAW";     exit 0 ;;
+   $PLACE.8)                                                    exit 0 ;;
+   *) $ECHO "string"; $ECHO "ack... $RET $REQ"; exit 0 ;;
+esac

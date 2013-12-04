@@ -1,0 +1,493 @@
+#!/usr/bin/env ruby
+
+require 'lib/xmlsimple'
+require 'cmdparse2'
+require 'open3'
+
+class VserverXml
+  def initialize(name,load_file,filename = nil)
+    @name = name
+    @filename = filename || "/etc/libvirt/qemu/#{name}.xml"
+    @xml = nil
+    @xml = nil
+    @xml = XmlSimple.xml_in(@filename) if load_file
+  end
+  def create(name,memory,vcpu,hvm,storage,driver_storage='vda')
+    os = [{
+      "type"=> [{"arch"=>"x86_64", "content"=>"hvm"}],
+      "arch" => ["hvm"],
+      "boot" => [{"dev" => "hd"}]
+    }]
+    arch = {
+      "type" => "kvm",
+      "name" => [name],
+      "memory" => ["#{memory}000"],
+      "vcpu" => [vcpu],
+      "features" => [{"apic"=>[{}], "acpi"=>[{}]}],
+      "on_crash"=>["restart"],
+      "on_reboot"=>["restart"],
+      "on_poweroff"=>["destroy"],
+      "clock"=>[{"offset"=>"utc"}],
+      "os" => os,
+      "devices"=>[{
+        "emulator"=>["/usr/bin/kvm"],        
+        "console"=>[{
+          "type"=>"pty", 
+          "target"=>[{"port"=>"0"}], 
+          }], 
+        "interface"=> [], 
+        "disk"=>nil 
+        }]
+      }
+      
+    disk = nil
+    type = nil
+    source = nil
+    if storage == "drbd"
+      type = "block"
+      source = {"dev"=>"/dev/drbd/by-res/#{name}"}
+    elsif storage == "img"
+      type = "file"
+      source = {"file"=>"/data/images/#{name}.img"}
+    end
+    disk = [{
+              "device"=>"disk", 
+              "type"=>type, 
+              "target"=>[{"dev"=>"#{driver_storage}"}], 
+              "source"=>[source]
+          }]
+    arch["devices"][0]["disk"] = disk
+    @xml = arch
+  end
+  def add_disk(name,storage)
+    type = nil
+    driver = nil
+    type_source = nil
+    if storage == "drbd"
+      type = "block"
+      driver = "drbd"
+      type_source = "dev"
+    elsif storage == "img"
+      type = "file"
+      driver = "phy"
+      type_source = "file"
+    end
+
+    disk = {
+              "device"=>"disk", 
+              "type"=>type, 
+              "target"=>[{"dev"=>"vdb1"}], 
+              "driver"=>[{"name"=>driver}], 
+              "source"=>[{type_source=>"#{name}"}]
+            }
+    @xml["devices"][0]["disk"].push(disk)
+  end
+  def bridge(bridge)
+    @xml["devices"][0]["interface"] = []
+    bridge.each{|b|
+      name , mac = b.split(",")
+      br = {
+            "type"=>"bridge", 
+            "model" => [{"type"=>"virtio"}],
+            "source"=>[{"bridge"=>name}],
+          }
+      
+      br["mac"] = [{"address" => mac}] if mac
+      @xml["devices"][0]["interface"].push(br)
+    }
+  end
+
+  def network_driver(driver)
+    @xml["devices"][0]["interface"].each{|dev|
+      dev["model"].first["type"] = driver
+      dev
+    }
+  end
+
+  def save
+    f = File::open(@filename,'w')
+    f.write XmlSimple.xml_out(@xml,{"RootName" => "domain"})
+    f.close
+    cmd = "/etc/init.d/libvirt-bin restart"
+    Open3.popen3(cmd) do |stdin, stdout, stderr|
+      err = stderr.readlines
+      warn "error on #{cmd} : \n#{err}" if err.size != 0
+      stdout.each_line{|line| puts line }
+      puts "Don't forget to lauch tools/vserverprov -c #{`hostname`.chomp} update_conf on your configuration directory"
+    end
+  end
+  def addcdrom(cdrom)
+    if @xml["devices"][0]["disk"].map{|dev| dev["device"] == "cdrom" ? true : false }.reduce(:|)
+      warn "A cdrom is already define"
+    else
+      cdrom = {
+       "device" => "cdrom",
+       "type" => "file",
+       "source" => [{ "file" => cdrom}],
+       "target" => [{ "dev" => "hdc"}]
+      }
+      @xml["devices"][0]["disk"].push(cdrom)
+    end
+  end
+  def removecdrom
+    @xml["devices"][0]["disk"].map!{|dev|
+      if dev["device"] == "cdrom"
+        nil
+      else
+        dev
+      end
+    }
+    @xml["devices"][0]["disk"].compact!
+  end
+  def boot(what)
+    @xml["os"][0]["boot"][0]["dev"] = what
+    if what == "network" #on change la carte réseau pour
+      @xml["devices"][0]["interface"].each{|dev|
+        dev["model"][0]["type"] = "e1000"
+      }
+      warn "Warning : all networking are now in e1000 driver"
+    #else #on remet la carte réseau virtio
+    #  @xml["devices"][0]["interface"].each{|dev|
+    #    dev["model"][0]["type"] = "virtio"
+    #  }
+    end
+  end
+  def add_vnc(addr,port,passwd)
+    del_vnc
+    @xml["devices"][0]["graphics"] = {
+      "port" => port,
+      "listen" => addr,
+      "passwd" => passwd,
+      "type" => "vnc"
+    }
+  end
+  def del_vnc
+    @xml["devices"][0].delete("graphics")
+  end
+  def del_serial_tcp
+    @xml["devices"][0].delete("serial")
+  end
+  def add_serial_tcp(addr,port)
+    del_serial_tcp
+    @xml["devices"][0]["serial"] = {
+      "type" => "tcp",
+      "source" => [{"mode" => "bind", "host" => addr, "service" => port }],
+      "protocol" => [{"type" => "raw" }],
+      "target" =>  [{"port" => "1"}]
+    }
+  end
+end
+
+class ValidateCmd
+  Opt = Struct::new(:value,:typo,:opt,:mandatory)
+  IP = "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
+  def initialize
+    @str_error = []
+    @opts = []
+  end
+  def val(value,typo,opt,mandatory)
+    @opts << Opt::new(value,typo,opt,mandatory)
+  end
+  def validate_word(str)
+    str =~ /^\w+$/ ? true : false
+  end
+  def validate_bridge(str)
+    if str.size == 0
+      false
+    else
+      str.map{|value|
+        value =~ /^\w+(,([0-9a-fA-F]{2}[:]){5}[0-9a-fA-F]{2})?$/ ? true : false
+      }.reduce(:&)
+    end
+  end
+  def validate_network(str)
+    str =~ /^#{IP}(\/(3[0-2]|[1-2][0-9]|[0-9]))?$/ ? true : false
+  end
+
+  def validate_ip(str)
+    str =~ /^#{IP}$/ ? true : false
+  end
+  def validate_ip_port(str)
+    str =~ /^#{IP}:\d+$/ ? true : false
+  end
+  def validate_int(str)
+    str =~ /^\d+$/ ? true : false
+  end
+  def validate_string(str)
+    str =~ /^\S+$/ ? true : false
+  end
+  def validate_type_storage(str)
+    str == "drbd" or str == "img"
+  end
+  def validate_boot_device(str)
+    str == "hd" or str == "network" or str == "cdrom"
+  end
+  def validate_network_driver(str)
+    str == "e1000" or str == "virtio"
+  end
+  def validate_all(str)
+    true
+  end
+  def check
+    @opts.each{|opt|
+      if opt.mandatory and opt.value.nil?
+        @str_error << "#{opt.opt} is mandatory"
+      elsif opt.mandatory and opt.value.is_a?(Array) and opt.value.size == 0
+        @str_error << "#{opt.opt} is mandatory"
+      end
+      if opt.typo and ( (opt.value.is_a?(Array) and opt.value.size > 0) or (!opt.value.is_a?(Array) and !opt.value.nil?))
+        if self.respond_to? "validate_" + opt.typo.to_s
+          if ! self.send  "validate_" + opt.typo.to_s,opt.value
+            @str_error << "#{opt.opt} with value #{opt.value} need to be a #{opt.typo}"
+          end
+        else
+          @str_error << "Type #{opt.typo} not know for option #{opt.opt}"
+        end
+      end
+    }
+    @str_error.map! {|val| "\t" + val }
+    if @str_error.size > 0
+      raise CmdParse::InvalidArgumentError , "\n" + @str_error.join("\n")
+    end
+  end
+end
+
+
+def validate(&block)
+  t = ValidateCmd::new
+  t.instance_eval(&block)
+  t.check
+end
+
+
+
+cmd = CmdParse::CommandParser.new(true,false)
+cmd.program_name = "config_vserver "
+
+create = CmdParse::Command.new( 'create', false )
+create.short_desc = "create a new xml libvirt config"
+create.description = "create a new xml libvirt config"
+create.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-h', '--host NAME', "name of vserver") { |s|  $name = s  }
+  opt.on('-v','--vcpu NB', "number of vcpu (default : 1)") {|s| $vcpu = s  }
+  opt.on('-m','--memory SIZE', "memory of vserver in MB (default : 256)") {|s| $memory = s  }
+  opt.on('-n','--network <BRIDGE>[:<MAC>]', "Add bridge for vserver") {|s| $bridge << s  }
+  opt.on('-f','--file NAME', "specify file for xml") {|s| $file_name = s  }
+  opt.on('-t','--type NAME', "type of disk [drbd|img] (default: drdb)") {|s| $type_storage = s  }
+  opt.on('-b', '--boot WHAT', "boot device : network | hd | cdrom") { |s|  $boot = s  }
+  opt.on('--hda', "Use hda insteed of vda for hard disk") { $driver_storage = "hda" }
+  opt.on('--driver NAME', "Name of network driver") { |s|  $network_driver = s  }
+  opt.on('--cdrom PATH', "Path of cdrom, select none to remove") { |s|  $cdrom = s  }
+  opt.on('--serial <IP:PORT>', "IP/Port for the serial tcp device") { |s|  $serial_tcp = s  }
+end
+
+
+$hvm    = false
+$vcpu   = "1"
+$memory = "256"
+$bridge = []
+$type_storage = "drbd"
+$driver_storage = "vda"
+
+create.set_execution_block do |args|
+  validate do
+    val $name,:string,"-h or --host",true
+    val $vcpu, :int,"-v or --vcpu",true
+    val $memory, :int,"-m or --memory",true
+    val $type_storage, :type_storage,"-t or --type",true
+    val $boot, :boot_device, "-b or --boot",false
+    val $network_driver, :network_driver,"--driver",false
+    val $bridge, :bridge,"-n or --network",true
+  end
+
+  v = VserverXml.new($name,false,$file_name)
+  v.create($name,$memory,$vcpu,$hvm,$type_storage,$driver_storage)
+  v.bridge($bridge)
+  v.boot $boot
+  if $network_driver
+    v.network_driver $network_driver
+  end
+  if $cdrom
+    v.addcdrom $cdrom
+  end
+  if $serial_tcp
+    ip , port = $serial_tcp.split(":")
+    v.add_serial_tcp(ip,port)
+  end
+  v.save
+end
+
+
+boot = CmdParse::Command.new( 'boot', false )
+boot.short_desc =  "change boot device"
+boot.description = "change boot device"
+boot.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-h', '--host NAME', "name of vserver") { |s|  $name = s  }
+  opt.on('-b', '--boot WHAT', "boot device : network | hd | cdrom") { |s|  $boot = s  }
+  opt.on('-f','--file NAME', "specify file for xml") {|s| $file_name = s  }
+end 
+boot.set_execution_block do |args|
+  validate do
+    val $name,:string,"-h or --host",true
+    val $boot, :boot_device, "-b or --boot",false
+  end
+  v = VserverXml.new($name,true,$file_name)
+  v.boot $boot
+  v.save
+end 
+
+bridge = CmdParse::Command.new( 'bridge', false )
+bridge.short_desc =  "change bridge device"
+bridge.description = "change bridge device"
+bridge.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-h', '--host NAME', "name of vserver") { |s|  $name = s  }
+  opt.on('-n','--network <BRIDGE>[:<MAC>]', "Add bridge for vserver") {|s| $bridge << s  }
+  opt.on('-f','--file NAME', "specify file for xml") {|s| $file_name = s  }
+end 
+bridge.set_execution_block do |args|
+  validate do
+    val $name,:string,"-h or --host",true
+    val $bridge, :bridge,"-n or --network",true
+  end
+  v = VserverXml.new($name,true,$file_name)
+  v.bridge $bridge
+  v.save
+end 
+
+cdrom = CmdParse::Command.new('cdrom', false )
+cdrom.short_desc =  "Add/remove a cdrom device"
+cdrom.description = "Add/remove a cdrom device"
+cdrom.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-h', '--host NAME', "name of vserver") { |s|  $name = s  }
+  opt.on('--cdrom PATH', "Path of cdrom, select none to remove") { |s|  $cdrom = s  }
+  opt.on('-f','--file NAME', "specify file for xml") {|s| $file_name = s  }
+end 
+cdrom.set_execution_block do |args|
+  validate do
+    val $name,:string,"-h or --host",true
+    val $cdrom, :all,"--cdrom",true
+  end
+  v = VserverXml.new($name,true,$file_name)
+  if $cdrom == "none"
+    v.removecdrom
+  else
+    v.addcdrom $cdrom
+  end
+  v.save
+end 
+
+disk = CmdParse::Command.new('disk', false )
+disk.short_desc =  "Add a disk device"
+disk.description = "Add a disk device"
+disk.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-h', '--host NAME', "name of vserver") { |s|  $name = s  }
+  opt.on('--disk NAME', "Name of disk") { |s|  $disk = s  }
+  opt.on('-f','--file NAME', "specify file for xml") {|s| $file_name = s  }
+  opt.on('-t','--type NAME', "type of disk [drbd|img] (default: drdb)") {|s| $type_storage = s  }
+end 
+disk.set_execution_block do |args|
+  validate do
+    val $name,:string,"-h or --host",true
+    val $disk, :all,"--disk",true
+    val $type_storage, :type_storage,"-t or --type",true
+  end
+  v = VserverXml.new($name,true,$file_name)
+  v.add_disk $disk,$type_storage
+  v.save
+end 
+
+
+vnc = CmdParse::Command.new('vnc', false )
+vnc.short_desc =  "Add a vnc device"
+vnc.description = "Add a vnc device"
+vnc.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-h', '--host NAME', "name of vserver") { |s|  $name = s  }
+  opt.on('-f','--file NAME', "specify file for xml") {|s| $file_name = s  }
+  opt.on('--disable', "disable VNC export") { $vnc = false  }
+  opt.on('--listen ADDR', "listen addr for VNC export") {|s| $vnc_listen = s  }
+  opt.on('--port NB', "listen port for VNC export") {|s| $vnc_port = s  }
+  opt.on('--passwd PASSWD', "passwd for VNC export") {|s| $vnc_passwd = s  }
+end
+
+$vnc = true
+$vnc_listen = "0.0.0.0"
+$vnc_passwd = ""
+
+vnc.set_execution_block do |args|
+  validate do
+    val $name,:string,"-h or --host",true
+    if $vnc
+      val $vnc_listen, :ip,"--listen",true
+      val $vnc_port,:int,"--port",true
+      if $vnc_passwd != ""
+        val $vnc_passwd, :word, "--passwd",false
+      end
+    end
+  end
+  v = VserverXml.new($name,true,$file_name)
+  if $vnc
+    v.add_vnc($vnc_listen,$vnc_port,$vnc_passwd)
+  else
+    v.del_vnc
+  end
+  v.save
+end 
+
+network_driver = CmdParse::Command.new('network-driver', false )
+network_driver.short_desc =  "Change network driver device"
+network_driver.description = "Change network driver device"
+network_driver.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-h', '--host NAME', "name of vserver") { |s|  $name = s  }
+  opt.on('-f','--file NAME', "specify file for xml") {|s| $file_name = s  }
+  opt.on('--driver NAME', "Name of network driver") { |s|  $network_driver = s  }
+end 
+network_driver.set_execution_block do |args|
+  validate do
+    val $name,:string,"-h or --host",true
+    val $network_driver, :network_driver,"--driver",true
+  end
+  v = VserverXml.new($name,true,$file_name)
+  v.network_driver $network_driver
+  v.save
+end 
+
+serial_tcp = CmdParse::Command.new('serial-tcp', false )
+serial_tcp.short_desc =  "Change serial-tcp device"
+serial_tcp.description = "Change serial-tcp device"
+serial_tcp.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-h', '--host NAME', "name of vserver") { |s|  $name = s  }
+  opt.on('-f','--file NAME', "specify file for xml") {|s| $file_name = s  }
+  opt.on('--serial <IP:PORT>', "IP/Port for the serial tcp device") { |s|  $serial_tcp = s  }
+  opt.on('--disable', "disable serial-tcp device") { $serial_enable = false  }
+end 
+
+$serial_enable = true
+
+serial_tcp.set_execution_block do |args|
+  validate do
+    val $name,:string,"-h or --host",true
+    if $serial_enable 
+      val $serial_tcp, :ip_port,"--serial",true
+    end
+  end
+  v = VserverXml.new($name,true,$file_name)
+  if $serial_enable
+    ip , port = $serial_tcp.split(":")
+    v.add_serial_tcp(ip,port)
+  else
+    v.del_serial_tcp
+  end
+  v.save
+end 
+
+cmd.add_command(create)
+cmd.add_command(boot)
+cmd.add_command(bridge)
+cmd.add_command(cdrom)
+cmd.add_command(disk)
+cmd.add_command(vnc)
+cmd.add_command(network_driver)
+cmd.add_command(serial_tcp)
+cmd.add_command(CmdParse::HelpCommand::new)
+
+cmd.parse

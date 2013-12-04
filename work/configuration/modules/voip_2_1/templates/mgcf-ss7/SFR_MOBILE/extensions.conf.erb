@@ -1,0 +1,22 @@
+[globals]
+
+[default]
+; mandatory by monit for sip's check 
+exten => _X.,1,Hangup() 
+ 
+; mandatory to answer ok to option without username part of R-URI 
+exten => s,1,Hangup()
+
+[outbound]
+
+exten => _[0-9].,1,AGI(agi://localhost:12345/ss7Outbound.agi)
+exten => _[0-9].,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _[0-9].,n,Hangup()
+exten => _[0-9].,n(FAILED),Hangup(38)
+
+[inbound]
+
+exten => _X.,1,AGI(agi://localhost:12345/mobileForcedRouting.agi)
+exten => _X.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _X.,n,Hangup()
+exten => _X.,n(FAILED),Hangup(38)

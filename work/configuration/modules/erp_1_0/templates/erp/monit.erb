@@ -1,0 +1,7 @@
+<% poller_groups.each do |group| -%>
+check process <%= group %>
+with pidfile "/srv/erp/tmp/<%= group %>.pid"
+start program = "/bin/su - erp -c 'PROCESS_GROUP=<%= group %> bundle exec script/poller start -- process-group="<%= group %>" RAILS_ENV=<%= environment %>'"
+stop program = "/bin/su - erp -c 'PROCESS_GROUP=<%= group %> bundle exec script/poller stop -- process-group="<%= group %>" RAILS_ENV=<%= environment %>'"
+group erp-poller
+<% end -%>

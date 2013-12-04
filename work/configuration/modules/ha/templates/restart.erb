@@ -1,0 +1,25 @@
+#!/bin/sh
+
+COMMAND=$1
+
+if [ -z "$1" ]; then
+        echo "Usage: `basename $0` <start|stop|methods>"
+        exit 1
+fi
+
+case $COMMAND in
+        start)
+                /etc/init.d/<%= name %> restart
+                ;;
+        stop)
+                /etc/init.d/<%= name %> restart
+                ;;
+        methods)
+cat <<EOF
+        start
+        stop
+        methods
+EOF
+                ;;
+        *)
+esac

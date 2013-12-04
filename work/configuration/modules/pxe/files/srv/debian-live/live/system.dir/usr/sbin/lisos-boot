@@ -1,0 +1,52 @@
+#!/usr/bin/env ruby
+require 'lisos'
+require 'cmdparse2'
+require 'augeas'
+$media = get_cmdline("live-media") 
+$error = false
+
+
+def boot(type)
+  begin
+    sh "mount -o remount,rw #{$media}1"
+    @aug = Augeas::open("/",nil,0)
+    available_boot = @aug.match("/files/live/image/syslinux/syslinux.cfg/label").collect{|label|
+     @aug.get label
+    }
+    if !available_boot.include?(type)
+      STDERR.puts "Cannot boot to #{type} because it doesn't exist"
+    else
+      @aug.set("/files/live/image/syslinux/syslinux.cfg/default",type)
+    end
+    @aug.save
+  ensure
+    @aug.close
+    sh "mount -o remount,ro #{$media}1"
+  end
+end
+
+
+cmd = CmdParse::CommandParser.new(true,false)
+cmd.program_name = "lisos-boot "
+
+cmd.options = CmdParse::OptionParserWrapper::new do |opt|
+end
+
+default = CmdParse::Command.new( 'default', false )
+default.short_desc = "Boot to default factory configuration"
+default.description = "Boot to default factory configuration"
+default.set_execution_block do |args|
+  boot("default")
+end
+
+live = CmdParse::Command.new( 'live', false )
+live.short_desc = "Boot to live configuration"
+live.description = "Boot to live configuration"
+live.set_execution_block do |args|
+  boot("live")
+end
+cmd.add_command(CmdParse::HelpCommand::new,true)
+cmd.add_command(default)
+cmd.add_command(live)
+
+cmd.parse

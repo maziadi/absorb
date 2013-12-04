@@ -1,0 +1,18 @@
+#!/bin/bash
+
+pkg_version="<%= pxe_version -%>"
+pkg_name="pxe-${pkg_version}" 
+pkg="${pkg_name}.tar.gz"
+
+error() {
+  echo "ERROR: $1"
+  exit -1
+}
+
+cd /tmp
+wget -c http://alphalink:nYbXBg76FN@gold.alphalink.fr/livrables/${pkg} || error "Unable to download"
+tar xvzf ${pkg} -C /tmp || error "Unable to unpack"
+rsync -av /tmp/debian-live/debian-live/ /srv/debian-live/
+rsync -av /tmp/debian-live/tftpboot/ /var/lib/tftpboot/
+rm -rf /tmp/debian-live
+touch /etc/pxe-${pkg_version} || error "Unable to create flag file"

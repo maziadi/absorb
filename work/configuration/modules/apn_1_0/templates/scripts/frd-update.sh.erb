@@ -1,0 +1,56 @@
+#!/bin/dash
+#
+# Called on account FRD option change (refmsisdn update trigger) by Postgres
+# Must return validation boolean code
+#
+# Remark: in this context, STDOUT is evaluated as SQL commands by uphill PG function and must be routed to /dev/null
+#
+# Input: old_visprefrt, new_visprefrt, old_visprefsi, new_visprefsi, ip, ref
+#
+
+if [ "$*" = "" ]; then exit 0; fi
+. /opt/local/bin/lib-apn.sh
+
+logger_tag="frd-update"
+logger -t ${logger_tag} "[$6] FRD option change $*"
+update=1
+old_visprefrt=$1
+old_visprefrt=${old_visprefrt#nil}
+new_visprefrt=$2
+new_visprefrt=${new_visprefrt#nil}
+
+# PASDARAN visp change | server 1
+ret_1=$(echo "$5;U;;;;${old_visprefrt};${new_visprefrt}" | netcat -w 1 ${pasdaran_server_1} 2>/dev/null); x=$?
+if [ ${#ret_1} = "0" ] || [ "$x" != "0" ]; then
+  strret_1="I'm a taliban (netcat exit $x)"
+else
+  strret_1=$(pasdaran_response $ret_1)
+fi
+logger -t ${logger_tag} "[$6] PASDARAN-1 $5;U;;;;${old_visprefrt};${new_visprefrt} response : $strret_1"
+
+# PASDARAN visp change | server 2
+ret_2=$(echo "$5;U;;;;${old_visprefrt};${new_visprefrt}" | netcat -w 1 ${pasdaran_server_2} 2>/dev/null); x=$?
+if [ ${#ret_2} = "0" ] || [ "$x" != "0" ]; then
+  strret_2="I'm a taliban (netcat exit $x)"
+else
+  strret_2=$(pasdaran_response $ret_2)
+fi
+logger -t ${logger_tag} "[$6] PASDARAN-2 $5;U;;;;${old_visprefrt};${new_visprefrt} response : $strret_2"
+
+# mail if one of pasdaran server is down
+if [ "$ret_1" != "0" ] || [ "$ret_2" != "0" ]; then
+  [ "$ret_1" = "0" ] && [ "$ret_2" = "0" ] && update=0
+  bodymail=$(mktemp)
+  echo "From $hn:${self}, account $6" > $bodymail
+  [ "$ret_1" != "0" ] && echo "pasdaran request (${pasdaran_server_1}): $5;U;;;;${old_visprefrt};${new_visprefrt}\n\treturned: $strret_1" >>$bodymail
+  [ "$ret_2" != "0" ] && echo "pasdaran request (${pasdaran_server_2}): $2;U;;;;${old_visprefrt};${new_visprefrt}\n\treturned: $strret_2" >>$bodymail
+  cat $bodymail | mail -s "[$hn] pasdaran error" $mail
+  rm $bodymail
+fi
+
+if [ "$update" = "1" ]; then
+  logger -t ${logger_tag} "[$6] FRD option change : succeeded"
+else
+  logger -t ${logger_tag} "[$6] FRD option change : failed"
+fi
+exit $update

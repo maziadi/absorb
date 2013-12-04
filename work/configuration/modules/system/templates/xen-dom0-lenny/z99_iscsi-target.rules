@@ -1,0 +1,1 @@
+KERNEL=="sd*", SUBSYSTEMS=="scsi", ATTRS{vendor}=="IET", ATTRS{model}=="VIRTUAL-DISK", ENV{ID_PATH}=="*", PROGRAM="/bin/sh -c 'K=%k; I=$env{ID_PATH}; I=$${I/*storage./}; I=$${I/-lun-0/}; printf iscsi_$${I}%n'", NAME="%c"

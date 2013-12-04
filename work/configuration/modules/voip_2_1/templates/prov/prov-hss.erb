@@ -1,0 +1,24 @@
+configuration:
+  name             : prov_hss
+  timeout          : 15
+  ON_MESSAGE_DELAY : 0
+  loglevel         : info
+  logdestination   : syslog,file
+  stomp_urls:
+    stomp1:
+      username     : "<%= prov_hss_user -%>"
+      password     : "<%= prov_hss_password -%>"
+      host         : <%= prov_activemq_host %>
+      port         : 61613
+      ssl          : false
+
+  subscribes:
+    "/queue/provisioning" :
+      selector    : node_name='<%= hostname -%>'
+  format          : application/json # Default is text (xml => text/xml | json => application/json)
+
+  daemon:
+    username  : "<%= prov_hss_db_user -%>"
+    password  : "<%= prov_hss_db_password -%>"
+    host      : "localhost"
+    database  : "<%= prov_hss_db_name -%>"

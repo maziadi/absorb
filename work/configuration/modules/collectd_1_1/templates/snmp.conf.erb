@@ -1,0 +1,28 @@
+LoadPlugin snmp
+<Plugin snmp>
+  <Data "linux-network">
+    Type "if_octets"
+    Table true
+    Instance "IF-MIB::ifDescr"
+    Values "IF-MIB::ifInOctets" "IF-MIB::ifOutOctets"
+  </Data> 
+  <Data "accelppp-ppp">
+    Type "accelppp-ppp"
+    Instance ""
+    Table false
+    Values "ACCEL-PPP-MIB::statPPP.1.0" "ACCEL-PPP-MIB::statPPP.2.0" "ACCEL-PPP-MIB::statPPP.2.0"
+  </Data> 
+<% hosts.each_pair do |host,params| -%>
+  <Host "<%= host -%>">
+    Address "<%= params['addr'] %>"
+    Version <%= params['version'] %>
+    Community "<%= params['community'] %>"
+    Interval <%= params['interval'] %>
+  <%- params['collect_groups'].each do |collect_group| -%>
+    <%- @collect_snmp_groups[collect_group].each do |collect| -%>
+    Collect "<%= collect %>"
+    <%- end -%>
+  <%- end -%>
+  </Host>
+<% end -%>
+</Plugin>

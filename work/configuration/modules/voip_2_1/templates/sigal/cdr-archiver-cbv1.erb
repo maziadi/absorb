@@ -1,0 +1,16 @@
+configuration:
+  name        : cdr_archiver
+  timeout     : 5
+  ON_MESSAGE_DELAY : 0
+  loglevel        : info
+  logdestination  : syslog
+  stomp_urls   : 
+    stomp1:
+      username  : "erp"
+      password  : "<%= active_mq_erp_password -%>"
+      host      : <%= active_mq_service_addr_cbv1 %>
+      port      : 61613
+      ssl       : false
+  subscribes:
+    "/queue/sigal.cdr":
+  format        : text       # Default is text (xml => text/xml | json => application/json)

@@ -1,0 +1,47 @@
+upstream redmine {
+  server 127.0.0.1:3000;
+}
+
+server {
+
+  listen   80; ## listen for ipv4
+  listen   [::]:80 default ipv6only=on; ## listen for ipv6
+
+  client_max_body_size 5M;
+  server_name <%= hostname %>;
+  access_log /var/log/nginx/localhost.access.log;
+
+  location / {
+    proxy_set_header  X-Real-IP  $remote_addr;
+    proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $http_host;
+    proxy_set_header X-FORWARDED_PROTO http;
+    proxy_redirect off;
+    if (-f $request_filename/index.html) {
+      rewrite (.*) $1/index.html break;
+    }
+    if (-f $request_filename.html) {
+      rewrite (.*) $1.html break;
+    }
+    if (!-f $request_filename) {
+      proxy_pass http://redmine;
+      break;
+    }
+  }
+  location /plugin_assets/redmine_backlogs/javascripts {
+    alias /srv/redmine/current/vendor/plugins/redmine_backlogs/assets/javascripts;
+  }
+  location /plugin_assets/redmine_pilotage/javascripts {
+    alias /srv/redmine/current/vendor/plugins/redmine_pilotage/assets/javascripts;
+  }
+  location /plugin_assets/redmine_pilotage/stylesheets {
+    alias /srv/redmine/current/vendor/plugins/redmine_pilotage/assets/stylesheets;
+  }
+  location /plugin_assets/redmine_pilotage/img {
+    alias /srv/redmine/current/vendor/plugins/redmine_pilotage/assets/img;
+  }
+  error_page   500 502 503 504  /500.html;
+  location = /500.html {
+    root /srv/redmine/current/public;
+  }
+}

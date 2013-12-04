@@ -1,0 +1,12 @@
+DROP DATABASE IF EXISTS `effacer`;
+
+CREATE TABLE `<%= rsyslog_mysql_dbname %>`.`syslog`(
+`ID`			            BIGINT	      	  UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+`ReceivedAt`	      	DATETIME	        NULL DEFAULT NULL,
+`DeviceReportedTime`	DATETIME      	  NULL DEFAULT NULL,
+`Facility`	        	TINYINT     	    UNSIGNED NULL DEFAULT NULL,
+`Priority`	        	TINYINT           UNSIGNED NULL DEFAULT NULL,
+`FromHost`	        	VARCHAR   (255)   NULL DEFAULT NULL,
+`SysLogTag`		        VARCHAR   (60)	  NULL DEFAULT NULL,
+`Message`             TEXT              NULL DEFAULT NULL
+) ENGINE = MYISAM DEFAULT CHARSET=utf8;

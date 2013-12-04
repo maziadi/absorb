@@ -1,0 +1,4 @@
+check process mongodb-arbiter
+  with pidfile "/var/run/mongodb-arbiter.pid"
+  start program = "/sbin/start-stop-daemon --background --start --quiet --pidfile /var/run/mongodb-arbiter.pid --make-pidfile --chuid mongodb --exec /usr/bin/mongod -- --dbpath /var/lib/mongodb-arbiter --logpath /var/log/mongodb/mongodb-arbiter.log --config /etc/mongodb.conf --port 27018 --nojournal run"
+  stop program = "/sbin/start-stop-daemon --stop --quiet --pidfile /var/run/mongodb-arbiter.pid --user mongodb --exec /usr/bin/mongod"

@@ -1,0 +1,55 @@
+# declaration du cluster
+
+global { 
+    usage-count no; 
+}
+
+common {
+    protocol C;
+}
+
+resource <%= ressource -%> {
+    syncer {
+        rate 100M;
+    }
+
+    disk {
+        on-io-error detach;
+    }
+    
+    net { 
+#        allow-two-primaries;
+#        max-buffers 16384;
+#        unplug-watermark    2048;
+        after-sb-0pri disconnect;
+        after-sb-1pri disconnect;
+        after-sb-2pri disconnect;
+        rr-conflict disconnect;
+    }
+
+    handlers {
+        pri-on-incon-degr "echo o > /proc/sysrq-trigger ; halt -f";
+        pri-lost-after-sb "echo o > /proc/sysrq-trigger ; halt -f";
+        local-io-error "echo o > /proc/sysrq-trigger ; halt -f";
+#        outdate-peer "/usr/lib/heartbeat/drbd-peer-outdater -t 5";
+        split-brain "echo split-brain. drbdadm -- --discard-my-data connect $DRBD_RESOURCE ? | mail -s 'DRBD Alert' root";
+    }
+
+    startup {
+        wfc-timeout  15;
+    }
+
+    on <%= node1_name  %> {
+        device    /dev/<%= ressource %>;
+        disk      <%= node1_disk %>;
+        address   <%= node1_address %>;
+        meta-disk internal;
+    }
+
+   on <%= node2_name  %> {
+        device    /dev/<%= ressource %>;
+        disk      <%= node2_disk %>;
+        address   <%= node2_address %>;
+        meta-disk internal;
+    }
+}

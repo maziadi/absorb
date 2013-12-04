@@ -1,0 +1,940 @@
+#!/usr/bin/ruby
+
+require 'yaml'
+require "augeas"
+require 'cmdparse2'
+require 'open-uri'
+require 'ipaddr'
+require 'tempfile'
+require 'fileutils'
+require 'socket'
+require 'digest/sha1'
+require 'lisos/editor/rteditor'
+
+include FileUtils::Verbose
+
+
+Iface = Struct::new(:name,:family,:method,:options,:preup,:up,:postup,:predown,:down,:postdown)
+
+
+$root="/" #default root directory
+$host=Socket.gethostname  #default host name
+$yaml_file="/etc/lisos/config.yaml"
+
+$ssh_dir="/etc/lisos/ssh"
+
+VAR_SNMP="/var/lib/snmp/snmpd.conf"
+USR_SNMP="/usr/share/snmp/snmpd.conf"
+
+class AugDesign
+	attr_reader :aug
+	def initialize(root)
+  		@aug = Augeas::open("#{root}",nil,0)
+	end
+	def addIface(iface,comment=nil)
+		@aug.set("/files/etc/network/interfaces/#comment[last()+1]",comment) if ! comment.nil?
+    @aug.set("/files/etc/network/interfaces/auto[last()+1]/1",iface.name)
+		@aug.set("/files/etc/network/interfaces/iface[last()+1]",iface.name) #we add options at the end
+		setIfaceOptions(iface.name,iface.family,iface.method,comment,iface.options,iface.preup,iface.up,iface.postup,iface.predown,iface.down,iface.postdown)
+	end
+	def modifyIface(iface)
+		@aug.rm("/files/etc/network/interfaces/*[self::iface='#{iface.name}']/*") #we remove all options
+		setIfaceOptions(iface.name,iface.family,iface.method,comment,iface.options,iface.preup,iface.up,iface.postup,iface.predown,iface.down,iface.postdown)
+	end
+	def setIfaceOptions(name,family,method,comment,options,preup,up,postup,predown,down,postdown)
+		@aug.set("/files/etc/network/interfaces/*[self::iface='#{name}']/family",family)
+		@aug.set("/files/etc/network/interfaces/*[self::iface='#{name}']/method",method)
+		#@aug.set("/files/etc/network/interfaces/*[self::iface='#{name}']/desc",comment) if !comment.nil?
+		if ! options.nil?
+      temp_options = options.clone # we try to not delete values options
+      ["network","address","netmask","broadcast","gateway"].each{|k|
+        v = temp_options.delete(k)
+        aug.set("/files/etc/network/interfaces/*[self::iface='#{name}']/#{k}",v) if !v.nil?
+      }
+			temp_options.each { |key,value|
+				@aug.set("/files/etc/network/interfaces/*[self::iface='#{name}']/#{key}",value)
+			}
+		end
+		if !preup.nil? and !preup.empty?
+			preup.each { |value|
+				@aug.set("/files/etc/network/interfaces/*[self::iface='#{name}']/pre-up[last()+1]",value)
+			}
+		end
+		if !up.nil? and !up.empty?
+			up.each { |value|
+				@aug.set("/files/etc/network/interfaces/*[self::iface='#{name}']/up[last()+1]",value)
+			}
+		end
+		if !postup.nil? and !postup.empty?
+			postup.each { |value|
+				@aug.set("/files/etc/network/interfaces/*[self::iface='#{name}']/post-up[last()+1]",value)
+			}
+		end
+		if !predown.nil? and !predown.empty?
+			predown.each { |value|
+				@aug.set("/files/etc/network/interfaces/*[self::iface='#{name}']/pre-down[last()+1]",value)
+			}
+		end
+		if !down.nil? and !down.empty?
+			down.each { |value|
+				@aug.set("/files/etc/network/interfaces/*[self::iface='#{name}']/down[last()+1]",value)
+			}
+		end
+		if !postdown.nil? and !postdown.empty?
+			postdown.each { |value|
+				@aug.set("/files/etc/network/interfaces/*[self::iface='#{name}']/post-down[last()+1]",value)
+			}
+		end
+	end
+	def deleteIface(name)
+		@aug.rm("/files/etc/network/interfaces/*[self::iface='#{name}']")
+    @aug.rm("/files/etc/network/interfaces/auto/*[.='#{name}']")
+	end
+	def setDnsmasq(range,eth)
+		@aug.set("/files/etc/dnsmasq.conf/dhcp-range","#{range}")
+		@aug.set("/files/etc/dnsmasq.conf/interface","#{eth}")
+	end
+	def addAtmDaemon(id,ip,port,comment=nil)
+		if @aug.match("/files/etc/network/atmudp/DAEMON").size > 0
+			if comment.nil?
+				@aug.insert("/files/etc/network/atmudp/DAEMON[last()]","DAEMON",false)
+			else
+				@aug.insert("/files/etc/network/atmudp/DAEMON[last()]","#comment",false)
+				@aug.insert("/files/etc/network/atmudp/*[self::#comment='']","DAEMON",false)
+				@aug.set("/files/etc/network/atmudp/*[self::#comment='']",comment)
+			end
+		else
+			@aug.set("/files/etc/network/atmudp/#comment[last()+1]",comment) if ! comment.nil?
+		end
+		@aug.set("/files/etc/network/atmudp/DAEMON[last()]/id",id)
+		@aug.set("/files/etc/network/atmudp/DAEMON[last()]/ip",ip)
+		@aug.set("/files/etc/network/atmudp/DAEMON[last()]/port",port)
+	end
+	def addAtmItfSocket(id,ip,port,daemon,comment=nil)
+		if @aug.match("/files/etc/network/atmudp/ITF").size > 0
+			if comment.nil?
+				@aug.insert("/files/etc/network/atmudp/ITF[last()]","ITF",false)
+			else
+				@aug.insert("/files/etc/network/atmudp/ITF[last()]","#comment",false)
+				@aug.insert("/files/etc/network/atmudp/*[self::#comment='']","ITF",false)
+				@aug.set("/files/etc/network/atmudp/*[self::#comment='']",comment)
+			end
+		else
+			@aug.set("/files/etc/network/atmudp/#comment[last()+1]",comment) if ! comment.nil?
+		end
+		@aug.set("/files/etc/network/atmudp/ITF[last()]","socket")
+		@aug.set("/files/etc/network/atmudp/ITF[last()]/id",id)
+		@aug.set("/files/etc/network/atmudp/ITF[last()]/ip",ip)
+		@aug.set("/files/etc/network/atmudp/ITF[last()]/port",port)
+		@aug.set("/files/etc/network/atmudp/ITF[last()]/daemon",daemon)
+	end
+	def addAtmItfTap(id,comment=nil)
+		if @aug.match("/files/etc/network/atmudp/ITF").size > 0
+			if comment.nil?
+				@aug.insert("/files/etc/network/atmudp/ITF[last()]","ITF",false)
+			else
+				@aug.insert("/files/etc/network/atmudp/ITF[last()]","#comment",false)
+				@aug.insert("/files/etc/network/atmudp/*[self::#comment='']","ITF",false)
+				@aug.set("/files/etc/network/atmudp/*[self::#comment='']",comment)
+			end
+		else
+			@aug.set("/files/etc/network/atmudp/#comment[last()+1]",comment) if ! comment.nil?
+		end
+		@aug.set("/files/etc/network/atmudp/ITF[last()]","tap")
+		@aug.set("/files/etc/network/atmudp/ITF[last()]/id",id)
+	end
+	def addAtmRoute(itf1,vp1,vc1,itf2,vp2,vc2,comment=nil)
+		if @aug.match("/files/etc/network/atmudp/ROUTE").size > 0
+			if comment.nil?
+				@aug.insert("/files/etc/network/atmudp/ROUTE[last()]","ROUTE",false)
+			else
+				@aug.insert("/files/etc/network/atmudp/ROUTE[last()]","#comment",false)
+				@aug.insert("/files/etc/network/atmudp/*[self::#comment='']","ROUTE",false)
+				@aug.set("/files/etc/network/atmudp/*[self::#comment='']",comment)
+			end
+		else
+			@aug.set("/files/etc/network/atmudp/#comment[last()+1]",comment) if ! comment.nil?
+		end
+		@aug.set("/files/etc/network/atmudp/ROUTE[last()]/vcc[1]/itf",itf1)
+		@aug.set("/files/etc/network/atmudp/ROUTE[last()]/vcc[1]/vp",vp1)
+		@aug.set("/files/etc/network/atmudp/ROUTE[last()]/vcc[1]/vc",vc1)
+		@aug.set("/files/etc/network/atmudp/ROUTE[last()]/vcc[2]/itf",itf2)
+		@aug.set("/files/etc/network/atmudp/ROUTE[last()]/vcc[2]/vp",vp2)
+		@aug.set("/files/etc/network/atmudp/ROUTE[last()]/vcc[2]/vc",vc2)
+	end
+  def ssh_ListenAddress(address)
+    @aug.set("/files/etc/ssh/sshd_config/Port","22")
+    @aug.set("/files/etc/ssh/sshd_config/ListenAddress",address)
+    @aug.set("/files/etc/ssh/sshd_config/Protocol","2")
+    @aug.set("/files/etc/ssh/sshd_config/HostKey","/etc/ssh/ssh_host_rsa_key")
+    @aug.set("/files/etc/ssh/sshd_config/HostKey","/etc/ssh/ssh_host_dsa_key")
+    @aug.set("/files/etc/ssh/sshd_config/UsePrivilegeSeparation","yes")
+    @aug.set("/files/etc/ssh/sshd_config/KeyRegenerationInterval","3600")
+    @aug.set("/files/etc/ssh/sshd_config/ServerKeyBits","768")
+    @aug.set("/files/etc/ssh/sshd_config/SyslogFacility","AUTH")
+    @aug.set("/files/etc/ssh/sshd_config/LogLevel","INFO")
+    @aug.set("/files/etc/ssh/sshd_config/LoginGraceTime","120")
+    @aug.set("/files/etc/ssh/sshd_config/PermitRootLogin","yes")
+    @aug.set("/files/etc/ssh/sshd_config/StrictModes","yes")
+    @aug.set("/files/etc/ssh/sshd_config/RSAAuthentication","yes")
+    @aug.set("/files/etc/ssh/sshd_config/PubkeyAuthentication","yes")
+    @aug.set("/files/etc/ssh/sshd_config/IgnoreRhosts","yes")
+    @aug.set("/files/etc/ssh/sshd_config/RhostsRSAAuthentication","no")
+    @aug.set("/files/etc/ssh/sshd_config/HostbasedAuthentication","no")
+    @aug.set("/files/etc/ssh/sshd_config/PermitEmptyPasswords","no")
+    @aug.set("/files/etc/ssh/sshd_config/ChallengeResponseAuthentication","no")
+    @aug.set("/files/etc/ssh/sshd_config/X11Forwarding","no")
+    @aug.set("/files/etc/ssh/sshd_config/X11DisplayOffset","10")
+    @aug.set("/files/etc/ssh/sshd_config/PrintMotd","no")
+    @aug.set("/files/etc/ssh/sshd_config/PrintLastLog","yes")
+    @aug.set("/files/etc/ssh/sshd_config/TCPKeepAlive","yes")
+    @aug.set("/files/etc/ssh/sshd_config/AcceptEnv/1","LANG")
+    @aug.set("/files/etc/ssh/sshd_config/AcceptEnv/2","LC_*")
+    @aug.set("/files/etc/ssh/sshd_config/Subsystem/sftp","/usr/lib/openssh/sftp-server")
+    @aug.set("/files/etc/ssh/sshd_config/UsePAM","yes")
+    @aug.set("/files/etc/ssh/sshd_config/PasswordAuthentication","no")
+    @aug.set("/files/etc/ssh/sshd_config/UseDNS","no")
+  end
+	def setSysctl(key,val)
+		@aug.set("/files/etc/sysctl.conf/#{key}","#{val}")
+	end
+	def close()
+		@aug.save()
+    #@aug.match("//*").each{|v|
+    #  p v
+    #  p @aug.get(v)
+    #}
+		@aug.close()
+	end
+end
+
+
+def write_cfg_file(file,value,perm=0644)
+	open("#{file}","w",perm){ |f|
+		if value.class == Array
+			f.write("#{value.join(" ")}")
+		else
+			f.write("#{value}")
+		end
+	}
+end
+
+
+def wget(pageUrl,output)
+        url = URI.parse("#{pageUrl}")
+        Net::HTTP.start(url.host, url.port) do |http|
+                open("#{output}","w"){ |f|
+                        http.request_get(url.path){|res|
+                                res.value()
+                                res.read_body(f)
+                        }
+                }
+        end
+        return 0
+end
+
+
+
+
+
+def create_snmpv2(community,source="default")
+  mkdir_p "#{$root}/etc/snmp"
+  write_cfg_file "#{$root}/etc/snmp/snmpd.conf",<<EOF
+        sec.name  source      community
+com2sec readonly  #{source}   #{community}
+
+####
+# Second, map the security names into group names:
+
+#               sec.model  sec.name
+group MyROSystem v1        paranoid
+group MyROSystem v2c       paranoid
+group MyROSystem usm       paranoid
+group MyROGroup v1         readonly
+group MyROGroup v2c        readonly
+group MyROGroup usm        readonly
+group MyRWGroup v1         readwrite
+group MyRWGroup v2c        readwrite
+group MyRWGroup usm        readwrite
+
+####
+# Third, create a view for us to let the groups have rights to:
+
+#           incl/excl subtree                          mask
+view all    included  .1                               80
+view system included  .iso.org.dod.internet.mgmt.mib-2.system
+
+####
+# Finally, grant the 2 groups access to the 1 view with different
+# write permissions:
+
+#                context sec.model sec.level match  read   write  notif
+access MyROSystem ""     any       noauth    exact  system none   none
+access MyROGroup ""      any       noauth    exact  all    none   none
+access MyRWGroup ""      any       noauth    exact  all    all    none
+
+# -----------------------------------------------------------------------------
+
+load 12 14 14
+
+syslocation Unknown (configure /etc/snmp/snmpd.local.conf)
+syscontact Root <root@localhost> (configure /etc/snmp/snmpd.local.conf)
+
+master  agentx
+EOF
+end
+
+
+
+
+
+def create_all(opt)
+	if opt.include?("snmp.user") and opt.include?("snmp.authpass") and opt.include?("snmp.privpass")
+		opt["snmp.auth"]="SHA" if ! opt.include?("snmp.auth")
+		opt["snmp.priv"]="AES" if ! opt.include?("snmp.priv")
+
+		generate_snmp(opt["snmp.user"],opt["snmp.auth"],opt["snmp.authpass"],opt["snmp.priv"],opt["snmp.privpass"])
+	end
+	if opt.include?("ssh_keys")
+		puts_ssh_keys(opt["ssh_keys"].split(","))
+	end
+  create_dns
+  if opt.include?("snmp.community")
+    if opt.include?("snmp.source")
+      create_snmpv2(opt["snmp.community"],opt["snmp.source"])
+    else
+      create_snmpv2(opt["snmp.community"])
+    end
+  end
+  if opt.include?("cluster.members")
+    opt["cluster.links.eth"] ||= "bond0.40"
+    opt["cluster.links.serial"] ||= "none"
+
+    ha_dir = "#{$root}/etc/ha.d"
+    serial = ""
+    if opt["cluster.links.serial"] != "none"
+      serial = <<EOF
+baud            19200
+serial          #{opt["cluster.links.serial"]}
+EOF
+    end
+    mkdir_p ha_dir
+    write_cfg_file("#{ha_dir}/ha.cf",<<EOF
+logfacility     syslog
+debug           0
+keepalive       1
+warntime        2
+deadtime        4
+initdead        10
+uuidfrom        nodename
+hbgenmethod     time
+auto_failback   off
+bcast           #{opt["cluster.links.eth"]}
+#{serial}
+EOF
+                  )
+    write_cfg_file("#{ha_dir}/authkeys","auth 1\n1 sha1 #{Digest::SHA1.hexdigest(opt["cluster.members"])}\n",0600)
+    if opt.include?("cluster.resources")
+      write_cfg_file "#{ha_dir}/haresources",<<EOF
+#{opt["cluster.members"].split(" ")[0]} #{opt["cluster.resources"]}
+EOF
+    end
+  end
+  if opt.include?("interface_diag")
+    if opt["interface_diag"]  == "false" or opt["interface_diag"] == false
+      disableDiagInterface
+    end
+  end	
+  if opt.include?("mailhub")
+    create_ssmtp opt["mailhub"]
+  end
+end
+
+def calculate_gateway(ip)
+  return IPAddr.new(IPAddr.new("#{ip}").to_i+1,Socket::AF_INET).to_s
+end
+
+def create_default_rt_table
+  mkdir_p "#{$root}/etc/iproute2"
+  write_cfg_file "#{$root}/etc/iproute2/rt_tables",<<EOF
+#
+# reserved values
+#
+255 local
+254 main
+253 default
+0 unspec
+#
+# local
+#
+EOF
+end
+
+def create_voipready(opt)
+# config of a standard voip ready
+#   eth0 : SDSL
+#   eth1 : DATA
+#   eth2 : VOIP
+# Mandatory field for voipready
+# interco*.address : ip/mask
+# interco*.bandwidth : 1234kb
+# rt*.address : ip
+# rt*.voip_vpvc : vp.vc
+# rt*.data_vpvc : vp.vc
+# links : number of SDSL
+
+  #default fields
+  opt["data.atmudp.localport"]=2599 if ! opt.include?("data.atmudp.localport")
+  opt["voip.atmudp.localport"]=2601 if ! opt.include?("voip.atmudp.localport")
+  opt["data.atmudp.remoteport"]=2600 if ! opt.include?("data.atmudp.remoteport")
+  opt["voip.atmudp.remoteport"]=2601 if ! opt.include?("voip.atmudp.remoteport")
+  opt["data.bandwidth"]="1" if ! opt.include?("data.bandwidth")
+  opt["data.burst"]="70" if ! opt.include?("data.burst")
+  opt["voip.bandwidth"]="98" if ! opt.include?("voip.bandwidth")
+  opt["voip.burst"]="100" if ! opt.include?("voip.burst")
+  opt["garbage.bandwidth"]="1" if ! opt.include?("garbage.bandwidth")
+  opt["garbage.burst"]="70" if ! opt.include?("garbage.burst")
+  opt["data.cpe.vlan"]="1" if ! opt.include?("data.vlan")
+  opt["voip.cpe.vlan"]="2" if ! opt.include?("voip.vlan")
+	
+  create_begin
+  
+  create_default_rt_table
+  $root_dir = $root
+  rt_editor = RoutingTableEditor::new
+
+  if ! opt.include?("links")
+	# 1.upto(opt["links"]){ |i|
+		i=1
+		interco=create_static_iface("eth#{i-1}",opt["interco.address"])
+		if ! opt.include?("interco.gateway") #we select the gateway or calculate the gateway ( = network +1 )
+			opt["interco.gateway"]=calculate_gateway("#{interco.options["network"]}")
+		end
+
+    #not backup interco via ppp
+    #if opt.include?("interco.backup.ppp.user") and opt.include?("interco.backup.ppp.password")
+    #  interco.options["eparpmon"] = "-d -i interco -c 5 -n #{opt["interco.rt.address"]} -g #{opt["interco.gateway"]}:eth#{i-1}:1"
+    #else
+  		interco.up.push("ip route add #{opt["interco.rt.address"]} via #{opt["interco.gateway"]} dev eth#{i-1} || true")
+    #end
+		#interco.down.push("ip route del #{opt["interco.rt.address"]} via #{opt["interco.gateway"]} dev eth#{i-1} || true")
+		
+		$aug_config.addIface(interco,"Link")
+		
+		# config ATMUDP
+		$aug_config.addAtmDaemon("#{i*2-1}","#{interco.options["address"]}","#{opt["data.atmudp.localport"]}","Daemon Data")
+		$aug_config.addAtmDaemon("#{i*2}","#{interco.options["address"]}","#{opt["voip.atmudp.localport"]}","Daemon Voip")
+		$aug_config.addAtmItfSocket("#{62+i*2}","#{opt["interco.rt.address"]}","#{opt["data.atmudp.remoteport"]}","#{i*2-1}","Data")
+		$aug_config.addAtmItfSocket("#{63+i*2}","#{opt["interco.rt.address"]}","#{opt["voip.atmudp.remoteport"]}","#{i*2}","Voip")
+	
+		$aug_config.addAtmRoute("#{62+i*2}","#{opt["data.atmudp.vp"]}","#{opt["data.atmudp.vc"]}","96","254","#{i*2-1}","Data")
+		$aug_config.addAtmRoute("#{63+i*2}","#{opt["voip.atmudp.vp"]}","#{opt["voip.atmudp.vc"]}","96","254","#{i*2}","Voip")
+		
+		#qos for SDSL
+		qosVoip("eth#{i-1}","#{opt["interco.bandwidth"]}")
+	# }
+  else
+	# config SDSL interco
+	1.upto(opt["links"]){ |i|
+		interco=create_static_iface("eth#{i-1}",opt["interco.#{i}.address"])
+		if ! opt.include?("interco.#{i}.gateway") #we select the gateway or calculate the gateway ( = network +1 )
+			opt["interco.#{i}.gateway"]=calculate_gateway("#{interco.options["network"]}")
+		end
+    table = "1" + "00#{i}"[-2,2]
+    interco.up.push("ip rule add from #{interco.options["address"]} lookup #{table} pref 1#{table} || true")
+    interco.down.push("ip rule del from  #{interco.options["address"]} lookup #{table} pref 1#{table} || true")
+    interco.up.push("ip route add table #{table} default via #{opt["interco.#{i}.gateway"]} dev #{interco.name} proto static || true")
+		
+    rt_editor.add_table("sdsl#{i}",table)
+
+		$aug_config.addIface(interco,"Link #{i}")
+
+		# config ATMUDP
+		$aug_config.addAtmDaemon("#{i*2-1}","#{interco.options["address"]}","#{opt["data.atmudp.localport"]}","Daemon Data Link #{i}")
+		$aug_config.addAtmDaemon("#{i*2}","#{interco.options["address"]}","#{opt["voip.atmudp.localport"]}","Daemon Voip Link #{i}")
+	
+
+		$aug_config.addAtmItfSocket("#{62+i*2}","#{opt["interco.#{i}.rt.address"]}","#{opt["data.atmudp.remoteport"]}","#{i*2-1}","Data Link #{i}")
+		$aug_config.addAtmItfSocket("#{63+i*2}","#{opt["interco.#{i}.rt.address"]}","#{opt["voip.atmudp.remoteport"]}","#{i*2}","Voip Link #{i}")
+	
+		$aug_config.addAtmRoute("#{62+i*2}","#{opt["data.atmudp.#{i}.vp"]}","#{opt["data.atmudp.#{i}.vc"]}","96","254","#{i*2-1}","Data Link #{i}")
+		$aug_config.addAtmRoute("#{63+i*2}","#{opt["voip.atmudp.#{i}.vp"]}","#{opt["voip.atmudp.#{i}.vc"]}","96","254","#{i*2}","Voip Link #{i}")
+		
+		#qos for SDSL
+		qosVoip("eth#{i-1}","#{opt["interco.#{i}.bandwidth"]}")
+	}
+  end
+
+  $aug_config.addAtmItfTap("96","Terminaison")
+
+	data_cpe_name="eth1"
+	voip_cpe_name="eth2"
+  data_interco = Iface::new("nas254001","inet","manual",{},[],[],[],[],[],[])
+  voip_interco = Iface::new("nas254002","inet","manual",{},[],[],[],[],[],[])
+
+  if opt.include?("interco.backup.ppp.user") and opt.include?("interco.backup.ppp.password")
+    create_pppoe opt["interco.backup.ppp.user"],opt["interco.backup.ppp.password"],"eth1", :unit =>"254001", :comment => "Backup ADSL"
+    mkdir_p "#{$root}/etc/ppp/profiles"
+    #qosVoip("ppp254001","512kb")
+    #mkdir_p "#{$root}/etc/ppp/ip-up.d"
+    #mkdir_p "#{$root}/etc/ppp/ip-down.d"
+    #write_cfg_file("#{$root}/etc/ppp/ip-up.d/route_rt","#!/bin/sh\nip route add metric 2 #{opt["interco.rt.address"]} dev $1\n/etc/init.d/qos start -i $1\n",0755)
+    #write_cfg_file("#{$root}/etc/ppp/ip-down.d/route_rt","#!/bin/sh\n/etc/init.d/qos stop -i $1\n",0755)
+    data_cpe_name = "eth2"
+    voip_cpe_name = "eth3"
+  end
+  
+	if opt["links"].to_i>1 #si on utilise plus d'un seul lien on cree 2 bonds (data et voip)
+    data_interco.name = "bond0"
+    voip_interco.name = "bond1"
+    data_interco.options["ifaces"] = "nas254001"
+    voip_interco.options["ifaces"] = "nas254002"
+    data_interco.options["mode"] = "BALANCE-RR"
+    voip_interco.options["mode"] = "BALANCE-RR"
+    data_interco.options["arp_interval"] = "500"
+    voip_interco.options["arp_interval"] = "500"
+
+
+		2.upto(opt["links"].to_i){ |i|
+			nb0="000#{i*2-1}"[-3,3] #pour etre sur que le nombre genere est de la forme xxx
+			nb1="000#{i*2}"[-3,3]
+			data_interco.options["ifaces"] << " nas254#{nb0}"
+			voip_interco.options["ifaces"] << " nas254#{nb1}"
+		}
+		data_cpe_name="eth#{opt["links"].to_i}" #on calcul les ports qui vont avoir les réseaux data et voip
+		voip_cpe_name="eth#{opt["links"].to_i+1}"
+	end
+
+	# config vlan
+  voip_cpe_name="#{data_cpe_name}.#{opt["voip.cpe.vlan"]}" if opt.include?("vlan") and "#{opt["vlan"]}" == "true"
+  data_cpe_name="#{data_cpe_name}.#{opt["data.cpe.vlan"]}" if opt.include?("vlan") and "#{opt["vlan"]}" == "true"
+
+
+  #config data
+  if opt.include?("data.type") and "#{opt["data.type"]}"=="route"
+    # in route mode we have address on all interfaces
+		data_interco.method = "static"
+    data_interco = gen_addr_iface(data_interco,opt["data.interco.address"])
+    opt["data.interco.gateway"]=calculate_gateway(opt["data.interco.address"]) if !opt.include?("data.interco.gateway") 
+    
+    if opt["interco.backup.type"] == "data"
+      data_interco.options["lima_interco_data"] = "network 0.0.0.0/0 gw address #{opt["data.interco.gateway"]} cycle 1 up-delay 5 down-delay 5"
+      $aug_config.aug.set("/files/etc/ppp/profiles/#{opt["interco.backup.ppp.user"]}/up","ip route add metric 2 default dev $IFNAME")
+    else
+      data_interco.options["gateway"]="#{opt["data.interco.gateway"]}"
+    end
+    
+    
+    data_interco.options["arp_ip_target"]="#{opt["data.interco.gateway"]}" if data_interco.name == "bond0"
+    data_cpe=create_static_iface("#{data_cpe_name}",opt["data.cpe.address"])
+   
+
+    $aug_config.addIface(data_cpe,"Data CPE")
+    $aug_config.addIface(data_interco,"Interco DATA") if data_interco.name == "bond0" or "#{opt["data.type"]}"=="route"
+  else
+    #bridge is simple
+    br0=Iface::new("br0","inet","manual",{},[],[],[],[],[],[])
+	  br0.options["bridge_ports"]="#{data_interco.name} #{data_cpe_name}"
+		#maybe address for bridge?
+    br0 = gen_addr_iface(br0,opt["data.cpe.address"]) if opt.include?("data.cpe.address")
+
+    data_interco.method = "static"
+    data_interco = gen_addr_iface(data_interco,opt["data.interco.address"]) if  data_interco.name == "bond0"
+    opt["data.interco.gateway"]=calculate_gateway(opt["data.interco.address"]) if !opt.include?("data.interco.gateway")  and data_interco.name == "bond0"
+    data_interco.options["arp_ip_target"]="#{opt["data.interco.gateway"]}" if data_interco.name == "bond0"
+    br0.options["bridge_keepip"]="bond0" if data_interco.name == "bond0"
+    
+    $aug_config.addIface(data_interco,"Interco DATA") if data_interco.name == "bond0" or "#{opt["data.type"]}"=="route"
+    $aug_config.addIface(br0,"Bridge Data")
+  end  
+  
+    
+  if opt.include?("voip.type") and "#{opt["voip.type"]}"=="route"
+    voip_interco.method  = "static"
+    voip_interco = gen_addr_iface(voip_interco,opt["voip.interco.address"])
+    opt["voip.interco.gateway"]=calculate_gateway(opt["voip.interco.address"]) if !opt.include?("voip.interco.gateway")
+    
+    voip_interco.options["arp_ip_target"]="#{opt["voip.interco.gateway"]}" if voip_interco.name == "bond1"
+    voip_cpe=create_static_iface("#{voip_cpe_name}",opt["voip.cpe.address"])
+    voip_cpe.up.push("ip rule add dev #{voip_cpe_name} lookup 250 pref 1250 || true")
+    voip_cpe.down.push("ip rule del dev #{voip_cpe_name} lookup 250 || true")
+
+    rt_editor.add_table("voip",250)
+
+    if opt["interco.backup.type"] == "voip"
+      voip_interco.options["lima_interco_voip"] = "table 250 network 0.0.0.0/0 gw address #{opt["voip.interco.gateway"]} cycle 1 up-delay 5 down-delay 5"
+      $aug_config.aug.set("/files/etc/ppp/profiles/#{opt["interco.backup.ppp.user"]}/up","ip route add metric 2 table 250 default dev $IFNAME")
+    else
+      voip_interco.up.push("ip route add table 250 default via #{opt["voip.interco.gateway"]} dev #{voip_interco.name} proto static || true")
+    end
+    $aug_config.addIface(voip_cpe,"Voip CPE")
+    $aug_config.addIface(voip_interco,"Interco Voip") if voip_interco.name == "bond1" or "#{opt["voip.type"]}"=="route"
+  else  
+    br1=Iface::new("br1","inet","manual",{},[],[],[],[],[],[])
+		br1.options["bridge_ports"]="#{voip_interco.name} #{voip_cpe_name}"
+    
+    #maybe address for bridge
+    br1 = gen_addr_iface(br1,opt["voip.cpe.address"]) if opt.include?("voip.cpe.address")
+    
+    voip_interco.method  = "static"
+    voip_interco = gen_addr_iface(voip_interco,opt["voip.interco.address"]) if  data_interco.name == "bond1"
+    opt["voip.interco.gateway"]=calculate_gateway(opt["voip.interco.address"]) if !opt.include?("voip.interco.gateway") and voip_interco.name == "bond1"
+    voip_interco.options["arp_ip_target"]="#{opt["voip.interco.gateway"]}" if voip_interco.name == "bond1"
+    br1.options["bridge_keepip"]="bond1" if voip_interco.name == "bond1"
+    
+    $aug_config.addIface(voip_interco,"Interco Voip") if voip_interco.name == "bond1" or "#{opt["voip.type"]}"=="route"
+    $aug_config.addIface(br1,"Bridge Voip")
+  end
+
+	
+  #create standard qos policy
+	qosPolicyVoip("#{opt["data.atmudp.localport"]}","#{opt["data.atmudp.remoteport"]}","#{opt["data.bandwidth"]}","#{opt["data.burst"]}","#{opt["voip.atmudp.localport"]}","#{opt["voip.atmudp.remoteport"]}","#{opt["voip.bandwidth"]}","#{opt["voip.burst"]}","#{opt["garbage.bandwidth"]}","#{opt["garbage.burst"]}")
+  rt_editor.save
+	create_all(opt)
+	create_end
+end
+
+def disableDiagInterface
+  (0..6).each {|i| FileUtils.mkdir_p "#{$root}/etc/rc#{i}.d" }
+  FileUtils.mkdir_p "#{$root}/etc/monitrc.d"
+  File::open("#{$root}/etc/rc0.d/.wh.K20lighttpd-tiny","w"){}
+  File::open("#{$root}/etc/rc1.d/.wh.K20lighttpd-tiny","w"){}
+  File::open("#{$root}/etc/rc2.d/.wh.S20lighttpd-tiny","w"){}
+  File::open("#{$root}/etc/rc3.d/.wh.S20lighttpd-tiny","w"){}
+  File::open("#{$root}/etc/rc4.d/.wh.S20lighttpd-tiny","w"){}
+  File::open("#{$root}/etc/rc5.d/.wh.S20lighttpd-tiny","w"){}
+  File::open("#{$root}/etc/rc6.d/.wh.K20lighttpd-tiny","w"){}
+  File::open("#{$root}/etc/monitrc.d/.wh.initsys-diag","w"){}
+end
+
+def qosVoip(iface,bandwidth)
+	write_cfg_file("#{$root}/etc/network/qos-#{iface}",<<EOF
+include = qosPolicy-voip ;
+
+qosIface ;
+        qosPolicy = voip-data ;
+        bandwidth = #{bandwidth} ;
+        < ;
+EOF
+)
+end	
+
+def qosPolicyVoip(data_sport,data_dport,data_bandwidth,data_burst,voip_sport,voip_dport,voip_bandwidth,voip_burst,garbage_bandwidth,garbage_burst)
+write_cfg_file("#{$root}/etc/network/qosPolicy-voip",<<EOF
+application = app-voip ;
+        proto = 17 ;
+        sport = #{voip_sport} ;
+        dport = #{voip_dport} ;
+        < ;
+
+ipv4Filter = flt-voip ;
+        application = app-voip ;
+        < ;
+
+application = app-data ;
+        proto = 17 ;
+        sport = #{data_sport} ;
+        dport = #{data_dport} ;
+        < ;
+
+ipv4Filter = flt-data ;
+        application = app-data ;
+        < ;
+
+qosPolicy = voip-data ;
+        qosClass = flx-voip ;
+                bandwidth = #{voip_bandwidth}% ;
+                burst = #{voip_burst}% ;
+                prio = 1 ;
+                ipv4Filter = flt-voip ;
+                < ;
+        qosClass = flx-data ;
+                bandwidth = #{data_bandwidth}% ;
+                burst = #{data_burst}% ;
+                prio = 7 ;
+                ipv4Filter = flt-data ;
+                < ;
+        qosClass = Garbage ;
+                bandwidth = #{garbage_bandwidth}% ;
+                burst = #{garbage_burst}% ;
+                prio = 8 ;
+                < ;
+
+
+EOF
+)
+end
+
+
+def create_bb(opt)
+	
+	create_begin
+  mkdir_p "#{$root}/etc/ssh"
+
+	opt["bond.ifaces"]="eth0 eth1" if ! opt.include?("bond.ifaces")
+	create_bond(opt["bond.ifaces"])
+
+	if opt.include?("admin.address")
+		admin_iface=create_static_iface("bond0.99",opt["admin.address"])
+		$aug_config.addIface(admin_iface)
+    $aug_config.ssh_ListenAddress(admin_iface.options["address"]) 
+	end
+  mkdir_p "#{$root}/etc/rsyslog.d"
+  disableDiagInterface
+  write_cfg_file "#{$root}/etc/rsyslog.d/bb.conf",<<EOF
+*.*       @169.254.0.160
+*.*       @169.254.1.160
+EOF
+
+  opt["mailhub"] ||= "169.254.0.177"
+
+	create_all(opt)
+	create_end
+end
+
+
+def create_cpebasic(opt)
+	
+	create_begin
+
+	if opt.include?("ppp.user") and opt.include?("ppp.password") # config eth0 (ppp)
+		create_pppoe opt["ppp.user"],opt["ppp.password"],"eth0", :defaultroute => true
+	end
+
+	if opt.include?("internal.address")
+		#we create the lan iface
+    opt["internal.iface"] ||= "eth2"
+		internal_iface=create_static_iface(opt["internal.iface"],opt["internal.address"])
+		internal_iface.options["gateway"]=opt["internal.gateway"] if opt.include?("internal.gateway")
+		$aug_config.addIface(internal_iface,"Internal Address")
+	end
+
+	create_dnsmasq(opt["dhcp.range"],"eth2") if opt.include?("dhcp.range") #dhcp on eth2
+
+  if opt.include?("issue")
+    write_cfg_file("#{$root}/etc/motd.tail","#{opt["issue"]}\n")
+  end
+	if opt.include?("masquerade") and opt["masquerade"]=="true"
+		write_cfg_file("#{$root}/etc/network/nat","-t nat -I POSTROUTING -o ppp0 -j MASQUERADE\n")
+	end
+  if opt.include?("snat")
+    write_cfg_file("#{$root}/etc/network/nat","-t nat -I POSTROUTING -o ppp0 -j SNAT --to-source #{opt["snat"]}\n")
+  end
+	create_all(opt)
+	create_end
+end
+
+def create_begin
+	$aug_config.addIface(Iface::new("lo","inet","loopback"))
+end
+def create_end
+	$aug_config.setSysctl("net.ipv4.ip_forward","1")
+end
+
+
+def create_static_iface(iface,internal_address)
+	internal_iface=Iface::new(iface,"inet","static",{},[],[],[],[],[],[])
+	internal_iface = gen_addr_iface(internal_iface,internal_address)
+end
+
+def gen_addr_iface(iface,internal_address)
+  address=IPAddr.new("#{internal_address[/^(.*)\/(.*)/,1]}")
+	network=IPAddr.new("#{internal_address}")
+	netmask = IPAddr.new("255.255.255.255/#{internal_address[/^(.*)\/(.*)/,2]}")
+	broadcast = network|~netmask
+  iface.options["method"]="static"
+  iface.options["address"]="#{address}"
+  iface.options["network"]="#{network}"
+  iface.options["netmask"]="#{netmask}"
+  iface.options["broadcast"]="#{broadcast}"
+  return iface
+end
+
+def create_bond(ifaces)
+	options={"ifaces"=>"#{ifaces}","mode"=>"ACTIVE-BACKUP","miimon"=>"200"}
+	bond=Iface::new("bond0","inet","manual",options)
+	$aug_config.addIface(bond)
+end
+
+def generate_snmp(user,auth,authpass,priv,privpass)
+	system "/etc/init.d/snmpd stop"
+
+	#backup conf snmpd of system install
+	cp "#{VAR_SNMP}","#{VAR_SNMP}.bak" if File::file?("#{VAR_SNMP}")
+	cp "#{USR_SNMP}","#{USR_SNMP}.bak" if File::file?("#{USR_SNMP}")
+	write_cfg_file("#{VAR_SNMP}","createUser #{user} #{auth} \"#{authpass}\" #{priv} #{privpass}\n")
+	write_cfg_file("#{USR_SNMP}","rouser #{user}\n")
+	system "/etc/init.d/snmpd start"
+	sleep 1
+	system "/etc/init.d/snmpd stop"
+	mkdir_p "#{$root}/var/lib/snmp/"
+	mkdir_p "#{$root}/usr/share/snmp/"
+	cp "#{VAR_SNMP}","#{$root}/var/lib/snmp/"
+	cp "#{USR_SNMP}","#{$root}/usr/share/snmp/"
+	#re inject conf snmpd
+	mv "#{VAR_SNMP}.bak","#{VAR_SNMP}" if File::file?("#{VAR_SNMP}.bak")
+	mv "#{USR_SNMP}.bak","#{USR_SNMP}" if File::file?("#{USR_SNMP}.bak")
+end
+
+def puts_ssh_keys(groups)
+	mkdir_p "#{$root}/root/.ssh/"
+	open("#{$root}/root/.ssh/authorized_keys","w") do |f|
+		groups.each{ |value|
+			begin
+				lines=open("#{$ssh_dir}/#{value}").readlines
+			rescue Exception => e
+				puts "#{e.message}"
+			end
+			f.write(lines.join(""))
+		}
+	end
+end
+
+
+#create a standard pppoe connexion on eth
+def create_pppoe(user,password,eth,options={}) 
+  opts = ""
+  opts += "unit #{options[:unit]}\n" if options.include?(:unit)
+  opts += "defaultroute\n" if options.include?(:defaultroute) and options[:defaultroute]
+  
+	mkdir_p "#{$root}/etc/ppp/peers"
+	write_cfg_file("#{$root}/etc/ppp/peers/alphalink",<<EOF
+plugin rp-pppoe.so #{eth}
+ipparam #{eth}
+persist
+noipdefault
+noauth
+hide-password
+lcp-echo-interval 20
+lcp-echo-failure 3
+maxfail 0
+mtu 1492
+mru 1492
+user #{user}
+#{opts}
+EOF
+)
+	write_cfg_file("#{$root}/etc/ppp/chap-secrets","#{user}\t*\t#{password}\t*\n",0600)
+	write_cfg_file("#{$root}/etc/ppp/pap-secrets","#{user}\t*\t#{password}\t*\n",0600)
+	$aug_config.addIface(Iface::new(eth,"inet","ppp",{"provider"=>"alphalink"}),options[:comment])
+end
+
+
+
+#this function need to be use like update-rc.d defaults (for service who begin in init 2)
+def update_rcd(init,ss,kk)
+	rcdirs = ["#{$root}/etc/rc0.d","#{$root}/etc/rc1.d","#{$root}/etc/rc2.d","#{$root}/etc/rc3.d","#{$root}/etc/rc4.d","#{$root}/etc/rc5.d","#{$root}/etc/rc6.d"]
+	mkdir_p rcdirs
+	ln_s "../init.d/#{init}","#{$root}/etc/rc0.d/K#{kk}#{init}"
+	ln_s "../init.d/#{init}","#{$root}/etc/rc1.d/K#{kk}#{init}"
+	ln_s "../init.d/#{init}","#{$root}/etc/rc6.d/K#{kk}#{init}"
+	ln_s "../init.d/#{init}","#{$root}/etc/rc2.d/S#{ss}#{init}"
+	ln_s "../init.d/#{init}","#{$root}/etc/rc3.d/S#{ss}#{init}"
+	ln_s "../init.d/#{init}","#{$root}/etc/rc4.d/S#{ss}#{init}"
+	ln_s "../init.d/#{init}","#{$root}/etc/rc5.d/S#{ss}#{init}"
+end
+
+#create a dnsmasq config on a eth
+def create_dnsmasq(range,eth)
+	update_rcd("dnsmasq",15,85)
+	$aug_config.setDnsmasq(range,eth)
+end
+
+def create_dns
+	write_cfg_file("#{$root}/etc/resolv.conf",<<EOF
+search alphalink.fr
+nameserver 217.15.80.4
+nameserver 217.15.88.4
+EOF
+	)
+end
+
+
+
+def create_ssmtp(ip)
+  mkdir_p "#{$root}/etc/ssmtp"
+	write_cfg_file("#{$root}/etc/ssmtp/ssmtp.conf",<<EOF
+#
+# Config file for sSMTP sendmail
+#
+# The person who gets all mail for userids < 1000
+# Make this empty to disable rewriting.
+root=root@admin.alphalink.fr
+
+# The place where the mail goes. The actual machine name is required no
+# MX records are consulted. Commonly mailhosts are named mail.domain.com
+mailhub=#{ip}
+
+# Where will the mail seem to come from?
+#rewriteDomain=
+
+# The full hostname
+# hostname=localhost.localdomain
+
+# Are users allowed to set their own From: address?
+# YES - Allow the user to specify their own From: address
+# NO - Use the system generated From: address
+#FromLineOverride=YES
+EOF
+                )
+end
+
+
+cmd = CmdParse::CommandParser.new(true,false)
+cmd.program_name = "lisos-configuration "
+cmd.add_command(CmdParse::HelpCommand::new, false)
+
+cmd.options = CmdParse::OptionParserWrapper::new do |opt|
+	opt.on('-r','--root DIRECTORY',"root directory where configuration is done (default: #{$root}), it change also the copy on write directory where snapshot is done"){ |directory|
+		$root=directory
+	}
+	opt.on('-h', '--host NAME', "name of the device (default: #{$host})") { |name|
+		$host=name
+	}
+	opt.on('-y','--yaml YAML',"yaml file for snapshot (default: #{$yaml_file})"){ |file|
+		$yaml_file=file
+	}
+	opt.on('-s','--ssh DIR',"ssh directory for construct authorized_keys (default: #{$ssh_dir})"){ |dir|
+		$ssh_dir=dir
+	}
+end
+
+
+config = CmdParse::Command.new('config',false)
+
+config.short_desc = "Configure the snapshot"
+config.description = "Make the configuration with informations in the yaml file"
+
+config.set_execution_block do |args|
+
+	mkdir_p "#{$root}/etc/network"
+
+	$allconfig=YAML::load(open($yaml_file))
+	$config=$allconfig[$host]
+	if $config.nil? #check if host exist
+		puts "host #{$host} does not exist"
+		exit(-1)
+	end
+	
+	#a host have a profile and options
+	profile = $config["profile"]
+	options = $config["options"]
+
+	$aug_config = AugDesign::new("#{$root}") #initialize augeas
+	case profile
+		when "cpe-basic":	
+			create_cpebasic(options)
+		when "bb"
+			create_bb(options)
+		when "cpe-voipready":
+			create_voipready(options)
+	end
+  $aug_config.close() #save and close augeas
+end
+
+
+
+cmd.add_command(config,true)
+
+cmd.parse
+

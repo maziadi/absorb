@@ -1,0 +1,27 @@
+#!/bin/bash
+
+function mail_alert() {
+<%- if (environment == "production") -%>
+echo "Subject: <%= hostname %> - Desactivation de la passerelle : ${1}
+To: noc-alerts@alphalink.fr
+
+Suite au message SIP : ${2}, ${1} a ete desactivee  pour <%= hostname %>/${3}
+" | /usr/sbin/ssmtp noc-alerts@alphalink.fr
+<%- else -%>
+echo "Subject: <%= hostname %> - Desactivation de la passerelle : ${1}
+To: dev-noc-alerts@alphalink.fr
+
+Suite au message SIP : ${2}, ${1} a ete desactivee  pour <%= hostname %>/${3}
+" | /usr/sbin/ssmtp dev-noc-alerts@alphalink.fr
+<%- end -%>
+}
+
+#
+# MAIN
+#
+
+ip=$1
+sip_cause=$2
+instance=$3
+
+mail_alert $ip $sip_cause $instance

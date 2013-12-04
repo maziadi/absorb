@@ -1,0 +1,140 @@
+#!/usr/bin/env ruby
+
+MAIN_DIR="/live/image/live"
+CONFIG_FILE="live-config.cpio.gz"
+FILESYSTEM_FILE="live-filesystem.cpio.gz"
+require 'sha1'
+require 'yaml'
+require 'cmdparse2'
+require 'lisos'
+require 'syslog'
+
+$media = get_cmdline("live-media") #name of the media where the system is install
+$log = Syslog.open("lisos-clean")
+
+def log(lvl,message)
+  case lvl
+  when :err
+    $log.err("#{message}")
+    puts"#{message}"
+  when :info
+    $log.info("#{message}")
+    puts "#{message}"
+  end
+end
+
+def remove_file(file)
+  FileUtils.rm_r "#{file}" if File::file?(file)
+end
+
+def first_part(action)
+  puts "Are you sure? (y/n)"
+  rep = STDIN.gets
+  rep.strip!
+  if rep == "y" or rep == "yes"
+    begin
+      log(:info,"BEGIN: #{action}")
+      sh "mount -o remount,rw #{$media}1"
+      yield
+      sh "sync"
+      log(:info,"  END: #{action}")
+    rescue Exception => e
+      log(:err,"#{action}: #{e.message}")
+      fail "ERROR: : #{e.message}"
+    ensure
+      sh "mount -o remount,ro #{$media}1"
+    end
+  end
+end
+
+def second_part(action)
+  puts "Are you sure? (y/n)"
+  rep = STDIN.gets
+  rep.strip!
+  if rep  == "y" or rep == "yes"
+    begin
+      log(:info,"BEGIN: #{action}")
+      mountPersistent()
+      yield
+      sh "sync"
+      log(:info,"  END: #{action}")
+    rescue Exception => e
+      log(:err,"#{action}: #{e.message}")
+      fail "ERROR: : #{e.message}"
+    ensure
+      umountPersistent()
+    end
+  end
+end
+
+
+
+cmd = CmdParse::CommandParser.new(true,false)
+cmd.program_name = "lisos-clean "
+
+rm = CmdParse::Command.new( 'image', true )
+rm.short_desc = "Remove an image"
+rm.description = "Remove an image"
+
+icurr = CmdParse::Command.new( 'current', false )
+icurr.short_desc = "Remove the current image"
+icurr.description = "Remove the current image"
+icurr.set_execution_block do |args|
+  first_part("remove current image") do
+    remove_file("#{MAIN_DIR}/filesystem.squashfs")
+    remove_file("#{MAIN_DIR}/vmlinuz1")
+    remove_file("#{MAIN_DIR}/initrd1.img")
+    remove_file("#{MAIN_DIR}/sha1.yaml")
+  end
+end
+
+iold = CmdParse::Command.new( 'old', false )
+iold.short_desc = "Remove the old image"
+iold.description = "Remove the current image"
+iold.set_execution_block do |args|
+  first_part("remove old image") do
+    remove_file("#{MAIN_DIR}/filesystem.old.squashfs")
+    remove_file("#{MAIN_DIR}/vmlinuz2")
+    remove_file("#{MAIN_DIR}/initrd2.img")
+    remove_file("#{MAIN_DIR}/sha1.old.yaml")
+  end
+end
+
+rmc = CmdParse::Command.new( 'config', true )
+rmc.short_desc = "Remove a config"
+rmc.description = "Remove a config"
+
+ccurr = CmdParse::Command.new( 'current', false )
+ccurr.short_desc = "Remove the current config"
+ccurr.description = "Remove the current config"
+ccurr.set_execution_block do |args|
+  second_part("remove current config") do
+    remove_file("#{PERSISTENT_MOUNT}/current/#{FILESYSTEM_FILE}")
+    remove_file("#{PERSISTENT_MOUNT}/current/#{CONFIG_FILE}")
+  end
+end
+
+
+cold = CmdParse::Command.new( 'old', false )
+cold.short_desc = "Remove the old config"
+cold.description = "Remove the old config"
+cold.set_execution_block do |args|
+  second_part("remove old config") do
+    remove_file("#{PERSISTENT_MOUNT}/old/#{FILESYSTEM_FILE}")
+    remove_file("#{PERSISTENT_MOUNT}/old/#{CONFIG_FILE}")
+  end
+end
+
+
+rm.add_command(icurr)
+rm.add_command(iold)
+
+
+rmc.add_command(ccurr)
+rmc.add_command(cold)
+
+cmd.add_command(rm)
+cmd.add_command(rmc)
+cmd.add_command(CmdParse::HelpCommand::new)
+
+cmd.parse

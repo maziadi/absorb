@@ -1,0 +1,117 @@
+# -*- text -*-
+##
+## sql.conf -- SQL modules
+##
+##      $Id$
+
+######################################################################
+#
+#  Configuration for the SQL module
+#
+#  The database schemas and queries are located in subdirectories:
+#
+#       sql/DB/schema.sql       Schema
+#       sql/DB/dialup.conf      Basic dialup (including policy) queries
+#       sql/DB/counter.conf     counter
+#       sql/DB/ippool.conf      IP Pools in SQL
+#       sql/DB/ippool.sql       schema for IP pools.
+#
+#  Where "DB" is mysql, mssql, oracle, or postgresql.
+#
+
+sql {
+        #
+        #  Set the database to one of:
+        #
+        #       mysql, mssql, oracle, postgresql
+        #
+        database = "postgresql"
+
+        #
+        #  Which FreeRADIUS driver to use.
+        #
+        driver = "rlm_sql_${database}"
+
+        # Connection info:
+        server = "<%= virtual_ip %>"
+
+        #port = 3306
+        login = "<%= db_user %>"
+        password = "<%= db_passwd %>"
+
+        # Database table configuration for everything except Oracle
+        radius_db = "radius"
+        # If you are using Oracle then use this instead
+        # radius_db = "(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521))(CONNECT_DATA=(SID=your_sid)))"
+
+        # If you want both stop and start records logged to the
+        # same SQL table, leave this as is.  If you want them in
+        # different tables, put the start table in acct_table1
+        # and stop table in acct_table2
+        acct_table1 = "radacct"
+        acct_table2 = "radacct"
+
+        # Allow for storing data after authentication
+        postauth_table = "radpostauth"
+
+        authcheck_table = "radcheck"
+        authreply_table = "radreply"
+
+        groupcheck_table = "radgroupcheck"
+        groupreply_table = "radgroupreply"
+
+        # Table to keep group info
+        usergroup_table = "radusergroup"
+
+        accounting_start_query = "INSERT INTO radacct (AcctSessionId, AcctUniqueId, UserName, Realm, NASIPAddress, NASPortId, NASPortType, AcctStartTime, AcctAuthentic, ConnectInfo_start, CalledStationId, CallingStationId, ServiceType, FramedProtocol, FramedIPAddress, AcctStartDelay, XAscendSessionSvrKey, Mcc, Timezone) VALUES('%{Acct-Session-Id}', '%{Acct-Unique-Session-Id}', '%{SQL-User-Name}', NULLIF('%{Realm}', ''), '%{NAS-IP-Address}', %{%{NAS-Port}:-NULL}, '%{NAS-Port-Type}', ('%S'::timestamp - '%{%{Acct-Delay-Time}:-0}'::interval), '%{Acct-Authentic}', '%{Connect-Info}', '%{Called-Station-Id}', '%{Calling-Station-Id}', '%{Service-Type}', '%{Framed-Protocol}', NULLIF('%{Framed-IP-Address}', '')::inet, 0, '%{X-Ascend-Session-Svr-Key}', %{%{3GPP-SGSN-MCC-MNC}:-0}, '%{%{3GPP-MS-Time-Zone}:-0}')"
+
+        accounting_stop_query = "SELECT fct_radius_acctstop('%{Acct-Session-Id}', '%{Acct-Unique-Session-Id}', '%{SQL-User-Name}', '%{NAS-IP-Address}', ('%S'::timestamp - '%{%{Acct-Delay-Time}:-0}'::INTERVAL), '%{%{Acct-Delay-Time}:-0}'::INTERVAL, %{%{Acct-Session-Time}:-0}, %{%{Acct-Input-Octets}:-0}, %{%{Acct-Output-Octets}:-0}, '%{Acct-Terminate-Cause}', '%{Connect-Info}', %{%{3GPP-SGSN-MCC-MNC}:-0}, '%{%{3GPP-MS-Time-Zone}:-0}')"
+
+        authorize_check_query = "SELECT * FROM fct_pgauth('%{SQL-User-Name}', %{%{3GPP-SGSN-MCC-MNC}:-0}, '%{%{3GPP-MS-Time-Zone}:-0}') f(id integer, UserName varchar(64), Attribute varchar(64), Value varchar(253), op char(2))"
+
+        # If set to 'yes' (default) we read the group tables
+        # If set to 'no' the user MUST have Fall-Through = Yes in the radreply table
+        # read_groups = yes
+
+        # Remove stale session if checkrad does not see a double login
+        deletestalesessions = yes
+
+        # Print all SQL statements when in debug mode (-x)
+        sqltrace = no
+        sqltracefile = ${logdir}/sqltrace.sql
+
+        # number of sql connections to make to server
+        num_sql_socks = 50 # 10
+
+        # number of seconds to dely retrying on a failed database
+        # connection (per_socket)
+        connect_failure_retry_delay = 60
+
+        # lifetime of an SQL socket.  If you are having network issues
+        # such as TCP sessions expiring, you may need to set the socket
+        # lifetime.  If set to non-zero, any open connections will be
+        # closed "lifetime" seconds after they were first opened.
+        lifetime = 0
+
+        # Maximum number of queries used by an SQL socket.  If you are
+        # having issues with SQL sockets lasting "too long", you can
+        # limit the number of queries performed over one socket.  After
+        # "max_qeuries", the socket will be closed.  Use 0 for "no limit".
+        max_queries = 0
+
+        # Set to 'yes' to read radius clients from the database ('nas' table)
+        # Clients will ONLY be read on server startup.  For performance
+        # and security reasons, finding clients via SQL queries CANNOT
+        # be done "live" while the server is running.
+        # 
+        #readclients = yes
+        <% if db_type != '' %>
+        readclients = yes
+        <% end %>
+
+        # Table to keep radius client info
+        nas_table = "nas"
+
+        # Read driver-specific configuration
+        $INCLUDE sql/${database}/dialup.conf
+}

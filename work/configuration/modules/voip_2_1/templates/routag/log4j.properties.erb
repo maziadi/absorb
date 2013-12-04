@@ -1,0 +1,17 @@
+# This is not needed by Jetty - but it helps with many web apps.
+
+log4j.rootLogger=INFO, stdout, syslogAppender
+
+log4j.appender.stdout=org.apache.log4j.ConsoleAppender
+log4j.appender.stdout.layout=org.apache.log4j.PatternLayout
+log4j.appender.stdout.layout.ConversionPattern=%d{HH:mm:ss,SSS} [%t] %-5p %c %x - %m%n
+
+
+log4j.appender.syslogAppender=org.apache.log4j.net.SyslogAppender
+log4j.appender.syslogAppender.syslogHost=<%= rsyslog_ip_service %>
+log4j.appender.syslogAppender.header=true
+log4j.appender.syslogAppender.layout=org.apache.log4j.PatternLayout
+log4j.appender.syslogAppender.layout.ConversionPattern=%c | %-5p | %m [%t]%n
+log4j.appender.syslogAppender.Facility=LOCAL3
+log4j.appender.syslogAppender.FacilityPrinting=true 
+log4j.appender.syslogAppender.Threshold=DEBUG

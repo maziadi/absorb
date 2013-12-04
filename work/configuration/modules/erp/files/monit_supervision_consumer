@@ -1,0 +1,5 @@
+check process supervision_consumer
+  with pidfile "/srv/supervision/lib/stomp/alarms_consumer.rb.pid"
+  start program = "/bin/su - supervision -c 'bundle exec /srv/supervision/script/alarms_consumer start'" 
+  stop program = "/bin/su - supervision -c 'bundle exec /srv/supervision/script/alarms_consumer stop'"
+

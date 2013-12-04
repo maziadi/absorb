@@ -1,0 +1,157 @@
+<?xml version="1.0"?>
+<thresholding-config>
+        <group name="mib2"
+                rrdRepository = "/var/lib/opennms/rrd/snmp/">
+                <threshold type="high" ds-name="tcpInErrors" ds-type="node" ds-label="" value="1" rearm="0" trigger="1"/>
+                <expression type="high" expression="ifInErrors + ifOutErrors" ds-type="if" ds-label="ifName" value="1" rearm="0" trigger="2"/>
+                <expression type="high" expression="ifInDiscards + ifOutDiscards" ds-type="if" ds-label="ifName" value="1" rearm="0" trigger="2"/>
+              <!--  <expression type="high" expression="ifInOctets * 8 / 1000000 / ifHighSpeed * 100" ds-type="if" ds-label="ifName" value="90.0" rearm="75.0" trigger="3">
+                  <resource-filter field="ifHighSpeed">^[1-9]+[0-9]*$</resource-filter>
+                </expression>
+                <expression type="high" expression="ifOutOctets * 8 / 1000000 / ifHighSpeed * 100" ds-type="if" ds-label="ifName" value="90.0" rearm="75.0" trigger="3">
+                  <resource-filter field="ifHighSpeed">^[1-9]+[0-9]*$</resource-filter>
+                </expression> -->
+        </group>
+        
+        <group name="hrstorage"
+        		rrdRepository = "/var/lib/opennms/rrd/snmp/">
+        		<expression type="high" expression="hrStorageUsed / hrStorageSize * 100.0" ds-type="hrStorageIndex" ds-label="hrStorageDescr" value="90.0" rearm="75.0" trigger="2">
+        		  <resource-filter field="hrStorageType">^\.1\.3\.6\.1\.2\.1\.25\.2\.1\.4$</resource-filter>
+        		</expression>
+        		<expression type="relativeChange" expression="hrStorageUsed / hrStorageSize * 100.0" ds-type="hrStorageIndex" ds-label="hrStorageDescr" value="0.5" rearm="0.0" trigger="2">
+        		  <resource-filter field="hrStorageType">^\.1\.3\.6\.1\.2\.1\.25\.2\.1\.4$</resource-filter>
+        		</expression>
+
+		</group>
+		
+        <group name="cisco"
+                rrdRepository = "/var/lib/opennms/rrd/snmp/">
+                <threshold type="high" ds-name="avgBusy5"  ds-type="node" ds-label="" value="80" rearm="50" trigger="3"/>
+                <threshold type="relativeChange" ds-name="cscoMemPoolUtl5Min"  ds-type="ciscoMemoryPoolType" ds-label="cscoMemoryPoolName" value="0.25" rearm="0.0" trigger="1"/>
+                <threshold type="high" ds-name="cvmTempStatusValue" ds-type="ciscoEnvMonTemperatureStatusIndex" ds-label="cvmTempStatusDescr" value="40.0" rearm="37.0" trigger="3"/>
+                <threshold type="relativeChange" ds-name="cvmTempStatusValue" ds-type="ciscoEnvMonTemperatureStatusIndex" ds-label="cvmTempStatusDescr" value="0.2" rearm="0.0" trigger="1"/>
+        </group>
+        
+        <group name="netsnmp"
+        		rrdRepository = "/var/lib/opennms/rrd/snmp/">
+        		<threshold type="high" ds-name="CpuRawUser" ds-type="dskIndex" ds-label="ns-dskPath" value="95.0" rearm="75.0" trigger="2"/>
+        		<threshold type="high" ds-name="ns-dskPercent" ds-type="dskIndex" ds-label="ns-dskPath" value="90.0" rearm="75.0" trigger="2"/>
+        		<threshold type="high" ds-name="ns-dskPercentNode" ds-type="dskIndex" ds-label="ns-dskPath" value="90.0" rearm="75.0" trigger="2"/>
+        		<threshold type="relativeChange" ds-name="ns-dskPercent" ds-type="dskIndex" ds-label="ns-dskPath" value="0.5" rearm="0.0" trigger="2"/>
+        		<threshold type="relativeChange" ds-name="ns-dskPercentNode" ds-type="dskIndex" ds-label="ns-dskPath" value="0.5" rearm="0.0" trigger="2"/>
+       <!-- 		<expression type="high" expression="loadavg5 / 100.0" ds-type="node" ds-label="" value="10.0" rearm="7.5" trigger="2"/>
+            <expression type="low" expression="memAvailSwap / memTotalSwap * 100.0" ds-type="node" ds-label="" value="10.0" rearm="15.0" trigger="2"/> --> 
+        </group>
+        
+        <group name="netsnmp-memory-linux"
+        		rrdRepository = "/var/lib/opennms/rrd/snmp/">
+        		<expression type="low" expression="(memAvailReal + memCached) / memTotalReal * 100.0" ds-type="node" ds-label="" value="5.0" rearm="10.0" trigger="2"/>
+        </group>
+
+        <group name="netsnmp-memory-nonlinux"
+        		rrdRepository = "/var/lib/opennms/rrd/snmp/">
+        		<expression type="low" expression="memAvailReal / memTotalReal * 100.0" ds-type="node" ds-label="" value="5.0" rearm="10.0" trigger="2"/>
+        </group>
+ 
+		<group name="coffee"
+				rrdRepository = "/var/lib/opennms/rrd/snmp/">
+				<expression type="low" expression ="coffeePotLevel / coffeePotCapacity * 100.0" ds-type="node" ds-label="" value="25.0" rearm="100.0" trigger="1"/>
+		</group>
+
+    <group name="callweaver" rrdRepository = "/var/lib/opennms/rrd/snmp/">
+      <threshold type="high" ds-name="nbCalls" ds-type="callweaver" ds-label="Callweaver" value="200.0" rearm="190.0" trigger="1"
+        triggeredUEI="uei.opennms.org/alphalink/callsLimit" 
+        rearmedUEI  ="uei.opennms.org/alphalink/callsLimit-rearmed"/>
+    </group>
+
+    <group name="linux" rrdRepository = "/var/lib/opennms/rrd/snmp/">
+    </group>
+
+
+    <group name="datacenter2" rrdRepository="/var/lib/opennms/rrd/snmp/">
+      <expression type="low" ds-type="jaceLonName" value="0"
+        rearm="1" trigger="1" ds-label="jaceLonName"
+        triggeredUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit"
+        rearmedUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-rearm"
+        expression="jaceLon">
+        <resource-filter field="jaceLonName">LO_HTArrivee_ArrUrg|EL_HTArrivee_1_TD48V_ArrUrg|EL_HTArrivee_1_TD48V_SD|EL_Chaine_1_GE_Dispo|EL_Chaine_1_GE_ArrUrg|EL_Chaine_1_GE_DisjDef|EL_Chaine_1_GE_SDA|EL_Chaine_1_GE_SD|EL_Chaine_1_TInverseur_SD|EL_Chaine_1_TInverseur_ArrUrg|LO_GE_CuveFioul_1_NivAlrBas|LO_GE_CuveFioul_1_NivAlrTresBas|LO_GE_CuveFioul_1_Fuite|LO_GE_ArrUrg|EL_Chaine_1_Voie_1_TGBT_PresUJDB|EL_Chaine_1_Voie_1_TGBT_TempAlrSeuil|EL_Chaine_1_Voie_1_TGBT_SD|EL_Chaine_1_Voie_1_TGBT_ArrUrg|EL_Chaine_1_Voie_1_ASI_1_SD|EL_Chaine_1_Voie_1_ASI_2_SD|EL_Chaine_1_Voie_2_ASI_1_SD|EL_Chaine_1_Voie_1_TGO_PresUJDB|EL_Chaine_1_Voie_1_TGO_ArrUrg|EL_Chaine_1_Voie_1_TGO_SD|EL_Chaine_1_Voie_2_TGO_PresUJDB|EL_Chaine_1_Voie_2_TGO_SD|EL_Chaine_1_Voie_2_TGO_ArrUrg|EL_Chaine_1_TDCVC_PresUJDB|EL_Chaine_1_TDCVC_ArrUrg|EL_Chaine_1_TDCVC_SD|EL_Chaine_1_TDSGX_PresUJDB|EL_Chaine_1_TDSGX_SD|EL_Chaine_1_TDSGX_ArrUrg|EL_Surete_1_TDSurete_PresUJdB|EL_Surete_1_TDSurete_SD|EL_Surete_1_TDSurete_ArrUrg|EL_Surete_1_STS_SD|SI_Centrale_SD|SI_Centrale_FeuAlr|LO_PCC_ArrUrg|EL_Chaine_1_Voie_1_TDO_1_PresUJDB|EL_Chaine_1_Voie_1_TDO_1_ArrUrg|EL_Chaine_1_Voie_1_TDO_1_SD|EL_Chaine_1_Voie_2_TDO_1_PresUJDB|EL_Chaine_1_Voie_2_TDO_1_ArrUrg|EL_Chaine_1_Voie_2_TDO_1_SD|LO_Salle_1_ArrUrg|EL_BoucleCVC_1_PresUJDB|EL_BoucleCVC_1_SD|CL_Boucle_1_Dry_1_SD|CL_Boucle_1_Dry_2_SD|CL_Boucle_1_Pompe_1_SD|CL_Boucle_1_Pompe_2_SD|CL_Boucle_1_PressionDef|LO_Combles_DetectEau</resource-filter>
+      </expression>
+      <expression type="low" ds-type="jaceLon2Name" value="0"
+        rearm="1" trigger="1" ds-label="jaceLon2Name"
+        triggeredUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit"
+        rearmedUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-rearm"
+        expression="jaceLon2">
+        <resource-filter field="jaceLon2Name">LO_HTArrivee_ArrUrg|EL_HTArrivee_1_TD48V_ArrUrg|EL_HTArrivee_1_TD48V_SD|EL_Chaine_1_GE_Dispo|EL_Chaine_1_GE_ArrUrg|EL_Chaine_1_GE_DisjDef|EL_Chaine_1_GE_SDA|EL_Chaine_1_GE_SD|EL_Chaine_1_TInverseur_SD|EL_Chaine_1_TInverseur_ArrUrg|LO_GE_CuveFioul_1_NivAlrBas|LO_GE_CuveFioul_1_NivAlrTresBas|LO_GE_CuveFioul_1_Fuite|LO_GE_ArrUrg|EL_Chaine_1_Voie_1_TGBT_PresUJDB|EL_Chaine_1_Voie_1_TGBT_TempAlrSeuil|EL_Chaine_1_Voie_1_TGBT_SD|EL_Chaine_1_Voie_1_TGBT_ArrUrg|EL_Chaine_1_Voie_1_ASI_1_SD|EL_Chaine_1_Voie_1_ASI_2_SD|EL_Chaine_1_Voie_2_ASI_1_SD|EL_Chaine_1_Voie_1_TGO_PresUJDB|EL_Chaine_1_Voie_1_TGO_ArrUrg|EL_Chaine_1_Voie_1_TGO_SD|EL_Chaine_1_Voie_2_TGO_PresUJDB|EL_Chaine_1_Voie_2_TGO_SD|EL_Chaine_1_Voie_2_TGO_ArrUrg|EL_Chaine_1_TDCVC_PresUJDB|EL_Chaine_1_TDCVC_ArrUrg|EL_Chaine_1_TDCVC_SD|EL_Chaine_1_TDSGX_PresUJDB|EL_Chaine_1_TDSGX_SD|EL_Chaine_1_TDSGX_ArrUrg|EL_Surete_1_TDSurete_PresUJdB|EL_Surete_1_TDSurete_SD|EL_Surete_1_TDSurete_ArrUrg|EL_Surete_1_STS_SD|SI_Centrale_SD|SI_Centrale_FeuAlr|LO_PCC_ArrUrg|EL_Chaine_1_Voie_1_TDO_1_PresUJDB|EL_Chaine_1_Voie_1_TDO_1_ArrUrg|EL_Chaine_1_Voie_1_TDO_1_SD|EL_Chaine_1_Voie_2_TDO_1_PresUJDB|EL_Chaine_1_Voie_2_TDO_1_ArrUrg|EL_Chaine_1_Voie_2_TDO_1_SD|LO_Salle_1_ArrUrg|EL_BoucleCVC_1_PresUJDB|EL_BoucleCVC_1_SD|CL_Boucle_1_Dry_1_SD|CL_Boucle_1_Dry_2_SD|CL_Boucle_1_Pompe_1_SD|CL_Boucle_1_Pompe_2_SD|CL_Boucle_1_PressionDef|LO_Combles_DetectEau</resource-filter>
+      </expression>
+      <expression type="low" ds-type="jaceLonName" value="0"
+        rearm="1" trigger="1" ds-label="jaceLonName"
+        triggeredUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-ho"
+        rearmedUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-rearm"
+        expression="jaceLon">
+        <resource-filter field="jaceLonName">EL_HTArrivee_1_Chargeur48V_1_SD|EL_HTArrivee_1_Chargeur48V_2_SD|CL_HTArrivee_1_Ventilateur_1_SDLT1_DectEau|FossRel1_Pompe2_Def|FossRel1_Pompe1_Def|FossRel2_Pompe2_Def|FossRel2_Pompe1_Def|CL_Boucle_1_Clim_2_1_SD|CL_Boucle_1_Clim_2_2_SD|LO_Salle_1_DetectEau|TA_SalleEtChaine_1_Centrale_SD|TA_VMC_1_Centrale_SD</resource-filter>
+      </expression>
+      <expression type="low" ds-type="jaceLon2Name" value="0"
+        rearm="1" trigger="1" ds-label="jaceLon2Name"
+        triggeredUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-ho"
+        rearmedUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-rearm"
+        expression="jaceLon">
+        <resource-filter field="jaceLon2Name">EL_HTArrivee_1_Chargeur48V_1_SD|EL_HTArrivee_1_Chargeur48V_2_SD|CL_HTArrivee_1_Ventilateur_1_SDLT1_DectEau|FossRel1_Pompe2_Def|FossRel1_Pompe1_Def|FossRel2_Pompe2_Def|FossRel2_Pompe1_Def|CL_Boucle_1_Clim_2_1_SD|CL_Boucle_1_Clim_2_2_SD|LO_Salle_1_DetectEau|TA_SalleEtChaine_1_Centrale_SD|TA_VMC_1_Centrale_SD</resource-filter>
+      </expression>
+      <expression type="low" ds-type="jaceStatusName" value="0"
+        rearm="1" trigger="1" ds-label="jaceStatusName"
+        triggeredUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit"
+        rearmedUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-rearm"
+        expression="jaceStatus">
+      </expression>
+      <expression type="high" ds-type="jaceLonName" value="1"
+        rearm="0" trigger="1" ds-label="jaceLonName"
+        triggeredUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit"
+        rearmedUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-rearm"
+        expression="jaceLon">
+        <resource-filter field="jaceLonName">EL_Chaine_1_Voie_1_TGBT_GEPretADebiter</resource-filter>
+      </expression>
+      <expression type="low" ds-type="jacePhName" value="7.8"
+        rearm="7.8" trigger="1" ds-label="jacePhName"
+        triggeredUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-mail"
+        rearmedUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-rearm"
+        expression="jacePh">
+      </expression>
+      <expression type="low" ds-type="jacePhName" value="7.6"
+        rearm="7.8" trigger="1" ds-label="jacePhName"
+        triggeredUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-ho"
+        rearmedUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-rearm"
+        expression="jacePh">
+      </expression>
+      <expression type="low" ds-type="jaceBarName" value="1.7"
+        rearm="1.7" trigger="1" ds-label="jaceBarName"
+        triggeredUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-mail"
+        rearmedUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-rearm"
+        expression="jaceBar">
+        <resource-filter field="jaceBarName">CL_Boucle_1_DeltaPression</resource-filter>
+      </expression>
+      <expression type="low" ds-type="jaceBarName" value="1.5"
+        rearm="1.7" trigger="1" ds-label="jaceBarName"
+        triggeredUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit"
+        rearmedUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-rearm"
+        expression="jaceBar">
+        <resource-filter field="jaceBarName">CL_Boucle_1_DeltaPression</resource-filter>
+      </expression>
+      <expression type="low" ds-type="jaceBarName" value="1.8"
+        rearm="2" trigger="1" ds-label="jaceBarName"
+        triggeredUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-mail"
+        rearmedUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-rearm"
+        expression="jaceBar">
+        <resource-filter field="jaceBarName">CL_Boucle_1_PressionAspiration</resource-filter>
+      </expression>
+      <expression type="low" ds-type="jaceBarName" value="1.5"
+        rearm="2" trigger="1" ds-label="jaceBarName"
+        triggeredUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit"
+        rearmedUEI="uei.opennms.org/vendor/alphalink/traps/valuelimit-rearm"
+        expression="jaceBar">
+        <resource-filter field="jaceBarName">CL_Boucle_1_PressionAspiration</resource-filter>
+      </expression>
+    </group>
+</thresholding-config>
+
+
+

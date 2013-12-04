@@ -1,0 +1,15 @@
+sigal.nodeName = <%= hostname %>
+jdbc.driverClassName = com.mysql.jdbc.Driver
+jdbc.url = jdbc:mysql://localhost/as
+jdbc.username = as
+jdbc.password = <%= sigal_as_db_password %>
+sigal.maxCallDuration = 15360
+sigal.dbQueueName = sigal.db
+sigal.cdrQueueName = sigal.cdr
+sigal.cdrTopicName = sigal.cdr.notification
+amq.primary.brokerUrl = <%= sigal_primary_broker_url %>
+amq.primary.username = as
+amq.primary.password = <%= active_mq_as_password %>
+amq.secondary.brokerUrl = <%= sigal_secondary_broker_url %>
+amq.secondary.username = as
+amq.secondary.password = <%= active_mq_as_password %>

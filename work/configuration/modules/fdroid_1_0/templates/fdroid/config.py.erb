@@ -1,0 +1,59 @@
+sdk_path = "/usr/local/adt-bundle-linux-x86_64/sdk"
+ndk_path = "" # only for build
+
+#You probably don't need to change this...
+javacc_path = "/usr/share/java"
+
+#Command for running maven 3 (could be mvn, mvn3, or a full path)
+mvn3 = "mvn3" # only for build
+
+repo_url = "http://127.0.0.1/repo"
+repo_name = "FDroid"
+repo_icon = "/var/lib/fdroiddata/fdroid-icon.png"
+repo_description = """
+The official FDroid repository. Applications in this repository are official
+binaries built by the original application developers.
+"""
+
+#The key (from the keystore defined below) to be used for signing the
+#repository itself. Can be None for an unsigned repository.
+repo_keyalias = None
+
+#The keystore to use for release keys when building. This needs to be
+#somewhere safe and secure, and backed up!
+keystore = "/var/lib/fdroiddata/repo.keystore"
+
+#The password for the keystore (at least 6 characters).
+keystorepass = "<%= keystorepass %>"
+
+#The password for keys - the same is used for each auto-generated key
+#as well as for the repository key.
+keypass = "<%= keypass %>"
+
+#The distinguished name used for all keys.
+#keydname = "CN=Birdman, OU=Cell, O=Alcatraz, L=Alcatraz, S=California, C=US"
+keydname = "CN=alphalink, OU=alphalink, O=alphalink, L=Pornic, ST=France, C=FR"
+
+#Use this to override the auto-generated key aliases with specific ones
+#for particular applications. Normally, just leave it empty.
+keyaliases = {}
+keyaliases['com.example.app'] = 'example'
+
+#The ssh path to the server's public web root directory. This is used for
+#uploading data, etc.
+serverwebroot = '/usr/share/nginx/www'
+
+#Wiki details
+wiki_server = "server"
+wiki_path = "/wiki/"
+wiki_user = "login"
+wiki_password = "1234"
+
+#Only set this to true when running a repository where you want to generate
+#stats, and only then on the master build servers, not a development
+#machine.
+update_stats = False
+
+#Set this to true to always use a build server. This saves specifying the
+#--server option on dedicated secure build server hosts.
+build_server_always = False

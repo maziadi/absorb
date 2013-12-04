@@ -1,0 +1,8 @@
+production:
+  adapter: stomp
+  login: "<%= active_mq_user_login -%>"
+  passcode: "<%= active_mq_user_password -%>"
+  host: "<%= active_mq_ip -%>"
+  port: 61613
+  reliable: true
+  reconnectDelay: 5

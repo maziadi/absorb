@@ -1,0 +1,5 @@
+check process delayed_job
+  with pidfile "/usr/share/erp-tech/tmp/pids/delayed_job.pid"
+  start program = "/bin/su - www-data -c 'RAILS_ENV=production /usr/share/erp-tech/script/delayed_job start'" 
+  stop program = "/bin/su - www-data -c 'RAILS_ENV=production /usr/share/erp-tech/script/delayed_job stop'; sleep 2; kill -9 $(pidof delayed_job)"
+  alert <%= monit_conf_alert_email %>

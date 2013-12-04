@@ -1,0 +1,32 @@
+set daemon 30
+set logfile syslog facility log_daemon
+set mailserver <%= ssmtp_mta %> 
+set mail-format { from: monit@<%= fqdn %> }
+set httpd port 2812 and use address localhost
+    allow localhost   # Allow localhost to connect
+    allow admin:monitor # Allow Basic Auth
+
+check system <%= hostname %>
+   alert <%= monit_conf_alert_email %>
+   if loadavg (1min) > <%= monit_load_one_min %> then alert
+   if loadavg (5min) > <%= monit_load_five_min %> then alert
+   if memory usage > <%= monit_memory_usage %>% for 6 cycles then alert
+<% if monit_cpu_usage -%>
+   if cpu usage (user) > 70% for 6 cycles then alert
+   if cpu usage (system) > 50% for 6 cycles then alert
+   if cpu usage (wait) > 70% for 6 cycles then alert
+<% end -%>
+
+check device rootfs with path /
+    alert <%= monit_conf_alert_email %> 
+    if space usage > <%= monit_space_usage %>% for 5 times within 15 cycles then alert
+    if inode usage > 90% for 5 times within 15 cycles then alert 
+<% monit_other_partition.each do |partition| -%>
+<%= "\n" -%>
+<%= "check device #{partition[1..-1]}fs with path #{partition}\n" -%>
+<%= "    alert #{monit_conf_alert_email}\n" -%>
+<%= "    if space usage > #{monit_space_usage}% for 5 times within 15 cycles then alert\n" -%>
+<%= "    if inode usage > 90% for 5 times within 15 cycles then alert\n" -%>
+<% end -%>
+
+include "/etc/monit/conf.d/*"

@@ -1,0 +1,73 @@
+tabs: &TABS
+  home: 
+    app: "business"
+    path: "/"
+  ordering: 
+    app: "business"
+    path: "/orders"
+    reqs:
+      - sales_admin
+      - ordering
+      - eligibility
+  ticketing: 
+    app: "business"
+    path: "/tickets"
+    reqs:
+      - ticket_support
+      - ticket_manager
+      - ticket_creator
+  invoicing:
+    app: "voip"
+    path: "/"
+    reqs: 
+      - voip
+      - sales_admin
+      - marketing
+      - ticket_support
+      - accountant
+      - marketing
+      - sales
+      - production
+  tech: 
+    app: "tech"
+    path: "/"
+    reqs:
+      - operating
+      - vpn_ssl
+  admin: 
+    app: "business"
+    path: "/admin"
+    reqs: 
+      - administration
+
+production:
+  apps:
+    business: "https://extranet.alphalink.fr/gestion"
+    tech: "https://extranet.alphalink.fr/erp-tech"
+    voip: "https://extranet.alphalink.fr/voip"
+  tabs:
+    <<: *TABS
+
+preproduction:
+  apps:
+    business: "https://extranet-preprod.admin.alphalink.fr/gestion"
+    tech: "https://extranet-preprod.admin.alphalink.fr/erp-tech"
+    voip: "https://extranet-preprod.admin.alphalink.fr/voip"
+  tabs:
+    <<: *TABS
+
+development:
+  apps:
+    business: "http://erp.dev"
+    tech: "http://erp-tech.dev"
+    voip: "http://taxman.dev"
+  tabs:
+    <<: *TABS
+
+test:
+  apps:
+    business: "http://erp.test"
+    tech: "http://erp-tech.test"
+    voip: "http://taxman.test"
+  tabs:
+    <<: *TABS

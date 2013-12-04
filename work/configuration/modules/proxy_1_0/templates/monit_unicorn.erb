@@ -1,0 +1,4 @@
+check process dansconfig
+  with pidfile "/var/run/dansconfig/unicorn.pid"
+  start program = "/bin/su - dansconfig -c 'unicorn -E <%= dansconfig_env %> -c /srv/dansconfig/config/unicorn.rb -D'" 
+  stop program = "/bin/su - dansconfig -c 'kill -QUIT $(cat /var/run/dansconfig/unicorn.pid)'"

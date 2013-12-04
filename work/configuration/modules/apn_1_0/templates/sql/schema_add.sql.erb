@@ -1,0 +1,62 @@
+/*
+ * APN schema specifics
+ * IMPORTANT NOTE: for all modifications, see http://intranet.admin.alphalink.fr/documentation/APN#head-f4bae4d235eb4286986903195e4a9f7e842da3ba
+ *
+*/
+
+/* add radcheck */
+DO $$  
+  BEGIN
+    BEGIN
+      ALTER TABLE radcheck ADD COLUMN ref VARCHAR(32) NOT NULL DEFAULT ''; 
+      ALTER TABLE radcheck ADD COLUMN state CHAR(1) NOT NULL DEFAULT 'A';
+      ALTER TABLE radcheck ADD COLUMN updatedat TIMESTAMP NOT NULL DEFAULT now();
+    EXCEPTION
+      WHEN duplicate_column THEN RAISE NOTICE '[radcheck] ADD COLUMN: column already exists';
+    END;
+  END;
+$$; 
+
+/* add radacct */
+DO $$  
+  BEGIN
+    BEGIN
+      ALTER TABLE radacct ADD COLUMN sent BOOLEAN DEFAULT false;
+      ALTER TABLE radacct ADD COLUMN mcc INTEGER;
+      ALTER TABLE radacct ADD COLUMN timezone VARCHAR(32);
+      ALTER TABLE radacct ADD COLUMN visprefsi VARCHAR(32) DEFAULT NULL;
+    EXCEPTION
+      WHEN duplicate_column THEN RAISE NOTICE '[radacct] ADD COLUMN: column already exists';
+    END;
+  END;
+$$;
+
+/*
+ * refmsisdn : association REFERENCE SI, MSISDN, routage, acct
+*/
+CREATE TABLE IF NOT EXISTS refmsisdn (
+  ref VARCHAR(32) PRIMARY KEY,
+  msisdn VARCHAR(64)
+);
+ALTER TABLE refmsisdn OWNER TO <%= db_user %>;
+DO $$  
+  BEGIN
+    BEGIN
+      ALTER TABLE refmsisdn ADD COLUMN visprefsi VARCHAR(32) DEFAULT NULL;
+      ALTER TABLE refmsisdn ADD COLUMN acctsession BOOLEAN DEFAULT false;
+      ALTER TABLE refmsisdn ADD COLUMN lastacctsessionid VARCHAR(64) DEFAULT NULL;
+    EXCEPTION
+      WHEN duplicate_column THEN RAISE NOTICE '[refmsisdn] ADD COLUMN: column already exists';
+    END;
+  END;
+$$;
+
+/*
+ * routage BGP/VISP : référence SI et technique
+*/
+CREATE TABLE IF NOT EXISTS rtvisp (
+ visprefsi VARCHAR(32) PRIMARY KEY,
+ visprefrt VARCHAR(32),
+ comment VARCHAR(255)
+);
+ALTER TABLE rtvisp OWNER TO <%= db_user %>;

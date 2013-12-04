@@ -1,0 +1,52 @@
+#!/bin/bash
+#
+# Rebuild local standby database
+# Log to syslog
+#
+
+SYSLOG_NAME="primary2standby"
+VIRTUAL_IP="<%= virtual_ip %>"
+
+logger -t "${SYSLOG_NAME}[$$]" "START db rebuild in standby"
+pg_version=$(ls /usr/lib/postgresql/ | tail -1)
+
+handle_errors() {
+  if [ "$2" != "0" ]; then
+    echo "Error(s) while $1. See syslog."
+    cat $errors | logger -p local0.crit -t $SYSLOG_NAME
+  fi
+}
+
+errors=$(mktemp)
+
+# ensure db is stopped
+/etc/init.d/freeradius stop 2>/dev/null
+pkill postgres
+pg_ctlcluster ${pg_version} main stop 2>$errors
+handle_errors "stopping local database" $?
+
+# rebuild db
+echo "* Rebuilding local database"
+psql -d <%= db_name %> -c "SELECT pg_start_backup('backup', true)" -h $VIRTUAL_IP >/dev/null 2>$errors
+handle_errors "starting backup on remote node"  $?
+rsync -avz --delete-before --exclude '*.pid' --exclude '*.conf' --exclude '*.done' --exclude '.*.swp' postgres@$VIRTUAL_IP:/var/lib/postgresql/${pg_version}/main/ /var/lib/postgresql/${pg_version}/main/ >/dev/null 2>$errors
+handle_errors "rebuilding local database (rsync)" $?
+psql -d <%= db_name %> -c "SELECT pg_stop_backup();" -h $VIRTUAL_IP >/dev/null 2>$errors
+handle_errors "stopping backup on remote node" $?
+
+rm /tmp/stopstandby 2>/dev/null
+
+# start db
+echo "* Starting local database"
+cp /etc/postgresql/${pg_version}/main/postgresql.conf.standby /var/lib/postgresql/${pg_version}/main/postgresql.conf
+cp /etc/postgresql/${pg_version}/main/postgresql.conf.standby /etc/postgresql/${pg_version}/main/postgresql.conf
+if [ -f /var/lib/postgresql/${pg_version}/main/recovery.done ]; then
+  mv /var/lib/postgresql/${pg_version}/main/recovery.done /var/lib/postgresql/${pg_version}/main/recovery.conf
+else
+  cp /etc/postgresql/${pg_version}/main/recovery.conf /var/lib/postgresql/${pg_version}/main
+fi
+pg_ctlcluster ${pg_version} main start 2>$errors
+handle_errors "starting local database" $?
+
+rm $errors
+logger -t "${SYSLOG_NAME}[$$]" "END db rebuild in standby"

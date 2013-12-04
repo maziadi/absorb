@@ -1,0 +1,16 @@
+#!/bin/sh
+# First arg is the operation.
+BRIDGES="/etc/network/interfaces.xen"
+OP=$1
+shift
+
+case "$OP" in
+    start)
+        /sbin/ifup -i $BRIDGES -a
+    ;;
+    stop)
+        /sbin/ifdown -i $BRIDGES -a
+    ;;
+esac
+                                       
+exit 0

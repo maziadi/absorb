@@ -1,0 +1,8 @@
+<% if !db_auth %>
+test Cleartext-Password := "initsys"
+  <% if gvrp %>
+  Tunnel-Type := VLAN,
+  Tunnel-Medium-Type := IEEE-802,
+  Tunnel-Private-Group-Id := 200 # VLAN ID : CHANGE IT
+  <% end %>
+<% end %>

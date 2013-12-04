@@ -1,0 +1,18 @@
+/var/log/erp/broker.log {
+  missingok
+  compress
+  daily
+  rotate 30
+}
+
+/var/log/erp/production.log {
+  missingok
+  compress
+  daily
+  rotate 30
+  postrotate
+    for i in `ls /usr/share/erp/tmp/pids/*.pid`; do
+      kill -USR2 `cat $i`
+    done
+  endscript
+}

@@ -1,0 +1,28 @@
+#!/bin/sh
+
+prefix=$1
+
+if [ -e /usr/lib/xen-tools/common.sh ]; then
+    . /usr/lib/xen-tools/common.sh
+else
+    . ./hooks/common.sh
+fi
+
+logMessage Script $0 starting
+(
+cat >> ${prefix}/etc/apt/sources.list <<EOF
+deb http://gold.alphalink.fr/ update/
+deb http://gold.alphalink.fr/ internal/
+EOF
+
+wget -O - http://gold.alphalink.fr/ALPHALINK.GPG | chroot ${prefix} apt-key add -
+chroot ${prefix} aptitude update
+chroot ${prefix} aptitude -y dist-upgrade
+
+installDebianPackage ${prefix} puppet
+
+mkdir -p ${prefix}/root/.ssh
+chmod 700 ${prefix}/root/.ssh
+cp /root/.ssh/authorized_keys ${prefix}/root/.ssh/
+) 2>&1 > /tmp/puppet-post.log
+logMessage Script $0 finished

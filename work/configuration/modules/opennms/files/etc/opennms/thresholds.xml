@@ -1,0 +1,171 @@
+<?xml version="1.0"?>
+    <!-- Dans ce fichier il faut remplir des variables qui corresponde aux variables dans datacollection-config.xml -->
+    <!-- selon la table suivante:                                                                                   -->
+
+    <!-- thresholds.xml     datacollection-config.xml                                                               -->
+    <!-- ds-name         -  MibObj: alias ??                                                                        -->
+    <!-- ds-type         -  "node" (si le fichier est dans /var/lib/opennms/rrd/snmp/{id}.                          -->
+    <!--                 -  "if" (si le fichier est dans /var/lib/opennms/rrd/snmp/{id}/eth0/                       -->
+    <!-- ds-label        -  resourceType: resourceLabel   MibObj: alias (egalement c'est le nom de fichier .jrb     -->
+    <!-- resource-filter -  l'expression qui est cherchee dans /var/lib/opennms/rrd/snmp/{id}/string.properties     -->
+    <!-- ========================================================================================================== -->
+
+<thresholding-config>
+  <group name="mib2" rrdRepository = "/var/lib/opennms/rrd/snmp/">
+     <threshold  type="high" ds-name="tcpInErrors"                     ds-type="node" ds-label=""       value="1" rearm="0" trigger="1"/>
+     <expression type="high" expression="ifInErrors + ifOutErrors"     ds-type="if"   ds-label="ifName" value="1" rearm="0" trigger="2"/>
+     <expression type="high" expression="ifInDiscards + ifOutDiscards" ds-type="if"   ds-label="ifName" value="1" rearm="0" trigger="2"/>
+
+     <expression type="high" expression="ifInOctets * 8 / 1000000 / ifHighSpeed * 100" ds-type="if" ds-label="ifName" value="90.0" rearm="75.0" trigger="3">
+       <resource-filter field="ifHighSpeed">^[1-9]+[0-9]*$</resource-filter>
+     </expression>
+
+     <expression type="high" expression="ifOutOctets * 8 / 1000000 / ifHighSpeed * 100" ds-type="if" ds-label="ifName" value="90.0" rearm="75.0" trigger="3">
+     <resource-filter field="ifHighSpeed">^[1-9]+[0-9]*$</resource-filter>
+     </expression>
+  </group>
+
+  <!-- ============================================= espace disque ================================================ -->
+  <group name="hrstorage"	rrdRepository = "/var/lib/opennms/rrd/snmp/">
+    <expression type="high" 
+      expression="hrStorageUsed / hrStorageSize * 100.0" 
+      ds-type="hrStorageIndex" 
+      ds-label="hrStorageDescr"  
+      value="80.0"   
+      rearm="75.0"    
+      trigger="2"
+      triggeredUEI="uei.opennms.org/alphalink/DisquePlein" 
+      rearmedUEI="uei.opennms.org/alphalink/DisquePlein-rearmed">
+      <resource-filter field="hrStorageDescr">^/$</resource-filter>
+    </expression>
+
+    <expression type="relativeChange" 
+      expression="hrStorageUsed / hrStorageSize * 100.0" 
+      ds-type="hrStorageIndex" 
+      ds-label="hrStorageDescr"
+      value="0.2"   
+      rearm="0.0"     
+      trigger="2"
+      triggeredUEI="uei.opennms.org/alphalink/DisqueSeRemplisseTropVite"> 
+      <resource-filter field="hrStorageDescr">^/$</resource-filter>
+    </expression>
+
+  <!-- ========= hr7-storage ========= -->
+    <expression type="high" 
+      expression="hr7_StrgeUsed / hr7_StrgeSize * 100.0"
+      ds-type="node" 
+      ds-label="hr7_StrgeDescr"  
+      value="90.0"   
+      rearm="90.0"    
+      trigger="2"
+      triggeredUEI="uei.opennms.org/alphalink/DisquePlein" 
+      rearmedUEI="uei.opennms.org/alphalink/DisquePlein-rearmed">
+      <resource-filter field="hr7_StrgeDescr">^/var/lib/amavis$</resource-filter>
+    </expression>
+
+  <!-- ========= hr6-storage ========= -->
+    <expression type="high" 
+      expression="hr6_StrgeUsed / hr6_StrgeSize * 100.0"
+      ds-type="node" 
+      ds-label="hr6_StrgeDescr"  
+      value="90.0"   
+      rearm="90.0"    
+      trigger="2"
+      triggeredUEI="uei.opennms.org/alphalink/DisquePlein" 
+      rearmedUEI="uei.opennms.org/alphalink/DisquePlein-rearmed">
+      <resource-filter field="hr6-StrgeDescr">^/data/backup0$</resource-filter>
+    </expression>
+
+  <!-- ========= hr7-storage ========= -->
+    <expression type="high" 
+      expression="hr7_StrgeUsed / hr7_StrgeSize * 100.0"
+      ds-type="node" 
+      ds-label="hr7_StrgeDescr"  
+      value="90.0"   
+      rearm="90.0"    
+      trigger="2"
+      triggeredUEI="uei.opennms.org/alphalink/DisquePlein" 
+      rearmedUEI="uei.opennms.org/alphalink/DisquePlein-rearmed">
+      <resource-filter field="hr7_StrgeDescr">^/data/backup1$</resource-filter>
+    </expression>
+
+	</group>
+  <!-- ============================================= netsnmp trigger  ================================================ -->
+  <group name="netsnmp" rrdRepository = "/var/lib/opennms/rrd/snmp/">
+    
+    <expression type="high" 
+      expression="loadavg5 / 100.0"                               
+      ds-type="node"  
+      ds-label="" 
+      value="10.0"  
+      rearm="7.5"   
+      trigger="1"
+      triggeredUEI="uei.opennms.org/alphalink/GrandLoadAvg5"  
+      rearmedUEI  ="uei.opennms.org/alphalink/GrandLoadAvg5-rearmed"/>
+
+    <!-- expression: (memUsed)/memTotalReal*100 -->
+    <expression type="high"  
+      expression="(memTotalReal-memBuffer-memCached-memShared-memAvailReal)/memTotalReal * 100.0" 
+      ds-type="node"  
+      ds-label="" 
+      value="90.0"   
+      rearm="80.0"  
+      trigger="1"
+      triggeredUEI="uei.opennms.org/alphalink/InsuffisanteRAM" 
+      rearmedUEI  ="uei.opennms.org/alphalink/InsuffisanteRAM-rearmed" />
+
+    <expression type="low"
+      expression="memAvailSwap / memTotalSwap * 100.0"
+      ds-type="node"
+      ds-label=""
+      value="25.0"
+      rearm="35.0"
+      trigger="1"
+      triggeredUEI="uei.opennms.org/alphalink/InsuffisanteSwap" 
+      rearmedUEI  ="uei.opennms.org/alphalink/InsuffisanteSwap-rearmed" /> 
+  </group>
+
+  <!-- ============================================= Callweaver ==================================================== -->
+  <group name="callweaver" rrdRepository = "/var/lib/opennms/rrd/snmp/">
+    <threshold type="high"
+      ds-name="nbCalls"
+      ds-type="callweaver"
+      ds-label="Callweaver"
+      value="200.0"
+      rearm="190.0"
+      trigger="1"
+      triggeredUEI="uei.opennms.org/alphalink/callweaver/BeaucoupDesAppels" 
+      rearmedUEI  ="uei.opennms.org/alphalink/callweaver/BeaucoupDesAppels-rearmed"/>
+  </group>
+
+
+  <!-- ============================================================================= -->
+  <!--      Polling thresholds (partir OpenNMS v.1.7.6)                              -->
+  <!--  ne pas utiliser pour les OpenNMS <v1.7.6 pour eviter misch-mash config files -->
+  <!-- ============================================= Poller ICMP latency =========================================== -->
+  <!--
+  <group name="pollerICMP" rrdRepository="/var/lib/opennms/rrd/response/">
+     <threshold type="high" 
+     ds-type="if" 
+     value="200000.0"
+     rearm="80000.0" 
+     ds-name="icmp"
+     trigger="1" 
+     triggeredUEI="uei.opennms.org/alphalink/poller/ICMP-latency" 
+     rearmedUEI  ="uei.opennms.org/alphalink/poller/ICMP-latency-rearmed"/>
+  </group>
+  -->
+  <!-- ============================================= Poller SSH latency ============================================ -->
+  <!--
+  <group name="pollerSSH" rrdRepository="/var/lib/opennms/rrd/response/">
+     <threshold type="high" 
+     ds-type="if" 
+     value="200000.0"
+     rearm="80000.0" 
+     ds-name="ssh"
+     trigger="1" 
+     triggeredUEI="uei.opennms.org/alphalink/poller/SSH-latency" 
+     rearmedUEI  ="uei.opennms.org/alphalink/poller/SSH-latency-rearmed"/>
+  </group>
+  -->
+</thresholding-config>

@@ -1,0 +1,39 @@
+#! /bin/sh
+
+# run the instance as user
+AMQ_USER=activemq
+
+if [ -f /etc/activemq.conf ];
+then
+. /etc/activemq.conf
+fi
+
+CMD="nohup ${ACTIVEMQ_HOME}/bin/activemq-admin"
+
+case "$1" in
+    start)
+        echo "Starting ActiveMQ "
+        /bin/su - $AMQ_USER -s /bin/bash -c "$CMD $1 >/dev/null 2>&1 &"
+        ps -U activemq -o pid= > /var/run/activemq.pid
+        ;;
+    stop)
+        echo "Shutting down ActiveMQ"
+        /bin/su - $AMQ_USER -s /bin/bash -c "$CMD $1 --jmxuser $JMX_USER --jmxpassword $JMX_PASSWORD --jmxurl $JMX_URL >/dev/null 2>&1 &"
+        sleep 3
+        pid=`ps -U activemq -o pid=`
+        [ -n "$pid" ] && kill -9 $pid
+        rm /var/run/activemq.pid
+        ;;
+    restart)
+        $0 stop
+    		sleep 3
+        $0 start
+        ;;
+    status)
+        echo not yet implemented
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status}"
+        exit 1
+        ;;
+esac

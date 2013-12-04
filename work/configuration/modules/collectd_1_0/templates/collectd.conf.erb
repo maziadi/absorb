@@ -1,0 +1,274 @@
+# Config file for collectd(1).
+#
+# Some plugins need additional configuration and are disabled by default.
+# Please read collectd.conf(5) for details.
+#
+# You should also read /usr/share/doc/collectd-core/README.Debian.plugins
+# before enabling any more plugins.
+
+#Hostname "localhost"
+#FQDNLookup true
+#BaseDir "/var/lib/collectd"
+#PluginDir "/usr/lib/collectd"
+TypesDB "/usr/share/collectd/types.db" "/etc/collectd/types.db"
+#Interval 10
+#Timeout 2
+#ReadThreads 5
+
+#LoadPlugin logfile
+LoadPlugin syslog
+
+#<Plugin logfile>
+#	LogLevel "info"
+#	File STDOUT
+#	Timestamp true
+#	PrintSeverity false
+#</Plugin>
+
+<Plugin syslog>
+  LogLevel info
+</Plugin>
+
+LoadPlugin cpu
+LoadPlugin df
+LoadPlugin disk
+LoadPlugin interface
+LoadPlugin irq
+LoadPlugin load
+LoadPlugin memory
+LoadPlugin network
+LoadPlugin processes
+<% unless client %>
+LoadPlugin rrdtool
+<% end %>
+LoadPlugin swap
+<% if greylist_module != "" %>
+LoadPlugin tail
+<% end %>
+LoadPlugin users
+
+<Plugin df>
+  FSType tmpfs
+  FSType rootfs
+  IgnoreSelected true
+  ReportReserved true
+  ReportInodes true
+</Plugin>
+
+
+<Plugin network>
+<% if client %>
+  <Server "<%= server_addr %>" "<%= server_port %>">
+    Username "<%= username %>"
+    Password "<%= password %>"
+    SecurityLevel Encrypt
+    Interface "<%= net_interface %>"
+  </Server>
+<% else %>
+  <Listen "<%= server_addr %>" "<%= server_port %>">
+    SecurityLevel Encrypt
+    Interface "<%= net_interface %>"
+    AuthFile "/etc/collectd/passwd"
+  </Listen>
+<% end %>
+  CacheFlush 1800
+</Plugin>
+
+<% unless client %>
+<Plugin rrdtool>
+  DataDir "/var/lib/collectd/rrd"
+</Plugin>
+<% end %>
+
+
+<% if greylist_module != "" %>
+<Plugin tail>
+  <% if greylist_module != "" %>
+  <File "<%=  greylist_module %>">
+    Instance "postgrey"
+    <Match>
+      Regex "\\<action=greylist, reason=new\\>"
+      DSType "CounterInc"
+      Type "mail_counter"
+      Instance "greylisted"
+    </Match>
+
+    <Match>
+      Regex "\\<action=pass, reason=triplet found\\>"
+      DSType "CounterInc"
+      Type "mail_counter"
+      Instance "accepted"
+    </Match>
+
+    <Match>
+      Regex "\\<action=pass, reason=client whitelist\\>"
+      DSType "CounterInc"
+      Type "mail_counter"
+      Instance "client_whitelist"
+    </Match>
+    Instance "postfix"
+    # number of connections
+    # (incoming)
+    <Match>
+      Regex "\\<postfix\\/smtpd\\[[0-9]+\\]: connect from\\>"
+      DSType "CounterInc"
+      Type "mail_counter"
+      Instance "connection-in-open"
+    </Match>
+    <Match>
+      Regex "\\<postfix\\/smtpd\\[[0-9]+\\]: disconnect from\\>"
+      DSType "CounterInc"
+      Type "mail_counter"
+      Instance "connection-in-close"
+    </Match>
+    <Match>
+      Regex "\\<postfix\\/smtpd\\[[0-9]+\\]: lost connection after .* from\\>"
+      DSType "CounterInc"
+      Type "mail_counter"
+      Instance "connection-in-lost"
+    </Match>
+    <Match>
+      Regex "\\<postfix\\/smtpd\\[[0-9]+\\]: timeout after .* from\\>"
+      DSType "CounterInc"
+      Type "mail_counter"
+      Instance "connection-in-timeout"
+    </Match>
+    <Match>
+      Regex "\\<postfix\\/smtpd\\[[0-9]+\\]: setting up TLS connection from\\>"
+      DSType "CounterInc"
+      Type "mail_counter"
+      Instance "connection-in-TLS-setup"
+    </Match>
+    <Match>
+      Regex "\\<postfix\\/smtpd\\[[0-9]+\\]: [A-Za-z]+ TLS connection established from\\>"
+      DSType "CounterInc"
+      Type "mail_counter"
+      Instance "connection-in-TLS-established"
+    </Match>
+    # (outgoing)
+    <Match>
+      Regex "\\<postfix\\/smtp\\[[0-9]+\\]: setting up TLS connection to\\>"
+      DSType "CounterInc"
+      Type "mail_counter"
+      Instance "connection-out-TLS-setup"
+    </Match>
+    <Match>
+      Regex "\\<postfix\\/smtp\\[[0-9]+\\]: [A-Za-z]+ TLS connection established to\\>"
+      DSType "CounterInc"
+      Type "mail_counter"
+      Instance "connection-out-TLS-established"
+    </Match>
+ 
+   # rejects for incoming E-mails
+   <Match>
+     Regex "\\<554 5\\.7\\.1\\>"
+     DSType "CounterInc"
+     Type "mail_counter"
+     Instance "rejected"
+   </Match>
+   <Match>
+     Regex "\\<450 4\\.7\\.1\\>.*Helo command rejected: Host not found\\>"
+     DSType "CounterInc"
+     Type "mail_counter"
+     Instance "rejected-host_not_found"
+   </Match>
+   <Match>
+     Regex "\\<450 4\\.7\\.1\\>.*Client host rejected: No DNS entries for your MTA, HELO and Domain\\>"
+     DSType "CounterInc"
+     Type "mail_counter"
+     Instance "rejected-no_dns_entry"
+   </Match>
+    <Match>
+      Regex "\\<450 4\\.7\\.1\\>.*Client host rejected: Mail appeared to be SPAM or forged\\>"
+      DSType "CounterInc"
+      Type "mail_counter"
+      Instance "rejected-spam_or_forged"
+    </Match>
+ 
+   # status codes
+   <Match>
+     Regex "status=deferred"
+     DSType "CounterInc"
+     Type "mail_counter"
+     Instance "status-deferred"
+   </Match>
+   <Match>
+     Regex "status=forwarded"
+     DSType "CounterInc"
+     Type "mail_counter"
+     Instance "status-forwarded"
+   </Match>
+   <Match>
+     Regex "status=reject"
+     DSType "CounterInc"
+     Type "mail_counter"
+     Instance "status-reject"
+   </Match>
+   <Match>
+     Regex "status=sent"
+     DSType "CounterInc"
+     Type "mail_counter"
+     Instance "status-sent"
+   </Match>
+   <Match>
+     Regex "status=bounced"
+     DSType "CounterInc"
+     Type "mail_counter"
+     Instance "status-bounced"
+   </Match>
+   <Match>
+     Regex "status=SOFTBOUNCE"
+     DSType "CounterInc"
+     Type "mail_counter"
+     Instance "status-softbounce"
+   </Match>
+ 
+   # message size
+   <Match>
+     Regex "size=([0-9]*)"
+     DSType "CounterAdd"
+     Type "ipt_bytes"
+     Instance "size"
+   </Match>
+ 
+   # delays (see [1] for details)
+   # total time spent in the Postfix queue
+   <Match>
+     Regex "delay=([\.0-9]*)"
+     DSType "GaugeAverage"
+     Type "gauge"
+     Instance "delay"
+   </Match>
+   # time spent before the queue manager, including message transmission
+   <Match>
+     Regex "delays=([\.0-9]*)/[\.0-9]*/[\.0-9]*/[\.0-9]*"
+     DSType "GaugeAverage"
+     Type "gauge"
+     Instance "delay-before_queue_mgr"
+   </Match>
+   # time spent in the queue manager
+   <Match>
+     Regex "delays=[\.0-9]*/([\.0-9]*)/[\.0-9]*/[\.0-9]*"
+     DSType "GaugeAverage"
+     Type "gauge"
+     Instance "delay-in_queue_mgr"
+   </Match>
+   # connection setup time including DNS, HELO and TLS
+   <Match>
+     Regex "delays=[\.0-9]*/[\.0-9]*/([\.0-9]*)/[\.0-9]*"
+     DSType "GaugeAverage"
+     Type "gauge"
+     Instance "delay-setup_time"
+   </Match>
+   # message transmission time
+   <Match>
+     Regex "delays=[\.0-9]*/[\.0-9]*/[\.0-9]*/([\.0-9]*)"
+     DSType "GaugeAverage"
+     Type "gauge"
+     Instance "delay-trans_time"
+   </Match>
+  </File>
+  <% end %>
+</Plugin>
+<% end %>
+
