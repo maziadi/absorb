@@ -1,0 +1,45 @@
+
+Disk /dev/sda: 1000.2 GB, 1000204886016 bytes
+255 heads, 63 sectors/track, 121601 cylinders, total 1953525168 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 4096 bytes
+Disk identifier: 0x0008f398
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sda1   *        2048      487423      242688   83  Linux
+/dev/sda2          489470  1953523711   976517121    5  Extended
+Partition 2 does not start on physical sector boundary.
+/dev/sda5          489472  1953523711   976517120   8e  Linux LVM
+
+Disk /dev/mapper/data-system: 30.0 GB, 29997662208 bytes
+255 heads, 63 sectors/track, 3647 cylinders, total 58589184 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 4096 bytes
+Disk identifier: 0x00000000
+
+
+Disk /dev/mapper/data-swap: 3997 MB, 3997171712 bytes
+255 heads, 63 sectors/track, 485 cylinders, total 7806976 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 4096 bytes
+Disk identifier: 0x00000000
+
+
+Disk /dev/mapper/data-home: 30.0 GB, 29997662208 bytes
+255 heads, 63 sectors/track, 3647 cylinders, total 58589184 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 4096 bytes
+Disk identifier: 0x00000000
+
+
+Disk /dev/mapper/data-var: 9999 MB, 9999220736 bytes
+255 heads, 63 sectors/track, 1215 cylinders, total 19529728 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 4096 bytes
+Disk identifier: 0x00000000
+
