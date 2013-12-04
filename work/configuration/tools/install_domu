@@ -1,0 +1,78 @@
+#!/bin/bash
+
+usage () {
+  echo "Script destiné a installer un domu de test sur maquette-1-por1"
+  echo "usage : ${0} -h hostname [-f flavour] [-i ip]" >&2
+  echo "flavour : etch, lenny ou lenny-10g"
+}
+
+while getopts :f:h:i:p: opt
+do
+  case ${opt} in
+    f)  FLAVOUR=${OPTARG}
+    ;;
+    h)  HOST=${OPTARG}
+    ;;
+    i)  IP=${OPTARG}
+    ;;
+    p)  PUPPETMASTER=${OPTARG}
+    ;;
+    '?')  echo "${0} : option ${OPTARG} is not valid" >&2
+          usage
+          exit -1
+    ;;
+  esac
+done
+
+# Verification de l'existence de la variable HOST
+if [ -z $HOST ]
+then
+  echo "You have to specified a hostname"
+  usage
+  exit -1
+fi
+
+# Attribution d'une valeur par defaut ou test pour les 
+# options qui ne sont pas obligatoires.
+if [ -z $IP ]
+then
+  IP=$(tools/infra.rb search $HOST -c admin_addr | grep -Eo '([0-9]{1,3}\.*){4}')
+#  IP=$(host -t a $HOST | grep -v "not found" | awk '{print $3}')
+  if [ -z $IP ]
+  then
+    echo "You have to specified an ip address : No DNS record"
+    exit -2
+  fi
+fi
+
+FLAVOUR=${FLAVOUR:-lenny}
+SERVER="maquette-1-por1"
+
+# Suppression des options et de leur parametre.
+# Test afin de verifier qu'il ne reste plus d'argument.
+shift $(($OPTIND - 1))
+
+if [ ! -z "$@" ]
+then
+  usage
+  exit -3
+fi
+
+ssh $SERVER 'xm list' | grep -q $HOST
+if [ $? -eq 0 ]
+then
+  echo -n "La machine $HOST est lancé sur maquette-1-por1, voulez vous la réinstaller ? y/n : "
+  read ANSWER
+  if [ $ANSWER == "y" ]
+  then
+    ssh $SERVER "xm destroy $HOST"
+    echo "Arret de la machine sur $SERVER"
+    sleep 5
+  else
+    echo "Annulation de l'installation de $HOST"
+    exit -3
+  fi
+fi
+
+
+rake -f tools/install_domu.rake install hostname=$HOST ip=$IP distrib=$FLAVOUR

@@ -1,0 +1,32 @@
+Bonjour, 
+
+Nous vous informons de l'expédition de(s) l'équipement(s) suivant(s) ce jour :
+
+<% @contenu_type.each {|materiel, nombre| %><%= nombre %>x <%= materiel %>
+<% } %>
+<%= @client %> - <%= @addr_client %> - <%= @addr_ville %> (affaire(s) n°: <% for i in 0..package_items.size-1 do %><%= @package_items[i][1] %> <% end %>)
+
+Adresse de livraison: 
+
+<%= @addr_client %>
+<%= @addr_attention %>
+<%= @addr_rue %>
+<%= @addr_codepostale %> <%= @addr_ville %>
+
+Contact de livraison: <%= @addr_tel %>
+N° de récépissé : <%= @num_recepise %>
+
+Pour tout problème d'acheminement, 
+merci de contacter le Service Expédition au 09.70.75.70.76 en leur communiquant le N° de récépissé.
+
+Cordialement,
+
+-- 
+Service Production
+________________________
+
+Groupe Alphalink
+Init-Sys
+Ligne support : + 33 9 70 75 70 76
+Fax : + 33 9 70 75 70 78
+Visitez : www.alphalink.fr

@@ -1,0 +1,150 @@
+\documentclass[pdftex,11pt,a4paper]{article}
+\pagestyle{empty}
+
+%\usepackage{showframe}
+\usepackage[french]{babel}
+\usepackage[pdftex]{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage{marvosym}
+\usepackage{pifont}
+\usepackage{epic}
+\usepackage{xcolor}
+\usepackage{multirow}
+\usepackage{colortbl}
+
+\setlength{\unitlength}{3mm}
+
+\newcommand{\squareUR}{\begin{picture}(1,1) \drawline(0,1)(1,1)(1,0) \end{picture}}
+\newcommand{\squareUL}{\begin{picture}(1,1) \drawline(0,0)(0,1)(1,1) \end{picture}}
+\newcommand{\squareBL}{\begin{picture}(1,1) \drawline(0,1)(0,0)(1,0) \end{picture}}
+\newcommand{\squareBR}{\begin{picture}(1,1) \drawline(0,0)(1,0)(1,1) \end{picture}}
+
+\newcommand{\visaspace}[1]{
+ \begin{picture}(12,6)
+ \linethickness{0.0mm}  
+    \normalsize
+    \put(0,0){\colorbox{gray!15}{\framebox(12,6)[b]{#1}}}
+  \end{picture}
+}
+
+\newcommand{\HRule}{\rule{16cm}{0.1mm}}
+\newcommand{\logo}{
+\includegraphics[height=2cm]{<%= SCRIPT_PATH+RESURCES_PATH+"alphalink_logo.jpg" %>}
+}
+\definecolor{Gray}{gray}{0.9}
+\newcolumntype{C}[1]{>{\centering\let\newline\\\arraybackslash\hspace{0pt}}m{#1}}
+
+
+\setlength{\topmargin}{-0.5cm}
+\setlength{\headheight}{0mm}
+\setlength{\headsep}{2mm}
+\setlength{\topskip}{1cm}
+\setlength{\oddsidemargin}{-1cm}
+\setlength{\evensidemargin}{-1cm}
+\setlength{\textwidth}{17cm}
+\setlength{\textheight}{26cm}
+\setlength{\footskip}{0mm}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+  {
+  \renewcommand{\arraystretch}{1.7}
+
+%%%%%%%%%%%%%%%%%%%%%%%  HEAD TABLE  %%%%%%%%%%%%%%%%%%
+  <% if @EFM %>
+  \begin{tabular}{|C{12cm}|l|l|}
+  \hline
+     FICHE INDIVIDUELLE DE TEST ET DE CONFORMITE & Date: & \textbf{<%= @date %>}  \\ \cline{2-3} 
+     MODEM, ROUTEUR ou SWITCH                    & Réf:  & IMP-SUP-1-4g \\ \cline{2-3}
+                                                 & Page: & 1/1          \\ \cline{2-3} 
+
+  <% else %>
+  \begin{tabular}{|l|c|l|l|}
+  \hline
+  \multirow{3}{*}{\logo} & FICHE INDIVIDUELLE DE TEST ET DE CONFORMITE & Date: &  \textbf{<%= @date %>} \\ \cline{3-4} 
+                         & MODEM, ROUTEUR ou SWITCH                    & Réf:  & IMP-SUP-1-4g \\ \cline{3-4}
+                         &                                             & Page: & 1/1          \\ \cline{3-4} 
+  <% end %>
+  \hline
+  \end{tabular}
+   }
+
+%%%%%%%%%%%%%%%%%%%%%  COLIS INFO %%%%%%%%%%%%%%%%%%%%%
+
+  \bigskip
+  \normalsize
+  \begin{tabular}{ll}
+    Client: & \textbf{<%= @client %>} \\
+    \No affaire:& \textbf{<%= @commande %>} \\
+    Poids estimé:  & \textbf{<%= @weight %> kg} \\
+  \end{tabular}
+
+%%%%%%%%%%%%%%%%%%%%%  ADRESSE %%%%%%%%%%%%%%%%%%%%%%%%
+  \bigskip
+  \bigskip
+  \bigskip
+
+  \hfill
+  \begin{minipage}[p]{12cm}\parindent 5mm
+    \large \noindent Adresse d'expédition:\\
+    \smallskip
+    \squareUL \hfill \squareUR \\
+    \Large \indent \indent <%= @addr_client %> \\    
+    \large \indent \indent <% if @addr_attention %>A l'attention de <%= @addr_attention %> <% end %> \\
+    \large \indent \indent <%= @addr_rue %> \\
+    \large \indent \indent <%= @addr_codepostale %> <%= @addr_ville %> \\
+    \bigskip
+    \indent \indent \Telefon \ <%= @addr_tel %> \\
+    \squareBL \hfill \squareBR
+  \end{minipage}
+
+%%%%%%%%%%%%%%%%% CONTENU DU COLIS %%%%%%%%%%%%%%%%%%%%%
+
+  \vspace{1cm}
+  \HRule
+  \begin{center} \sffamily \normalsize CONTENU DU COLIS \end{center}
+  \small
+  \begin{tabular}{ll}
+  <% @contenu_type.each {|mat, nombre| %>
+  <%=mat%>: & \textbf{x<%= nombre%>} \\
+  <%}%>
+  Alimentation : & \textbf{x<%= @contenu["alimentation"]%>} \\ 
+  Cordon alim :  & \textbf{x<%= @contenu["cordonalim"]%>}\\
+  Câble droit :  & \textbf{x<%= @contenu["cabledroit"]%>} \\
+  Câble croisé : & \textbf{x<%= @contenu["cablecroise"]%>} \\
+  Câble série :  & \textbf{x<%= @contenu["cableserie"]%>} \\
+  Autres :       & \textbf{x<%= @contenu["autres"]%>} \\
+  \end{tabular}
+
+%%%%%%%%%%%%%%%%%%% TEST DU MATERIEL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  \vspace{2.0cm}
+  \HRule
+  \begin{center} \sffamily \normalsize TEST DE MATERIEL \\
+  \bigskip
+  \small
+  \begin{tabular}{ccccccc} \hline
+    \rowcolor{Gray}
+    \textbf{Materiel} & \textbf{\No serie} & \textbf{Configuration} & \textbf{Test} & \textbf{Etiquetage} & \textbf {GTR-4h} \\
+  \hline 
+  <% for i in 0..package_items.size-1 do %>
+    <%= @package_items[i][11] %> & <%= @package_items[i][12] %> & <%= @package_items[i][13] %> & <%= @package_items[i][14] %> & <%= @package_items[i][16] %> & <%= @package_items[i][17] %> \\
+  <% end %>
+  \hline
+  \end{tabular}
+  \end{center}
+  \vfill
+
+%%%%%%%%%%%%%%%%%%% SIGNATURE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  \smallskip
+  \hfill
+  \bigskip
+
+\HRule \\
+<% if not @EFM %> 
+\normalsize \itshape \indent \Telefon \ SAV: 09.70.75.70.76 \\ 
+\normalsize \itshape \indent Alphalink Group, Route de Chauvé, ZAC du Val Saint Martin, 44210 Pornic, France 
+<% end %>
+\end{document}

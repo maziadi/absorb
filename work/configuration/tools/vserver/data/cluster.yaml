@@ -1,0 +1,27 @@
+cluster-cbv:
+  portal: 169.254.62.101
+  members:
+    - xen-2-cbv1
+    - xen-1-cbv1
+    - xen-3-cbv1
+    - xen-1-ext1
+    - xen-2-ext1
+    - xen-3-ext1
+cluster-aude-portzamparc:
+  portal: 192.168.30.24
+  members:
+    - xen-1-aude-portzamparc
+    - xen-2-aude-portzamparc
+cluster-artistes-portzamparc:
+  portal: 192.168.20.24
+  members:
+    - xen-1-artistes-portzamparc
+    - xen-2-artistes-portzamparc
+dual-1-por1:
+  members:
+    - kvm-3-por1
+    - kvm-4-por1
+dual-2-por1:
+  members:
+    - kvm-1-por1
+    - kvm-2-por1

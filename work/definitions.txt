@@ -1,0 +1,151 @@
+-----------
+SIP SERVLET
+-----------
+  A SIP servlet is a Java programming language server-side component that performs SIP signalling.
+  SIP servlets are managed by a SIP servlet container, which typically are part of a SIP-enabled application server.
+  SIP servlets interact with clients by responding to incomingSIP requests and returning corresponding SIP responses.
+  SIP servlets are built off the generic servlet API provided by the Java Servlet Specification
+
+-----
+NOSQL 
+-----
+  NoSQL (Not only SQL en anglais) désigne une catégorie de systèmes de gestion de base de données (SGBD) qui n'est plus
+  fondée sur l'architecture classique des bases relationnelles. L'unité logique n'y est plus la table 
+  (des collections dans le cas de MongoDB par exemple), et les données ne sont en général pas manipulées avecSQL
+  
+------------------------
+DRBD/HEARTBEAT/PACEMAKER
+------------------------
+  DRBD
+  ----
+  DRBD (Distributed Replicated Block Device ou périphérique en mode bloc répliqué et distribué en français)
+  est une architecture de stockage distribuée pour GNU/Linux, permettant la réplication de périphériques de bloc
+  (disques, partitions, volumes logiques etc…) entre des serveurs.DRBD est composé d'un module noyau, d'outils 
+  d'administration en espace utilisateur ainsi que de scripts shell.
+  À ce jour, DRBD ne permet que la réplication entre deux nœuds, mais la feuille de route nous indique qu'il est 
+  prévu pour la version 9 de corriger cela.
+  DRBD ajoute une couche logique de périphériques de bloc (conventionnellement nommée /dev/drbdX, ou X est le 
+  numéro de périphérique mineur) au-dessus de la couche logique locale des périphériques de bloc existante sur
+  les nœuds du cluster participants. Les écritures sur le nœud primaire sont transférés sur le périphérique de
+  bloc de bas niveau et sont simultanéments propagées au nœud secondaire. Le nœud secondaire transfère ensuite
+  les données à son périphérique de bloc de bas niveau correspondant. Toutes les lectures sont effectuées localement.
+  En cas de défaillance du nœud primaire, un processus de gestion de cluster promeut le nœud secondaire dans un état
+  primaire. Cette transition peut requérir une vérification subséquente de l'intégrité du système de fichier, empilé
+  au sommet de DRBD, par le biais d'une vérification du système de fichiers ou d'un rejeu de journal. Quand l'ancien
+  nœud primaire défaillant revient, le système peut (ou peut ne pas) l'élever à nouveau à un niveau primaire, après 
+  une synchronisation des données du périphérique. L'algorithme de synchronisation de DRBD est efficace dans le sens
+  ou seuls les blocs qui ont changé durant la panne doivent être resynchronisés, plutôt que le périphérique dans son
+  entiéreté.
+  DRBD peut être utilisé aussi bien en dessous qu'au-dessus de la pile de Linux LVM.
+  DRBD se décompose en deux parties: le module noyau d'une part, et les outils d'administration et autres scripts 
+  d'autre part. La fonctionnalité principale de DRBD est implémentée par un module noyau. Plus précisément, DRBD
+  est un driver pour un périphérique virtuel de type bloc; de fait, DRBD se situe plutôt bas dans la pile 
+  d'entrée/sortie du système, ce qui le rend très flexible et transparent
+  
+  HEARTBEAT
+  ---------
+  HEARTBEAT is a daemon providing cluster infrastructure services to its clients. Clients will be able to know the 
+  presence/disapperence of peer processes on other machines. HEARTBEAT is associated with a CRM (Cluster Ressource Manager)
+  that can sart/stop the services.
+ 
+  PACEMAKER
+  ---------
+  PACEMAKER is the prefered CRM for HEARTBEAT.
+  
+  Exemple : Cluster-1-dev-por1[kvm-3(node), kvm-4]
+
+--------
+PROTOBUF
+--------
+  The example we're going to use is a very simple "address book" application that can read and write people's contact 
+  details to and from a file. Each person in the address book has a name, an ID, an email address, and a contact phone number.
+  How do you serialize and retrieve structured data like this? 
+  Protocol buffers are the flexible, efficient, automated solution to solve exactly this problem. With protocol buffers,
+  you write a .proto description of the data structure you wish to store. From that, the protocol buffer compiler creates 
+  a class that implements automatic encoding and parsing of the protocol buffer data with an efficient binary format.
+  The generated class provides getters and setters for the fields that make up a protocol buffer and takes care of the
+  details of reading and writing the protocol buffer as a unit.
+
+------
+PUPPET
+------
+  Puppet is IT automation software that helps system administrators manage infrastructure throughout its lifecycle,
+  from provisioning and configuration to orchestration and reporting (Node : facts, Master : catalog, Node : report,
+  Master : report). Using Puppet, you can easily automate repetitive tasks, quickly deploy critical applications,
+  and proactively manage change, scaling from 10s of servers to 1000s, on-premise or in the cloud.
+
+------------
+KARAF & OSGI
+------------
+  OSGI
+  ----
+  The OSGi technology is a set of specifications that define a dynamic component system for Java. These specifications
+  enable a development model where applications are (dynamically) composed of many different (reusable) components.
+  The OSGi specifications enable components to hide their implementations from other components while communicating
+  through services, which are objects that are specifically shared between components. This surprisingly simple model
+  has far reaching effects for almost any aspect of the software development process.
+ 
+  DEFINITION 2 : The OSGi framework is a module system and service platform for the Java programming language that 
+  implements a complete and dynamic component model, something that does not exist in standalone Java/VM environments.
+  Applications or components (coming in the form of bundles for deployment) can be remotely installed, started, stopped,
+  updated, and uninstalled without requiring a reboot; management of Java packages/classes is specified in great detail.
+  Application life cycle management (start, stop, install, etc.) is done via APIs that allow for remote downloading of 
+  management policies. The service registry allows bundles to detect the addition of new services, or the removal of
+  services, and adapt accordingly.
+
+  KARAF
+  -----
+  Apache Karaf is a small OSGi based runtime which provides a lightweight container onto which various components and
+  applications can be deployed. Here is a short list of features supported by the Karaf:
+    -Hot deployment: Karaf supports hot deployment of OSGi bundles by monitoring jar files inside the [home]/deploy directory.
+      Each time a jar is copied in this folder, it will be installed inside the runtime. You can then update or delete it and 
+      changes will be handled automatically. In addition, the Karaf also supports exploded bundles and custom deployers 
+      (blueprint and spring ones are included by default).
+    -Dynamic configuration: Services are usually configured through the ConfigurationAdmin OSGi service. Such configuration
+       can be defined in Karaf using property files inside the [home]/etc directory. These configurations are monitored and 
+       changes on the properties files will be propagated to the services.
+    -Logging System: using a centralized logging back end supported by Log4J, Karaf supports a number of different APIs 
+       (JDK 1.4, JCL, SLF4J, Avalon, Tomcat, OSGi)
+    -Provisioning: Provisioning of libraries or applications can be done through a number of different ways, by which they
+      will be downloaded locally, installed and started.
+    -Native OS integration: Karaf can be integrated into your own Operating System as a service so that the lifecycle will
+      be bound to your Operating System.
+    -Extensible Shell console: Karaf features a nice text console where you can manage the services, install new applications
+      or libraries and manage their state. This shell is easily extensible by deploying new commands dynamically along with 
+      new features or applications.
+    -Remote access: use any SSH client to connect to Karaf and issue commands in the console
+
+---------
+JAIN-SLEE
+---------
+A Service Logic Execution Environment (SLEE) is a high throughput, low latency event processing application environment.
+JAIN SLEE is the Java open standard fora SLEE and is designed to allow implementations of the standard to meet the stringent
+requirements of communications networksignalling applications. The JAIN SLEEspecification is designed so that implementations
+can achieve scalability andavailability through clustering architectures.
+
+-----------
+SS7 vs ISDN
+-----------
+  The difference between PRI and CAS is in where the signaling occurs : PRI (and BRI, for that matter) use OOB (out-of-band)
+  signaling. That is what the D channel is for. When a call come in, the originating equipment will tell the other sidei
+  "I have a call for you on channel x". And, since this kind of info circulates on a dedicated channel, it can also occur 
+  during the call. CAS's signaling is in-band, like for the phone in your home.
+  
+  The difference between PRI and SS7 is the kind of signaling that occurs. SS7 is the signaling network for telcos.
+  Like ISDN, inter-telco signaling is OOB. However, SS7 links carry only signaling. And signaling is not solely related to
+  call passing. LNP (Line Number Portability) transactions occur on this kind of link. You may think of ISDN as an IGP and
+  SS7 as an EGP. ISDN is for processing calls between the telco and the customer. SS7 is for processing signaling, generally 
+  between telcos. 
+
+-----------------
+SAMBA: SMB & CIFS
+-----------------
+  SAMBA was originally SMB Server - but the name had to be changed due to SMB Server being an actual product. SMB was the 
+  predecessor to CIFS. SMB "server message block" and CIFS "common internet file system" are protocols. Samba implements
+  CIFS network protocol. This is what allows Samba to communicate with (newer) MS Windows systems. Typically you will see 
+  it referred to SMB/CIFS. However, CIFS is the extension of the SMB protocol so if someone is sharing out SMB via Samba 
+  to a legacy system still using NetBIOS it will typically connect to the Samba server via port 137, 138, 139 and CIFS is
+  strictly port 445.
+  
+  Samba provides CIFS file shares. The time when you might use SMB over CIFS is if you are providing access to Windows 2K
+  systems or earlier or you just want to connect to port 139 instead of 445.
