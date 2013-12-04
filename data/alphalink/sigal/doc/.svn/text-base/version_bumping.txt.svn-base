@@ -1,4 +1,0 @@
-mvn versions:set -DnewVersion=1.5.2-SNAPSHOT
-find . -name \*versionsBackup | xargs rm
-vi -p dist/pom.xml Rakefile
-svn revert */.{project,classpath}
