@@ -1,0 +1,208 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'prov_hss'
+require 'time'
+require 'cmdparse2'
+require 'sequel'
+require 'yaml'
+
+PROGRAM_NAME = "gen_c4"
+CONF = '/etc/voip-tools.yaml'
+DATABASE_INFOS = YAML.load(File.read(CONF))[:database]
+
+def validate_interco_and_vno
+  if $vno.nil?
+    STDERR.puts "ERROR: A VNO must be set"
+    exit 1
+  end
+  if $interco.nil?
+    STDERR.puts "ERROR: An interco must be set"
+    exit 1
+  end
+end
+
+def interco_exists?(configurator)
+  begin
+    configurator.read
+    true
+  rescue Prov::Hss::NotFound
+    false
+  end
+end
+
+def update_or_create
+  if not $media_group
+    STDERR.puts 'ERROR: A media group must be set'
+    exit 1
+  end
+  if not $reg and $ips.size == 0
+    STDERR.puts 'ERROR: IP accounts must have at least an IP to be authenticated with'
+    exit 1
+  end
+  if $pwd and not $reg
+    STDERR.puts 'ERROR: Password can only be used with REGISTRAR account (-r option)'
+    exit 1
+  end
+  #TODO: should not be set in command line but retrieved from domain table
+  $ip2 = Sequel.connect(DATABASE_INFOS)[:"#{$vno}_dom"].first[:domain]
+  if $pwd.nil? and $reg
+    STDOUT.puts "No password set, generating one"
+    $pwd="#{rand(2**256).to_s(36)[0..9]}"
+  end
+  message = {
+    'group_id' => $media_group.to_s,
+    'account_code' => $interco,
+    'updated_at' => Time.now.iso8601,
+    'username' => $interco,
+    'domain' => $ip2,
+    'password' => $pwd,
+  }
+  networks = []
+  $ips.each do |host|
+    ip,port = host.split(':')
+    port = '5060' if port.nil?
+    networks << { 'ip' => ip, 'port' => port, 'weight' => '1', 'failure' => '1' }
+  end
+
+  if $reg
+    message['networks'] = networks
+  else
+    message['endpoints'] = networks
+  end
+
+  use_prov(:update, message)
+end
+
+def get_conf(account)
+  db = Sequel.connect(DATABASE_INFOS)
+  if db[:"#{$vno}_act"].select(:update_date).filter(:account_code => account).empty?
+    STDOUT.puts "Interco #{account} does not exists"
+    exit 0
+  end
+  adr = db[:"#{$vno}_adr"]
+  addresses = []
+  reg = false
+  if ! adr.filter(:context_info => "REG_#{account}").empty?
+    STDOUT.puts "#{account} is a REGISTRAR account"
+    reg = true
+  elsif ! adr.filter(:context_info => account).empty?
+    STDOUT.puts "#{account} is an IP account"
+  else
+    STDERR.puts "ERROR: #{account} was not found in #{$vno}_adr"
+  end
+  adr.filter("context_info like '%#{account}'").each do |ad|
+    addresses << "#{ad[:ip]}:#{ad[:port]}"
+  end
+  sub = db[:"#{$vno}_sub"].filter(:username => account).first
+  pwd = sub[:password]
+  media_group = sub[:group_id]
+  dom = db[:"#{$vno}_dom"].first[:domain]
+  if reg
+    STDOUT.puts "The create/update command was (but password may have been generated) :"
+    STDOUT.puts "#{PROGRAM_NAME} -v #{$vno} -c #{$interco} update -i #{addresses.join(' -i ')} -r -p #{pwd} -g #{media_group}"
+  else
+    STDOUT.puts "The create/update command was :"
+    STDOUT.puts "#{PROGRAM_NAME} -v #{$vno} -c #{$interco} update -i #{addresses.join(' -i ')} -g #{media_group}"
+  end
+end
+
+def use_prov(action, message = {})
+  Prov::Hss::establish_connection(DATABASE_INFOS)
+  $interco.each do |id|
+    begin
+      configurator = Prov::Hss::InterconnectionConfigurator.new
+      if defined?(ActiveRecord)
+        ActiveRecord::Base.logger = nil
+      end
+      configurator.params = { :id => id, :vno => $vno }
+      configurator.data = message
+      if action == :create || action == :update
+        if interco_exists?(configurator)
+          res = configurator.update
+        else
+          res = configurator.create
+        end
+        if res[2][:id] != id
+          raise "Something wrong with creation of '#{id}'"
+        end
+      elsif action == :delete
+        if interco_exists?(configurator)
+          res = configurator.delete
+        else
+          STDERR.puts "ERROR: Interco #{id} does not exists"
+        end
+      end
+      puts "'#{id}' : OK"
+    rescue Sequel::DatabaseError => e
+      puts "Error while processing '#{id}'\n#{e.message}"
+    end
+  end
+end
+
+cmd = CmdParse::CommandParser.new(true,false)
+cmd.program_name = PROGRAM_NAME
+cmd.program_version = [2, 0, 0]
+cmd.options = CmdParse::OptionParserWrapper.new do |opt|
+  opt.separator "Global options:"
+  opt.on('-v', '--vno-ref $vno', "reference du VNO") { |vno| $vno = vno.downcase }
+  opt.on('-c', '--c4-ref C4_REF', "reference du C4 d'interco") { |interco| $interco = interco }
+end
+
+cmd.add_command(CmdParse::HelpCommand.new)
+cmd.add_command(CmdParse::VersionCommand.new)
+
+$ips = []
+create = CmdParse::Command.new( 'create', false )
+create.short_desc = "Create or update an account"
+create.options = CmdParse::OptionParserWrapper.new do |opt|
+  opt.separator "add options:"
+  opt.on('-i', '--ip-authentif ADRESSE_IP', "(optionnal) addresse IP d'authentification, plusieurs appel a cette option si plusieurs IP d'authentif, fail-over + load balancing automatiques - doit être precisé si le compte n'est pas REGISTRAR") {|ip| $ips << ip }
+  opt.on('-g', '--media-group MEDIA_GROUP', "choisir le group media (par exmple 3 pour sip_c4_1, 4 pour sip_c4_2 ...)") { |media_group| $media_group = media_group }
+  opt.on('-r', '--registrar', "(optionnal) le compte créé est un compte REGISTRAR") { |reg| $reg = true }
+  opt.on('-p', '--password PASSWORD', "(optionnal) mot de passe - généré aléatoirement si vide - ne doit pas être utilisé pour les comptes IP") { |pwd| $pwd = pwd }
+end
+create.set_execution_block do |args|
+  validate_interco_and_vno
+  update_or_create
+end
+
+update = CmdParse::Command.new( 'update', false )
+update.short_desc = "Create or update an account - same as create"
+update.options = CmdParse::OptionParserWrapper.new do |opt|
+  opt.separator "add options:"
+  opt.on('-i', '--ip-authentif ADRESSE_IP', "(optionnal) addresse IP d'authentification, plusieurs appel a cette option si plusieurs IP d'authentif, fail-over + load balancing automatiques - doit être precisé si le compte n'est pas REGISTRAR") {|ip| $ips << ip }
+  opt.on('-g', '--media-group MEDIA_GROUP', "choisir le group media (par exmple 3 pour sip_c4_1, 4 pour sip_c4_2 ...)") { |media_group| $media_group = media_group }
+  opt.on('-r', '--registrar', "(optionnal) le compte créé est un compte REGISTRAR") { |reg| $reg = true }
+  opt.on('-p', '--password PASSWORD', "(optionnal) mot de passe - généré aléatoirement si vide - ne doit pas être utilisé pour les comptes IP") { |pwd| $pwd = pwd }
+end
+update.set_execution_block do |args|
+  STDOUT.puts "NOTICE: update is an alias of create"
+  validate_interco_and_vno
+  update_or_create
+end
+
+get_conf = CmdParse::Command.new( 'get_conf', false )
+get_conf.short_desc = "Show informations about an interconnection"
+get_conf.options = CmdParse::OptionParserWrapper.new do |opt|
+end
+get_conf.set_execution_block do |args|
+  validate_interco_and_vno
+  get_conf($interco)
+end
+
+delete = CmdParse::Command.new( 'delete', false )
+delete.short_desc = "Delete an account"
+delete.options = CmdParse::OptionParserWrapper.new do |opt|
+end
+delete.set_execution_block do |args|
+  validate_interco_and_vno
+  use_prov(:delete)
+end
+
+cmd.add_command(create)
+cmd.add_command(update)
+cmd.add_command(delete)
+cmd.add_command(get_conf)
+cmd.parse
+

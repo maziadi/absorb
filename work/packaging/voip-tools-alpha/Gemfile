@@ -1,0 +1,6 @@
+# A sample Gemfile
+source "https://rubygems.org"
+
+gem 'postgres'
+gem 'pg', '~> 0.14.1'
+gem 'log4r'

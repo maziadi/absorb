@@ -1,0 +1,352 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'sequel'
+require 'yaml'
+require 'resolv'
+require 'time'
+
+require 'optparse'
+
+require 'bundler'
+ENV["BUNDLE_PATH"] = "/usr/lib/ruby/1.8/voip-tools/bundle"
+ENV["BUNDLE_DISABLE_SHARED_GEMS"] = "1"
+ENV["BUNDLE_GEMFILE"] = "/usr/lib/ruby/1.8/voip-tools/Gemfile"
+Bundler.setup
+
+CONF = '/etc/voip-tools.yaml'
+DATABASE_INFOS = YAML.load(File.read(CONF))[:database]
+$db = Sequel.connect(DATABASE_INFOS)
+
+STDOUT.sync = true
+
+def extract_pcscf_c5_accounts
+  c5s = {}
+  accs = $db[:account].all
+  subs = $db[:subscriber]
+  dr_rls = $db[:dr_rules].filter(:groupid => '2')
+  dr_gws = $db[:dr_gateways]
+  adrs = $db[:address].exclude(:context_info => 'MRFC5')
+
+  accs.each do |acc|
+    a_c = acc[:account_code]
+    sub = subs.filter(:username => a_c).all
+    dr_rl = dr_rls.filter(:prefix => a_c).all
+    dr_gw = []
+    if dr_rl.count > 0
+      gateways = dr_rl.first[:gwlist].map { |gws| gws.split(',').map { |gw| gw[/(\d+)(=.+)?/,1] }}.flatten.uniq # get gateways from 'gw1=weight1,gw2,gw3,gw4=weight4'
+      dr_gw = dr_gws.filter([:gwid => gateways]).all
+    end
+
+    adr_pattern = (dr_gw.count == 0) ? 'REG_' : ''
+    adr_pattern += a_c
+
+    adr = adrs.filter(:context_info => adr_pattern).all
+
+    if sub.count == 1 && adr.count > 0
+      sub = sub.first
+
+      networks = []
+      endpoints = []
+      if dr_gw.count > 0 # IP
+        if adr.count != dr_gw.count
+          STDERR.puts "Something wrong with '#{a_c}'"
+          raise "Something wrong with '#{a_c}'"
+        end
+
+        endpoints = dr_gw.map do |gw|
+          ip,port = gw[:address].split(':')
+          port = port.to_i
+          port = 5060 if port == 0
+          {
+          'ip' => "#{ip}",
+          'port' => port.to_i,
+          'weight' => 1.0,
+          'failure' => (dr_gw.size > 1 ? 1 : 0)
+          }
+        end
+        context_prefix = ""
+      else # REG
+        context_prefix = "REG_"
+      end
+      networks = adr.map do |addr|
+        {
+        'ip' => "#{addr[:ip]}",
+        'port' => 5060,
+        'weight' => 0.0,
+        'failure' => 0
+        }
+      end
+
+      c5s[a_c] = {
+        'group_id' => sub[:group_id],
+        'account_code' => "#{a_c}",
+        'updated_at' => (acc[:update_date] + 4*3600).iso8601,
+        'username' => "#{a_c}",
+        'domain' => sub[:domain]
+      }
+      if endpoints.empty? #REG
+        c5s[a_c]['password'] = sub[:password]
+        c5s[a_c]['networks'] = networks
+      else # IP
+        c5s[a_c]['endpoints'] = endpoints
+      end
+    else
+      STDERR.puts "Something wrong with '#{a_c}'"
+      raise "Something wrong with '#{a_c}'"
+    end
+
+  end
+
+  File.open("hss_c5s_dump.yaml", "w") do |f|
+    f.write c5s.to_yaml
+  end
+end
+
+def extract_pcscf_c4_accounts(vno)
+  c4s = {}
+  subs = $db[(vno + '_sub').to_sym].all
+  dr_rls = $db[(vno + '_dr_rl').to_sym].filter(:groupid => '2')
+  dr_gws = $db[(vno + '_dr_gw').to_sym]
+  adrs = $db[(vno + '_adr').to_sym].exclude(:context_info => 'MRFC4')
+
+  subs.each do |sub|
+    a_c = sub[:username]
+    dr_rl = dr_rls.filter(:prefix => a_c).all
+    dr_gw = []
+    if dr_rl.count > 0
+      gateways = dr_rl.first[:gwlist].map { |gws| gws.split(',').map { |gw| gw[/(\d+)(=.+)?/,1] }}.flatten.uniq # get gateways from 'gw1=weight1,gw2,gw3,gw4=weight4'
+      dr_gw = dr_gws.filter([:gwid => gateways]).all
+    end
+
+    adr_pattern = (dr_gw.count == 0) ? 'REG_' : ''
+    adr_pattern += a_c
+
+    adr = adrs.filter(:context_info => adr_pattern).all
+
+    if adr.count > 0
+      networks = []
+      endpoints = []
+      if dr_gw.count > 0 # IP
+        if adr.count != dr_gw.count
+          STDERR.puts "Something wrong with '#{a_c}'"
+          raise "Something wrong with '#{a_c}'"
+        end
+
+        endpoints = dr_gw.map do |gw|
+          ip,port = gw[:address].split(':')
+          port = port.to_i
+          port = 5060 if port == 0
+          {
+          'ip' => "#{ip}",
+          'port' => port.to_i,
+          'weight' => '1.0',
+          'failure' => (dr_gw.size > 1 ? '1' : '0')
+          }
+        end
+        context_prefix = ""
+      else # REG
+        context_prefix = "REG_"
+      end
+      networks = adr.map do |addr|
+        {
+        'ip' => "#{addr[:ip]}",
+        'port' => 5060,
+        'weight' => '1.0',
+        'failure' => '0'
+        }
+      end
+
+      c4s[a_c] = {
+        'group_id' => sub[:group_id],
+        'account_code' => "#{a_c}",
+        'updated_at' => Time.at(0).iso8601,
+        'username' => "#{a_c}",
+        'domain' => sub[:domain]
+      }
+      if endpoints.empty? #REG
+        c4s[a_c]['password'] = sub[:password]
+        c4s[a_c]['networks'] = networks
+      else # IP
+        c4s[a_c]['endpoints'] = endpoints
+      end
+    else
+      STDERR.puts "Something wrong with '#{a_c}'"
+      raise "Something wrong with '#{a_c}'"
+    end
+  end
+
+  File.open("hss_c4_#{vno}_dump.yaml", "w") do |f|
+    f.write c4s.to_yaml
+  end
+end
+
+def extract_pcscf_c5_media_groups
+  mgs = {}
+  dr_crs = $db[:dr_carriers]
+  dr_gws = $db[:dr_gateways]
+
+  dr_crs.each do |dr_cr|
+    g_id = dr_cr[:carrierid]
+    gateways = dr_crs.filter(:carrierid => g_id).first[:gwlist].map { |gws| gws.split(',').map { |gw| gw[/(\d+)(=.+)?/,1] }}.flatten.uniq # get gateways from 'gw1=weight1,gw2,gw3,gw4=weight4'
+    dr_gw = dr_gws.filter([:gwid => gateways]).all
+
+    mgs[g_id.to_i] = {
+    'group_id' => g_id.to_i,
+    'updated_at' => dr_cr[:update_date].iso8601
+    }
+
+    mgs[g_id.to_i]['destinations'] = dr_gw.map do |gw|
+      ip,port = gw[:address].split(':')
+      begin
+        {
+      'destination' => "#{Resolv.getname(ip)}:#{port}",
+      'weight' => '1.0'
+        }
+      rescue Resolv::ResolvError
+        STDERR.puts "getname of '#{ip}' failed!"
+        nil
+      rescue
+        STDERR.puts "Something wrong with ip '#{ip}' !"
+        nil
+      end
+    end.compact
+  end
+
+  File.open("hss_mgs_dump.yaml", "w") do |f|
+    f.write mgs.to_yaml
+  end
+end
+
+def extract_pcscf_c4_media_groups(vno)
+  mgs = {}
+  dr_crs = $db[(vno + '_dr_cr').to_sym]
+  dr_gws = $db[(vno + '_dr_gw').to_sym]
+
+  dr_crs.each do |dr_cr|
+    g_id = dr_cr[:carrierid]
+    gateways = dr_crs.filter(:carrierid => g_id).first[:gwlist].map { |gws| gws.split(',').map { |gw| gw[/(\d+)(=.+)?/,1] }}.flatten.uniq # get gateways from 'gw1=weight1,gw2,gw3,gw4=weight4'
+    dr_gw = dr_gws.filter([:gwid => gateways]).all
+
+    mgs[g_id.to_i] = {
+    'group_id' => g_id.to_i,
+    'updated_at' => dr_cr[:update_date].iso8601
+    }
+
+    mgs[g_id.to_i]['destinations'] = dr_gw.map do |gw|
+      ip,port = gw[:address].split(':')
+      begin
+        {
+      'destination' => "#{Resolv.getname(ip)}:#{port}",
+      'weight' => '1.0'
+        }
+      rescue Resolv::ResolvError
+        STDERR.puts "getname of '#{ip}' failed!"
+        nil
+      rescue
+        STDERR.puts "Something wrong with ip '#{ip}' !"
+        nil
+      end
+    end.compact
+  end
+
+  File.open("hss_mgs_#{vno}_dump.yaml", "w") do |f|
+    f.write mgs.to_yaml
+  end
+end
+
+#
+# CLI
+#
+
+$vnos = []
+
+optparse = OptionParser.new do |opt|
+  opt.on('-a', '--all', "extract all but c4 media groups") { $all = true }
+  opt.on('--c5-accounts', "extract C5 accounts") { $c5_accounts = true }
+  opt.on('--c4-accounts', "extract C4 accounts") { $c4_accounts = true }
+  opt.on('--c5-media_groups', "extract media groups from C5 tables") { $c5_media_groups = true }
+  opt.on('--c4-media_groups', "extract media groups from C4 tables") { $c4_media_groups = true }
+  opt.on('-v', '--vno-ref $vno', "reference de VNO pour l'extraction de comptes -- plusieurs occurences possibles -- autodétection si non précisé") { |vno|
+    $vnos << vno.downcase
+  }
+  opt.on('-h', '--help', 'Display this screen') {
+    puts opt
+    exit
+  }
+end
+
+optparse.parse!
+unless $c5_accounts or $c4_accounts or $c5_media_groups or $c4_media_groups or $all
+  puts 'No options specified, extracting all'
+  $all = true
+end
+
+#
+# PCSCF-C5 : Accounts
+#
+if $c5_accounts or $all
+  STDOUT.print "PCSCF-C5, export accounts: "
+  extract_pcscf_c5_accounts
+  STDOUT.print "OK.\n"
+end
+
+#
+# PCSCF-C5 : Media Groups
+#
+
+if $c5_media_groups or $all
+  STDOUT.print "PCSCF-C5, export media groups: "
+  extract_pcscf_c5_media_groups
+  STDOUT.print "OK.\n"
+end
+
+#
+# PCSCF-C4s : Accounts
+#
+
+if $c4_accounts or $all
+  unless $vnos.size == 0
+    vnos = $vnos
+  else
+    puts "Extracting all VNOs"
+    # req = $db[:version].filter(['table_name like ?', 'd20%']).all
+    req = $db[:version].filter("table_name ~ 'd[0-9]{12}_[a-z_]+'").all
+    vnos = req.map { |v| v[:table_name][0..12] }.uniq
+  end
+  vnos.each do |vno|
+    STDOUT.print "PCSCF-C4[#{vno}], export accounts: "
+    begin
+      extract_pcscf_c4_accounts(vno)
+      STDOUT.print "OK.\n"
+    rescue Exception => e
+      STDERR.puts e.message
+      STDOUT.print "Failled.\n"
+    end
+  end
+end
+
+#
+# PCSCF-C4s : Media Groups
+#
+
+if $c4_media_groups # $all do not need to extract this
+  unless $vnos.size == 0
+    vnos = $vnos
+  else
+    puts "Extracting all VNOs"
+    # req = $db[:version].filter(['table_name like ?', 'd20%']).all
+    req = $db[:version].filter("table_name ~ 'd[0-9]{12}_[a-z_]+'").all
+    vnos = req.map { |v| v[:table_name][0..12] }.uniq
+  end
+  vnos.each do |vno|
+    STDOUT.print "PCSCF-C4[#{vno}], export accounts: "
+    begin
+      extract_pcscf_c4_media_groups(vno)
+      STDOUT.print "OK.\n"
+    rescue Exception => e
+      STDERR.puts e.message
+      STDOUT.print "Failled.\n"
+    end
+  end
+end

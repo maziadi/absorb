@@ -1,0 +1,381 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'sequel'
+require 'yaml'
+require 'prov_hss'
+
+CONF = '/etc/voip-tools.yaml'
+YAML_CONF = YAML.load(File.read(CONF))
+DATABASE_INFOS = YAML_CONF[:database]
+
+PCSCF_MAIN_NAME = YAML_CONF[:slony][:main] 
+PCSCF_SECONDARY_NAME =YAML_CONF[:slony][:secondary]
+Prov::Hss::establish_connection(DATABASE_INFOS)
+DB = Sequel.connect(DATABASE_INFOS)
+DB_main = Sequel.connect(DATABASE_INFOS.merge(:host => PCSCF_MAIN_NAME))
+DB_secondary = Sequel.connect(DATABASE_INFOS.merge(:host => PCSCF_SECONDARY_NAME))
+
+require 'erb'
+require 'cmdparse2'
+require 'resolv'
+require 'fileutils'
+
+SlonyPath = YAML_CONF[:slony][:conf_path]
+RefVNOMediaGroups = YAML_CONF[:vno_used_as_reference]
+
+if File.directory?('/usr/share/vno-tools')
+  Dir.chdir('/usr/share/vno-tools')
+else
+  STDERR.puts 'FATAL: /usr/share/vno-tools was not initialized'
+  exit(1)
+end
+
+def my_template(infile, outfile, mode = 0640)
+  templ = ERB::new(File.read(infile),nil,'<>')
+  txt = templ.result(binding)
+  File::open(outfile, "w", mode) { |f| f.write txt }
+end
+
+def create_media_groups_from_yaml(vno_id, yaml_file)
+  mgs = YAML.load(File.open(yaml_file))
+  STDERR.puts 'WARNING: No media groups will be imported' if mgs.size == 0
+  mgs.each do |k,v|
+    begin
+      configurator = Prov::Hss::MediaGroupConfigurator.new
+      configurator.params = { :id => k }
+      configurator.data = v
+      configurator.create_vno_or_c5(vno_id)
+    rescue Sequel::DatabaseError => e
+      puts "Error while processing '#{k}'\n#{e.message}"
+    end
+  end
+end
+
+def vno_sql_create(vno_id)
+  vno_tables = %w(act dom loc rt sub adr dr_gw dr_rl dr_cr dr_gr).map {|t| "#{vno_id}_#{t}"}
+  table_regex = vno_tables.join('|')
+  current_tables = `/usr/bin/psql -t -U postgres opensips -c "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name~'#{table_regex}';"`.map {|i| i.strip}
+  print "Generating opensips' postgresql config...\n"
+  vno_tables.each do |table|
+    table_type = table[/_(\w+(_\w+)*)$/,1]
+    my_template("sql/#{table_type}.sql", "sql/#{vno_id}_#{table_type}.sql")
+    if current_tables.include? table
+      STDERR.puts "#{table} allready exists, skipped."
+    else
+      print "Importing opensips' postgresql config, #{table} ...\n"
+      `/usr/bin/psql -U postgres opensips < sql/#{table}.sql`
+    end
+  end
+  vno_slony_create(vno_id) if is_replication_ready
+end
+
+def vno_sql_delete(vno_id)
+  version_tables = DB[:version].filter("table_name LIKE '#{vno_id}%'").select(:table_name)
+  version_tables_array = version_tables.map { |t| t[:table_name] }
+  version_tables_array += ["#{vno_id}_act"] #account table is an opensips table and is not in version
+  if version_tables.count > 0
+    print "Removing opensips' postgresql config for mrfc4 ...\n"
+    drop_opensips_table("#{vno_id}_act")
+    drop_opensips_table("#{vno_id}_rt")
+    drop_opensips_table("#{vno_id}_adr")
+    drop_opensips_table("#{vno_id}_sub")
+    drop_opensips_table("#{vno_id}_dom")
+    drop_opensips_table("#{vno_id}_dr_cr")
+    drop_opensips_table("#{vno_id}_dr_gr")
+    drop_opensips_table("#{vno_id}_dr_gw")
+    drop_opensips_table("#{vno_id}_dr_rl")
+    unless is_replication_ready #this table have to be drop after replication manipulations
+      drop_opensips_table("#{vno_id}_loc")
+    end
+  end
+end
+
+def vno_opensips_create(vno_id)
+  print "Generating opensips config...\n"
+  my_template("VNO_opensips.cfg", "/etc/opensips/#{vno_id}_opensips.cfg")
+  print "Generating opensips default config...\n"
+  my_template("VNO_opensips_default", "/etc/default/#{vno_id}_opensips")
+  print "Generating opensips init script...\n"
+  my_template("VNO_opensips_init", "/etc/init.d/#{vno_id}_opensips", 0755)
+  print "Generating opensips' control script...\n"
+  my_template("VNO_opensipsctl.erb", "/opt/local/bin/#{vno_id}_opensipsctl", 0755)
+  print "Generating opensips' control script's configuration...\n"
+  my_template("VNO_opensipsctlrc.erb", "/etc/opensips/#{vno_id}_opensipsctlrc", 0644)
+  `mkdir -p /usr/lib/opensips/#{vno_id}_opensipsctl/` unless File.directory?("/usr/lib/opensips/#{vno_id}_opensipsctl/")
+  `cp -r VNO_usr_lib_opensips/* /usr/lib/opensips/#{vno_id}_opensipsctl/`
+  my_template("VNO_opensipsctl.base.erb", "/usr/lib/opensips/#{vno_id}_opensipsctl/opensipsctl.base")
+  `chmod 644 /usr/lib/opensips/#{vno_id}_opensipsctl/* /usr/lib/opensips/#{vno_id}_opensipsctl/dbtextdb/dbtextdb.py`
+  `chmod 755 /usr/lib/opensips/#{vno_id}_opensipsctl/dbtextdb`
+  print "Generating opensips' monit config...\n"
+  $mail_domain_name = "#{`grep -q '^[[:space:]]*environment = development' /etc/puppet/puppet.conf && echo -n dev.`}admin.alphalink.fr"
+  my_template("VNO_opensips_monit", "/etc/monit/conf.d/#{vno_id}_opensips")
+  `monit reload`
+  print "Adding system startup for /etc/init.d/#{vno_id}_opensips...\n"
+  `update-rc.d #{vno_id}_opensips defaults 23`
+end
+
+def vno_opensips_delete(vno_id)
+  print "Stopping #{vno_id}_opensips...\n"
+  `/etc/init.d/#{vno_id}_opensips stop`
+  print "Removing system startup for /etc/init.d/#{vno_id}_opensips...\n"
+  `update-rc.d -f #{vno_id}_opensips remove`
+  if File.exists?("/etc/monit/conf.d/#{vno_id}_opensips")
+    print "Removing opensips' monit config...\n"
+    File.delete("/etc/monit/conf.d/#{vno_id}_opensips")
+    `monit reload`
+  end
+  print "Removing opensips' control script's configuration...\n"
+  FileUtils.rm_rf("/usr/lib/opensips/#{vno_id}_opensipsctl") if File.exists?("/usr/lib/opensips/#{vno_id}_opensipsctl")
+  File.delete("/etc/opensips/#{vno_id}_opensipsctlrc") if File.exists?("/etc/opensips/#{vno_id}_opensipsctlrc")
+  if File.exists?("/opt/local/bin/#{vno_id}_opensipsctl")
+    print "Removing opensips' control script...\n"
+    File.delete("/opt/local/bin/#{vno_id}_opensipsctl")
+  end
+  if File.exists?("/etc/init.d/#{vno_id}_opensips")
+    print "Removing opensips init script...\n"
+    File.delete("/etc/init.d/#{vno_id}_opensips")
+  end
+  if File.exists?("/etc/default/#{vno_id}_opensips")
+    print "Remove opensips default config...\n"
+    File.delete("/etc/default/#{vno_id}_opensips")
+  end
+  if File.exists?("/etc/opensips/#{vno_id}_opensips.cfg")
+    print "Removing opensips config...\n"
+    File.delete("/etc/opensips/#{vno_id}_opensips.cfg")
+  end
+  vno_slony_delete(vno_id) if is_replication_ready
+end
+
+def vno_mrfc4_sql_create(vno_id, media_group_yaml)
+  print "Importing opensips' postgresql config for mrfc4 ...\n"
+  if media_group_yaml
+    begin
+      create_media_groups_from_yaml(vno_id, media_group_yaml)
+    rescue Exception => e
+      STDERR.puts "ERROR: #{e.message}"
+      exit(1)
+    end
+  else
+    `hss_v2.1_extractor --c4-media_groups -v #{RefVNOMediaGroups}`
+    if RefVNOMediaGroups == vno_id
+      STDERR.puts "ERROR: #{vno_id} can not import media groups because he was defined as a reference"
+      exit(1)
+    end
+    dump_file = "hss_mgs_#{RefVNOMediaGroups}_dump.yaml"
+    if File.exists?(dump_file)
+      begin
+        create_media_groups_from_yaml(vno_id, dump_file)
+      rescue Exception => e
+        STDERR.puts "ERROR: #{e.message}"
+        exit(1)
+      end
+      File.delete(dump_file) # dump should be generated every time
+    else
+      STDERR.puts "Le VNO de référence n'est pas présent, les media groups ne peuvent pas être récupérés de manière fiable. Merci de contacter l'intégration."
+      exit(1)
+    end
+  end
+end
+
+def get_replication_info(vno_id)
+  table_id_main = DB_main[:_pgsql_cluster__sl_table].filter(:tab_relname => "#{vno_id}_loc").first
+  table_id_secondary = DB_secondary[:_pgsql_cluster__sl_table].filter(:tab_relname => "#{vno_id}_loc").first
+  table_id_main || table_id_secondary
+end
+
+def is_master
+  master_address = Resolv.getaddress(PCSCF_MAIN_NAME)
+  `ip addr | grep #{master_address}`.size > 0
+end
+
+def is_replication_ready
+  main_cluster = DB_main[:pg_catalog__pg_namespace].filter(:nspname => '_pgsql_cluster')
+  secondary_cluster = DB_secondary[:pg_catalog__pg_namespace].filter(:nspname => '_pgsql_cluster')
+  STDERR.puts "ERROR: Le cluster de réplication n'est pas initialisé sur l'un des noeuds" if main_cluster.count ==0 or secondary_cluster.count == 0
+  main_cluster.count > 0 and secondary_cluster.count > 0
+end
+
+def list_other_vno(current_vno)
+  vno_main = DB_main[:version].map { |o| o[:table_name][/^(d\d{12})(_\w+)+/,1] }.uniq.compact
+  vno_secondary = DB_secondary[:version].map { |o| o[:table_name][/^(d\d{12})(_\w+)+/,1] }.uniq.compact
+  vno_diff = (vno_main - vno_secondary) + (vno_secondary - vno_main) - [current_vno]
+  STDERR.puts "WARN: Both PCSCF differ in VNOs: #{vno_diff.join(', ')}." if vno_diff.size > 0
+  sets_main = DB_main[:_pgsql_cluster__sl_table].join(:_pgsql_cluster__sl_sequence, :seq_set => :tab_set).select(:tab_id, :seq_id, :tab_set, :tab_relname)
+  sets_secondary = DB_secondary[:_pgsql_cluster__sl_table].join(:_pgsql_cluster__sl_sequence, :seq_set => :tab_set).select(:tab_id, :seq_id, :tab_set, :tab_relname)
+  replicated_vno_tables_main = sets_main.map { |s| s[:tab_relname][/^(d\d{12})(_\w+)+/,1] }.compact
+  replicated_vno_tables_secondary = sets_secondary.map { |s| s[:tab_relname][/^(d\d{12})(_\w+)+/,1] }.compact
+  replicated_vno_tables_diff = (replicated_vno_tables_main - replicated_vno_tables_secondary) + (replicated_vno_tables_secondary - replicated_vno_tables_main) - [current_vno]
+  STDERR.puts "WARN: Both PCSCF differ in replicated VNOs: #{replicated_vno_tables_diff.join(', ')}." if replicated_vno_tables_diff.size > 0
+  (vno_main + vno_secondary + replicated_vno_tables_main + replicated_vno_tables_secondary).uniq - [current_vno]
+end
+
+def get_replication_max_index
+  indexes_main = DB_main[:_pgsql_cluster__sl_table].select(:tab_id).map { |t| t[:tab_id] }
+  indexes_secondary = DB_secondary[:_pgsql_cluster__sl_table].select(:tab_id).map { |t| t[:tab_id] }
+  (indexes_main + indexes_secondary).max
+end
+
+def vno_slony_create(vno_id)
+  $slon_tools_sets = [{:set_id => 1, :table_id => 1, :sequence_id => 1, :location => 'location'}]
+  index = 1
+  list_other_vno(vno_id).each do |vno|
+    replication_infos = get_replication_info(vno)
+    if replication_infos
+      index = replication_infos[:tab_id]
+      $slon_tools_sets << {:set_id => index, :table_id => index, :sequence_id => index, :location => "#{vno}_loc"}
+    end
+  end
+  new_set_id = nil
+  replicated = get_replication_info(vno_id)
+  index = replicated ? replicated[:tab_id] : get_replication_max_index + 1
+  $slon_tools_sets += [{:set_id => index, :table_id => index, :sequence_id => index, :location => "#{vno_id}_loc"}]
+  my_template('slon_tools.conf.erb', '/etc/slony1/slon_tools.conf')
+  puts "Pensez à lancer refresh.sh dist/nodes/#{`hostname`.strip}/etc/slony1/slon_tools.conf pour ne pas perdre la conf slony1 au prochain coup de puppet."
+  if is_master and ! replicated
+    print "Creating new replication set #{new_set_id}...\n"
+    `slonik_create_set #{index} | slonik`
+  end
+  if DB[:_pgsql_cluster__sl_set].filter(:set_id => index).count > 0
+    print "Subscribing replication set #{new_set_id}...\n"
+    `slonik_subscribe_set #{index} 2 | slonik`
+  end
+end
+
+def drop_opensips_table(table, dbs = nil)
+  if dbs
+    dbs = [dbs] unless dbs.is_a?(Array)
+    dbs.each do |db|
+      db.drop_table(table) if db[:pg_catalog__pg_tables].filter(:schemaname => 'public', :tablename => table).count > 0
+      db[:version].filter(:table_name => table).delete
+    end
+  else
+    DB.drop_table(table) if DB[:pg_catalog__pg_tables].filter(:schemaname => 'public', :tablename => table).count > 0
+    DB[:version].filter(:table_name => table).delete
+  end
+end
+
+def vno_slony_delete(vno_id)
+  $slon_tools_sets = [{:set_id => 1, :table_id => 1, :sequence_id => 1, :location => 'location'}]
+  index = 1
+  list_other_vno(vno_id).each do |vno|
+    replication_infos = get_replication_info(vno)
+    if replication_infos
+      index = replication_infos[:tab_id]
+      $slon_tools_sets << {:set_id => index, :table_id => index, :sequence_id => index, :location => "#{vno}_loc"}
+    end
+  end
+  replicated = get_replication_info(vno_id)
+  if is_master and replicated
+    puts "Deactivating replication on set #{replicated[:tab_set]}"
+    `slonik_unsubscribe_set #{replicated[:tab_set]} 2 | slonik`
+    puts "Removing table #{replicated[:tab_id]} form cluster"
+    `slonik_drop_table #{replicated[:tab_id]} #{replicated[:tab_set]} | slonik`
+    puts "Removing set #{replicated[:tab_set]} form cluster"
+    `slonik_drop_set #{replicated[:tab_set]} | slonik`
+  end
+  puts "Droping table #{vno_id}"
+  drop_opensips_table("#{vno_id}_loc", [DB_main, DB_secondary])
+  my_template('slon_tools.conf.erb', '/etc/slony1/slon_tools.conf')
+  puts "Pensez à lancer refresh.sh dist/nodes/#{`hostname`.strip}/etc/slony1/slon_tools.conf pour ne pas perdre la conf slony1 au prochain coup de puppet."
+end
+
+cmd = CmdParse::CommandParser::new(true, true)
+cmd.program_name = "vno.rb"
+cmd.program_version = [0, 0, 4]
+
+cmd.add_command(CmdParse::HelpCommand::new, true)
+cmd.add_command(CmdParse::VersionCommand::new)
+
+prov = CmdParse::Command::new('prov', false)
+prov.short_desc = "Provision a VNO"
+prov.description = "Provision opensips' base configuration for a VNO and launch it"
+prov.description << """
+  Example:
+    ./vno.rb prov -i D201005050001 -a 217.15.80.171
+"""
+
+$opensips_shared_memory = 64
+$opensips_private_memory = 4
+$monitored_memory = 150
+prov.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-i', "--vno-id [VNO_ID]", "Specify vno_id") { |vno_id|
+    $vno_id = vno_id.downcase
+  }
+  opt.on('-a', "--opensips-service-addr [ADDR]", "Specify opensips service addr") { |service_addr|
+    $opensips_service_addr = service_addr
+  }
+  opt.on('-m', "--opensips-shared-memory [INT]", "Specify opensips shared memory") { |mem|
+    $opensips_shared_memory = mem
+  }
+  opt.on('-M', "--opensips-private-memory [INT]", "Specify opensips private memory") { |mem|
+    $opensips_private_memory = mem
+  }
+  opt.on("--monitored-memory [INT]", "Specify alert on opensips' memory (default is 150 MiB)") { |mem|
+    $monitored_memory = mem
+  }
+end
+
+prov.set_execution_block do |args|
+  if($vno_id.nil? || $opensips_service_addr.nil?)
+    STDERR.print("Missing arguments\n")
+    exit(1)
+  end
+
+  vno_sql_create($vno_id)
+  vno_opensips_create($vno_id)
+end
+
+prov_mrfc4 = CmdParse::Command::new('prov_mrfc4', false)
+prov_mrfc4.short_desc = "Provision a VNO mrfc4 rules"
+prov_mrfc4.description = "Provision opensips' VNO mrfc4 rules"
+prov_mrfc4.description << """
+  Example:
+    ./vno.rb prov_mrfc4 -i D201005050001
+"""
+
+prov_mrfc4.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-i', "--vno-id [VNO_ID]", "Specify vno_id") { |vno_id|
+    $vno_id = vno_id.downcase
+  }
+  opt.on('-y', "--media_group-yaml [FILE]", "Specify yaml file to be used to crete media groups -- Should not be used") { |yaml|
+    $media_group_yaml = yaml
+  }
+end
+
+prov_mrfc4.set_execution_block do |args|
+  if($vno_id.nil?)
+    STDERR.print("Missing arguments\n")
+    exit(1)
+  end
+
+  vno_mrfc4_sql_create($vno_id, $media_group_yaml)
+end
+
+remove = CmdParse::Command::new('remove', false)
+remove.short_desc = "Remove a VNO"
+remove.description = "Remove opensips' base configuration for a VNO and stop it"
+remove.description << """
+  Example:
+    ./vno.rb remove -i D201005050001
+"""
+remove.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-i', "--vno-id [VNO_ID]", "Specify vno_id") { |vno_id|
+    $vno_id = vno_id.downcase
+  }
+end
+
+remove.set_execution_block do |args|
+  if $vno_id.nil?
+    STDERR.print("Missing VNO id\n")
+    exit(1)
+  end
+
+  vno_opensips_delete($vno_id)
+  vno_sql_delete($vno_id)
+end
+
+cmd.add_command(prov)
+cmd.add_command(prov_mrfc4)
+cmd.add_command(remove)
+cmd.parse

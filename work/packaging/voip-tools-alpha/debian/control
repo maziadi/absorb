@@ -1,0 +1,21 @@
+Source: voip-tools
+Section: internal/admin
+Priority: extra
+Maintainer: Adrien Martin <a.martin@alphalink.fr>
+Build-Depends: debhelper (>=7)
+Standards-Version:3.9.1.0
+Homepage: http://www.alphalink.fr
+
+Package: pcscf-tools
+Architecture: any
+Depends: libbundler-ruby1.8, libsequel-ruby1.8, rubygems1.8, libcmdparse2-ruby
+Conflicts: scscf-tools
+Replaces: 
+Description: Tools used to manage PCSCF
+
+Package: scscf-tools
+Architecture: any
+Depends: libbundler-ruby1.8, libsequel-ruby1.8, rubygems1.8, libcmdparse2-ruby, libmysql-ruby1.8
+Conflicts: pcscf-tools
+Replaces: 
+Description: Tools used to manage SCSCF
