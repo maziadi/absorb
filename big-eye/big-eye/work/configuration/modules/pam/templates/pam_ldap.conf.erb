@@ -1,0 +1,21 @@
+HOST <%= pam_directory_ip %>
+BASE <%= pam_directory_base %>
+URI ldap://<%= pam_directory_uri %>
+ldap_version 3
+rootbinddn <%= pam_directory_binddn %>
+bindpw
+#binddn <%= pam_directory_binddn %>
+#timelimit 30
+bind_timelimit 30
+<% if pam_ad -%>
+nss_map_objectclass posixAccount user
+nss_map_objectclass shadowAccount user
+nss_map_attribute uid sAMAccountName
+nss_map_attribute shadowLastChange pwdLastSet
+nss_map_objectclass posixGroup group
+nss_map_attribute uniqueMember member
+pam_login_attribute sAMAccountName
+pam_filter objectclass=user
+pam_password ad
+sasl_secprops maxssf=0
+<% end -%>

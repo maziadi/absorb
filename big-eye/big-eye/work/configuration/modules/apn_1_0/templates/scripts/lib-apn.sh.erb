@@ -1,0 +1,62 @@
+#!/bin/dash
+
+pasdaran_response() {
+# $1 : pasdaran return code
+  local ret=""
+  case "$1" in
+    "0")
+      ret="OK"
+      ;;  
+    "1")
+      ret="BAD_QUOTA_FILE"
+      ;;  
+    "255")
+      ret="ERROR_UNDEFINED"
+      ;;  
+    "2")
+      ret="ERROR_ADD_CO_IP"
+      ;;  
+    "3")
+      ret="ERROR_ADD_CO_RULES"
+      ;;  
+    "4")
+      ret="ERROR_DEL_CO_IP"
+      ;;  
+    "5")
+      ret="ERROR_DEL_CO_RULES"
+      ;;  
+    "6")
+      ret="BAD_PARAMS"
+      ;;  
+    "7")
+      ret="ERROR_ADD_FRD_IP"
+      ;;  
+    "8")
+      ret="ERROR_ADD_FRD_RULES"
+      ;;  
+    "9")
+      ret="ERROR_DEL_FRD_IP"
+      ;;  
+    "10")
+      ret="ERROR_DEL_FRD_RULES"
+      ;;  
+    *)
+      ret="UNKNOWN_ERROR"
+      ;;  
+  esac
+  echo "$ret"
+}
+
+pasdaran_server_1="<%= pasdaran_1_ip %> 2403"
+pasdaran_server_2="<%= pasdaran_2_ip %> 2403"
+basij_server="<%= basij_ip %> 2403"
+tax_server="<%= tax_ip_port %>"
+timeout1=2 # connection timeout
+timeout2=3 # whole transaction timeout
+<% if env == "production" %>
+mail="noc-alerts@alphalink.fr"
+<% else %>
+mail="dev-noc-alerts@alphalink.fr"
+<% end %>
+hn=$(cat /etc/hostname)
+self=$(basename $0)

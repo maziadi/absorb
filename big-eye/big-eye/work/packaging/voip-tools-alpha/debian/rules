@@ -1,0 +1,35 @@
+#!/usr/bin/make -f
+DEB_DH_SHLIBDEPS_ARGS_ALL=--dpkg-shlibdeps-params=--ignore-missing-info
+include /usr/share/cdbs/1/rules/debhelper.mk
+
+pre-build::
+		bundle install bundle --disable-shared-gems
+
+install/pcscf-tools::
+		mkdir -p debian/$(cdbs_curpkg)/usr/bin/
+		mkdir -p debian/$(cdbs_curpkg)/usr/share/vno-tools/
+		mkdir -p debian/$(cdbs_curpkg)/etc/
+		mkdir -p debian/$(cdbs_curpkg)/usr/lib/ruby/1.8/voip-tools
+		cp bin/manage_mg_pcscf debian/$(cdbs_curpkg)/usr/bin/manage_mg
+		cp bin/gen_c4 debian/$(cdbs_curpkg)/usr/bin/gen_c4
+		cp bin/vno debian/$(cdbs_curpkg)/usr/bin/vno
+		cp bin/hss_v2.0_extractor debian/$(cdbs_curpkg)/usr/bin/hss_v2.0_extractor
+		cp bin/hss_v2.1_extractor debian/$(cdbs_curpkg)/usr/bin/hss_v2.1_extractor
+		cp bin/hss_importer debian/$(cdbs_curpkg)/usr/bin/hss_importer
+		cp bin/monitor_gw_status debian/$(cdbs_curpkg)/usr/bin/monitor_gw_status
+		cp -r share/vno-tools/* debian/$(cdbs_curpkg)/usr/share/vno-tools
+		cp Gemfile debian/$(cdbs_curpkg)/usr/lib/ruby/1.8/voip-tools/
+		cp -r bundle debian/$(cdbs_curpkg)/usr/lib/ruby/1.8/voip-tools/
+		cp conf/* debian/$(cdbs_curpkg)/etc/
+		rm -rf .bundle
+
+install/scscf-tools::
+		mkdir -p debian/$(cdbs_curpkg)/usr/bin/
+		mkdir -p debian/$(cdbs_curpkg)/usr/lib/ruby/1.8/voip-tools
+		mkdir -p debian/$(cdbs_curpkg)/etc/
+		cp bin/manage_mg_scscf debian/$(cdbs_curpkg)/usr/bin/manage_mg
+		cp Gemfile debian/$(cdbs_curpkg)/usr/lib/ruby/1.8/voip-tools/
+		cp -r bundle debian/$(cdbs_curpkg)/usr/lib/ruby/1.8/voip-tools/
+		cp conf/* debian/$(cdbs_curpkg)/etc/
+		rm -rf .bundle
+

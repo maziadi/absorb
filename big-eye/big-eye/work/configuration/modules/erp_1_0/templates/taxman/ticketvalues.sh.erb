@@ -1,0 +1,111 @@
+#!/bin/bash
+#
+# Return possible values for closed sessions from last SFR tickets for a given msisdn and time interval
+#
+
+archivedir="/data/mobile_batches"
+
+function usage() {
+  fcmd=$(basename $0)
+  echo "Usage: $fcmd -l start -u stop -m msisdn"
+  echo "-l start      session start lower bound, YYYYMMDDHHmm"
+  echo "-u stop       session start upper bound, YYYYMMDDHHmm"
+  echo "-m msisdn     msisdn, 06nnnnnnnn"
+}
+
+function str2timestamp() {
+# $1: YYYYMMDDhhmm
+  local qt=''
+  y=$(echo $starttime | cut -c1-4)
+  m=$(echo $starttime | cut -c5-6)
+  d=$(echo $starttime | cut -c7-8)
+  h=$(echo $starttime | cut -c9-10)
+  mm=$(echo $starttime | cut -c11-12)
+  qt=$(date --utc --date="$y-$m-$d $h:$mm" +%s)
+  echo "$qt"
+}
+
+nargs=0
+while getopts ":l:u:m:" optname; do
+  case "$optname" in
+    "l")
+      timestart=$(echo $OPTARG | grep -E "^201[0-9](0|1)[0-9](0|1|2|3)[0-9][0-5][0-9][0-5][0-9]$")
+      if [ "$?" != 0 ]; then
+        echo "Bad format: $OPTARG"
+        exit -1
+      else
+        nargs=$(($nargs+1))
+      fi  
+      ;;  
+    "u")
+      timestop=$(echo $OPTARG | grep -E "^201[0-9](0|1)[0-9](0|1|2|3)[0-9][0-5][0-9][0-5][0-9]$")
+      if [ "$?" != 0 ]; then
+        echo "Bad format: $OPTARG"
+        exit -1
+      else
+        nargs=$(($nargs+1))
+      fi  
+      ;;  
+    "m")
+      msisdn=$(echo $OPTARG | grep -E "^06[0-9]{8}$")
+      if [ "$?" != 0 ]; then
+        echo "Bad format: $OPTARG"
+        exit -1
+      else
+        nargs=$(($nargs+1))
+      fi  
+      ;;  
+    "?")
+      echo "Unknown option $OPTARG"
+      usage
+      exit -1
+      ;;  
+  esac
+done
+if [ "$nargs" != "3" ]; then
+  echo "Missing parameters."
+  usage
+  exit -1
+fi
+
+oldIFS=$IFS
+IFS=$'\n'
+for file in $(ls -rt $archivedir | grep "^NA.*\.000584\..*ended$"); do
+
+  filedate=20$(echo $file | cut -d'.' -f5)
+  if [ "$filedate" -ge "$timestart" ] && [ "$filedate" -le "$timestop" ]; then
+
+    for line in $(cat $archivedir/$file | grep "^67[[:space:]]" | grep $msisdn); do
+      starttime=$(echo $line | cut -c52-63)
+      if [ "$starttime" -ge "$timestart" ] && [ "$starttime" -le "$timestop" ]; then
+
+        sessiontime=$(echo $line | cut -c66-77)
+        rx=$(echo $line | cut -c90-101)
+        tx=$(echo $line | cut -c102-113)
+        mcc=$(echo $line | cut -c195-199)
+        msisdn=$(echo $line | cut -c226-240)
+        ip=$(echo $line | cut -c324-362)
+
+        # calculate session stop time 
+        qtstop=$(str2timestamp $starttime)
+        duration=$(echo $sessiontime | sed 's/^0*//')
+        qtstop=$(($qtstop + $duration))
+        stoptime=$(date --utc --date "1970-01-01 $qtstop sec" "+%Y%m%d%H%M")
+
+        echo
+        echo "[$file] ip            $ip"
+        echo "[$file] msisdn        $msisdn"
+        echo "[$file] start time    $starttime"
+        echo "[$file] stop time     $stoptime"
+        echo "[$file] session time  $sessiontime"
+        echo "[$file] mcc           $mcc"
+        echo "[$file] rx            $rx"
+        echo "[$file] tx            $tx"
+
+      fi
+    done
+
+  fi
+
+done
+IFS=$oldIFS

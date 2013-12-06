@@ -1,0 +1,128 @@
+#!/bin/bash
+usage () {
+  echo "usage : ${0} -h hostname [-f flavour] [-d domain] [-i ip] [-t] [-u]" >&2
+}
+
+[ -z ${2} ] && {
+  usage
+  exit -1
+}
+
+while getopts :d:f:h:i:p:tu opt
+do
+  case ${opt} in
+    d)  domain=${OPTARG};;
+    f)  flavour=${OPTARG};;
+    h)  hostname=${OPTARG};;
+    i)  ip=${OPTARG};;
+    t)  environment="development";;
+    u)  ubuntu="1";;
+    '?')  echo "${0} : option ${OPTARG} is not valid" >&2
+          usage
+          exit -1
+    ;;
+  esac
+done
+
+if [ -z ${hostname} ]
+then
+  echo "You have to specified a hostname"
+  usage
+  exit -1
+fi
+
+domain=${domain:-admin.alphalink.fr}
+flavour=${flavour:-lenny}
+ubuntu=${ubuntu:-0}
+gold_server=${gold_server:-gold}
+realhostname="${hostname}.${domain}"
+environment=${environment:-production}
+
+# Si une ip est fournit, on l'utilise pour se connecter a l'hote via ssh
+if [ ! -z ${ip} ]; then
+    hostname=${ip}
+fi
+ssldir=/var/lib/puppet/ssl
+tmpfile=/tmp/puppetize.tmp.$$
+manifest="/var/lib/puppet/branches/${environment}/master/manifests/site.pp"
+modulepath="/var/lib/puppet/branches/${environment}/modules/"
+manifestdir="/var/lib/puppet/branches/${environment}/master/manifests/"
+templatedir="/var/lib/puppet/branches/${environment}/master/templates"
+
+tools/addKey.sh ${hostname} dist/authorized_keys
+if [ $ubuntu -eq 1 ]; then
+  ssh -x ${hostname} <<EOF
+  aptitude install -y puppet ca-certificates ntp 
+  /etc/init.d/puppet stop
+  /etc/init.d/ntp stop
+  ntpd -qgx
+EOF
+else
+(
+  if [[ $flavour == "lenny" ]]; then
+cat <<EOF
+deb http://archive.debian.org/debian/ ${flavour} main contrib non-free
+deb-src http://archive.debian.org/debian/ ${flavour} main contrib non-free
+
+deb http://alphalink:WBL3UqtLwS@${gold_server}.alphalink.fr/debian ${flavour} update internal
+EOF
+else
+
+cat <<EOF
+deb http://gold.alphalink.fr:3142/debian/ ${flavour} main contrib non-free
+deb-src http://gold.alphalink.fr:3142/debian/ ${flavour} main contrib non-free
+ 
+deb http://gold.alphalink.fr:3142/security.debian.org/ ${flavour}/updates main contrib non-free
+
+deb http://alphalink:WBL3UqtLwS@${gold_server}.alphalink.fr/debian ${flavour} update internal
+EOF
+fi
+) | ssh ${hostname} "cat > /etc/apt/sources.list"
+
+  ssh -x ${hostname} "wget -O - http://alphalink:WBL3UqtLwS@${gold_server}.alphalink.fr/debian/ALPHALINK.GPG | apt-key add -"
+  ssh -x ${hostname} "aptitude update"
+  ssh -x ${hostname} "echo \"locales locales/locales_to_be_generated multiselect     en_US.UTF-8 UTF-8, fr_FR.UTF-8 UTF-8\" | debconf-set-selections"
+  ssh -x ${hostname} "echo \"locales locales/default_environment_locale      select  en_US.UTF-8\" | debconf-set-selections"
+  ssh -x ${hostname} "aptitude -y install ca-certificates ntp locales facter puppet lsb-release"
+  ssh -x ${hostname} "echo \"
+[main]
+  logdir=/var/log/puppet
+  vardir=/var/lib/puppet
+  rundir=/var/run/puppet
+  ssldir=\\\$vardir/ssl
+  factpath=\\\$vardir/lib/facter
+  pluginsync = true
+  pluginsource = puppet://\\\$server/plugins
+  environment = ${environment}
+  manifest   = /var/lib/puppet/branches/production/master/manifests/site.pp
+  modulepath = /var/lib/puppet/branches/production/modules/
+  manifestdir = /var/lib/puppet/branches/production/master/manifests/
+  templatedir = /var/lib/puppet/branches/production/master/templates/
+
+[development]
+  manifest   = /var/lib/puppet/branches/development/master/manifests/site.pp
+  modulepath = /var/lib/puppet/branches/development/modules/
+  manifestdir = /var/lib/puppet/branches/development/master/manifests/
+  templatedir = /var/lib/puppet/branches/development/master/templates/
+
+[agent]
+  server = gold.alphalink.fr
+  report = true
+  fqdn = ${realhostname}
+
+[master]
+  certname=gold.alphalink.fr
+  reports = http,store
+  reporturl = http://127.0.0.1:3000/dashboard/reports/upload
+\" > /etc/puppet/puppet.conf"
+
+  ssh -x ${hostname} "/etc/init.d/puppet stop"
+  ssh -x ${hostname} "/etc/init.d/ntp stop"
+  ssh -x ${hostname} "ntpd -qgx"
+fi
+ssh root@${gold_server}.alphalink.fr "puppetca --generate '${realhostname}'"
+ssh root@${gold_server}.alphalink.fr "tar cvf - ${ssldir}/certs/ca.pem ${ssldir}/certs/${realhostname}.pem ${ssldir}/private_keys/${realhostname}.pem" \
+    | ssh -o "StrictHostKeyChecking no" root@${hostname} "tar xvf - -C /"
+ssh root@${gold_server}.alphalink.fr "rm -f  ${ssldir}/certs/${realhostname}.pem ${ssldir}/private_keys/${hostname}.pem"
+
+ssh root@${hostname} "puppetd --verbose --test --server ${gold_server}.alphalink.fr --ssldir /var/lib/puppet/ssl --fqdn=${realhostname} --manifest ${manifest} --modulepath ${modulepath} --manifestdir ${manifestdir} --templatedir ${templatedir} --environment ${environment}"

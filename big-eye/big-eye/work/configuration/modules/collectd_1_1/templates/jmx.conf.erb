@@ -1,0 +1,519 @@
+# From : https://github.com/collectd/collectd/blob/master/contrib/GenericJMX.conf
+#
+### contrib/GenericJMX.conf
+# -----------------------
+#
+# This is an example config file for the ‘GenericJMX’ plugin, a plugin written
+# in Java to receive values via the “Java Management Extensions” (JMX). The
+# plugin can be found in the
+#   bindings/java/org/collectd/java/
+# directory of the source distribution.
+#
+# This sample config defines a couple of <MBean /> blocks which query MBeans
+# provided by the JVM itself, i. e. which should be available for all Java
+# processes. The following MBean blocks are defined:
+#
+#   +-------------------+------------------------------------------------+
+#   ! Name              ! Description                                    !
+#   +-------------------+------------------------------------------------+
+#   ! classes           ! Number of classes being loaded.                !
+#   ! compilation       ! Time spent by the JVM compiling or optimizing. !
+#   ! garbage_collector ! Number of garbage collections and time spent.  !
+#   ! memory            ! Generic heap/nonheap memory usage.             !
+#   ! memory_pool       ! Memory usage by memory pool.                   !
+#   +-------------------+------------------------------------------------+
+#
+
+LoadPlugin java
+<Plugin "java">
+<% if jmx_collects.include?("Mobicents") -%>
+  # JBoss AS use a custom JMX protocol (remoting-jmx)
+  JVMARG "-Djava.class.path=/usr/share/collectd/java/collectd-api.jar:/usr/share/collectd/java/generic-jmx.jar:/opt/mobicents/bin/client/jboss-client.jar"
+<% else -%>
+  JVMARG "-Djava.class.path=/usr/share/collectd/java/collectd-api.jar:/usr/share/collectd/java/generic-jmx.jar"
+<% end -%>
+  LoadPlugin "org.collectd.java.GenericJMX"
+
+  <Plugin "GenericJMX">
+    ################
+    # MBean blocks #
+    ################
+    # Number of classes being loaded.
+    <MBean "classes">
+      ObjectName "java.lang:type=ClassLoading"
+      #InstancePrefix ""
+      #InstanceFrom ""
+
+      <Value>
+        Type "gauge"
+        InstancePrefix "loaded_classes"
+        #InstanceFrom ""
+        Table false
+        Attribute "LoadedClassCount"
+      </Value>
+    </MBean>
+
+    # Time spent by the JVM compiling or optimizing.
+    <MBean "compilation">
+      ObjectName "java.lang:type=Compilation"
+      #InstancePrefix ""
+      #InstanceFrom ""
+
+      <Value>
+        Type "total_time_in_ms"
+        InstancePrefix "compilation_time"
+        #InstanceFrom ""
+        Table false
+        Attribute "TotalCompilationTime"
+      </Value>
+    </MBean>
+
+    # Garbage collector information
+    <MBean "garbage_collector">
+      ObjectName "java.lang:type=GarbageCollector,*"
+      InstancePrefix "gc-"
+      InstanceFrom "name"
+
+      <Value>
+        Type "invocations"
+        #InstancePrefix ""
+        #InstanceFrom ""
+        Table false
+        Attribute "CollectionCount"
+      </Value>
+
+      <Value>
+        Type "total_time_in_ms"
+        InstancePrefix "collection_time"
+        #InstanceFrom ""
+        Table false
+        Attribute "CollectionTime"
+      </Value>
+
+#      # Not that useful, therefore commented out.
+#      <Value>
+#        Type "threads"
+#        #InstancePrefix ""
+#        #InstanceFrom ""
+#        Table false
+#        # Demonstration how to access composite types
+#        Attribute "LastGcInfo.GcThreadCount"
+#      </Value>
+    </MBean>
+
+    ######################################
+    # Define the "jmx_memory" type as:   #
+    #   jmx_memory  value:GAUGE:0:U      #
+    # See types.db(5) for details.       #
+    ######################################
+
+    # Generic heap/nonheap memory usage.
+    <MBean "memory">
+      ObjectName "java.lang:type=Memory"
+      #InstanceFrom ""
+      InstancePrefix "memory"
+
+      # Creates four values: committed, init, max, used
+      <Value>
+        Type "jmx_memory"
+        #InstancePrefix ""
+        #InstanceFrom ""
+        Table true
+        Attribute "HeapMemoryUsage"
+        InstancePrefix "heap-"
+      </Value>
+
+      # Creates four values: committed, init, max, used
+      <Value>
+        Type "jmx_memory"
+        #InstancePrefix ""
+        #InstanceFrom ""
+        Table true
+        Attribute "NonHeapMemoryUsage"
+        InstancePrefix "nonheap-"
+      </Value>
+    </MBean>
+
+    # Memory usage by memory pool.
+    <MBean "memory_pool">
+      ObjectName "java.lang:type=MemoryPool,*"
+      InstancePrefix "memory_pool-"
+      InstanceFrom "name"
+
+      <Value>
+        Type "jmx_memory"
+        #InstancePrefix ""
+        #InstanceFrom ""
+        Table true
+        Attribute "Usage"
+      </Value>
+    </MBean>
+
+    # AMQ Queue
+    <MBean "Broker">
+      ObjectName"org.apache.activemq:BrokerName=*,Type=Broker"
+      InstancePrefix "Broker"
+
+      <Value>
+        Type "gauge"
+        Table false
+
+        Attribute "MemoryPercentUsage"
+        InstancePrefix "MemoryPercentUsage"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "StorePercentUsage"
+        InstancePrefix "StorePercentUsage"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "TempPercentUsage"
+        InstancePrefix "TempPercentUsage"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "TotalConsumerCount"
+        InstancePrefix "TotalConsumerCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "TotalEnqueueCount"
+        InstancePrefix "TotalEnqueueCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "TotalDequeueCount"
+        InstancePrefix "TotalDequeueCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "TotalMessageCount"
+        InstancePrefix "TotalMessageCount"
+      </Value>
+
+    </MBean>
+
+    # AMQ Queue
+    <MBean "Queue">
+      ObjectName"org.apache.activemq:BrokerName=*,Type=Queue,*"
+      InstancePrefix "Queue-"
+      InstanceFrom "Destination"
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "CursorMemoryUsage"
+        InstancePrefix "CursorMemoryUsage"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+
+        Attribute "CursorPercentUsage"
+        InstancePrefix "CursorPercentUsage"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "InFlightCount"
+        InstancePrefix "InFlightCount"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "ConsumerCount"
+        InstancePrefix "ConsumerCount"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "QueueSize"
+        InstancePrefix "QueueSize"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "AverageEnqueueTime"
+        InstancePrefix "AverageEnqueueTime"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "MaxEnqueueTime"
+        InstancePrefix "MaxEnqueueTime"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "MinEnqueueTime"
+        InstancePrefix "MinEnqueueTime"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "ProducerCount"
+        InstancePrefix "ProducerCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "EnqueueCount"
+        InstancePrefix "EnqueueCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "DequeueCount"
+        InstancePrefix "DequeueCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "DispatchCount"
+        InstancePrefix "DispatchCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "ExpiredCount"
+        InstancePrefix "ExpiredCount"
+      </Value>
+
+    </MBean>
+
+    # AMQ Topic
+   <MBean "Topic">
+      ObjectName"org.apache.activemq:BrokerName=*,Type=Topic,*"
+      InstancePrefix "Topic-"
+      InstanceFrom "Destination"
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "InFlightCount"
+        InstancePrefix "InFlightCount"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "ConsumerCount"
+        InstancePrefix "ConsumerCount"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "QueueSize"
+        InstancePrefix "QueueSize"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "AverageEnqueueTime"
+        InstancePrefix "AverageEnqueueTime"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "MaxEnqueueTime"
+        InstancePrefix "MaxEnqueueTime"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "MinEnqueueTime"
+        InstancePrefix "MinEnqueueTime"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "ProducerCount"
+        InstancePrefix "ProducerCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "EnqueueCount"
+        InstancePrefix "EnqueueCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "DequeueCount"
+        InstancePrefix "DequeueCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "DispatchCount"
+        InstancePrefix "DispatchCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "ExpiredCount"
+        InstancePrefix "ExpiredCount"
+      </Value>
+
+   </MBean>
+
+    # Mobicents
+   <MBean "Mobicents">
+      ObjectName"null:host=default-host,path=/*,type=SipManager"
+      InstancePrefix "Mobicents-"
+      InstanceFrom "path"
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "activeSipSessions"
+        InstancePrefix "activeSipSessions"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "expiredSipSessions"
+        InstancePrefix "expiredSipSessions"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "sipSessionCounter"
+        InstancePrefix "sipSessionCounter"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "sipSessionMaxAliveTime"
+        InstancePrefix "sipSessionMaxAliveTime"
+      </Value>
+   </MBean>
+
+    # Sigal
+   <MBean "Sigal">
+      ObjectName"sigal:name=*"
+      InstancePrefix "Sigal-"
+      InstanceFrom "name"
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "BusyCauseCount"
+        InstancePrefix "BusyCauseCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "CallCount"
+        InstancePrefix "CallCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "CongestionCauseCount"
+        InstancePrefix "CongestionCauseCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "EstablishedCallCount"
+        InstancePrefix "EstablishedCallCount"
+      </Value>
+
+      <Value>
+        Type "counter"
+        Table false
+        Attribute "ExceptionCount"
+        InstancePrefix "ExceptionCount"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "MeanBillableDuration"
+        InstancePrefix "MeanBillableDuration"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "MeanDuration"
+        InstancePrefix "MeanDuration"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "MeanInviteLatency"
+        InstancePrefix "MeanInviteLatency"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "MeanTreatmentDuration"
+        InstancePrefix "MeanTreatmentDuration"
+      </Value>
+
+      <Value>
+        Type "gauge"
+        Table false
+        Attribute "UnallocatedCauseCount"
+        InstancePrefix "UnallocatedCauseCount"
+      </Value>
+   </MBean>
+
+    #####################
+    # Connection blocks #
+    #####################
+    <Connection>
+      ServiceURL "<%= jmx_service_url -%>"
+      User "<%= jmx_user -%>"
+      Password "<%= jmx_password -%>"
+      Host "<%= jmx_host -%>"
+<% jmx_collects.each do |jmxcollect| -%>
+      Collect "<%= jmxcollect -%>"
+<% end -%>
+    </Connection>
+  </Plugin>
+</Plugin>

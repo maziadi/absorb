@@ -1,0 +1,4 @@
+APT::Default-Release "stable";
+<% if apt_cache_limit -%>
+APT::Cache-Limit 20000000;
+<% end -%>

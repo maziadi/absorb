@@ -1,0 +1,11 @@
+<% $branches.each do |branch| %>
+[dist-<%= branch %>]
+  path <%= $environment_basedir %>/<%= branch %>/dist
+  allow *
+<% end %>
+
+[modules]
+  allow *.alphalink.fr
+
+[plugins]
+  allow *.alphalink.fr

@@ -1,0 +1,4 @@
+check process delayed_job_drive
+  with pidfile "/var/run/drive/delayed_job.pid"
+  start program = "/bin/su - drive -c 'RAILS_ENV=<%= environment %> bundle exec /srv/drive/script/delayed_job start --pid-dir=/var/run/drive/'" 
+  stop program = "/bin/su - drive -c 'RAILS_ENV=<%= environment %> bundle exec /srv/drive/script/delayed_job stop --pid-dir=/var/run/drive/'"

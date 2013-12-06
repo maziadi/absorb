@@ -1,0 +1,18 @@
+worker_processes 2
+working_directory "/srv/cas/"
+
+# This loads the application in the master process before forking
+# worker processes
+# Read more about it here:
+# http://unicorn.bogomips.org/Unicorn/Configurator.html
+preload_app true
+
+timeout 30
+
+listen "127.0.0.1:8097", :tcp_nopush => true
+
+pid "/srv/cas/unicorn.pid"
+
+stderr_path "/srv/cas/log/unicorn.stderr.log"
+stdout_path "/srv/cas/log/unicorn.stdout.log"
+

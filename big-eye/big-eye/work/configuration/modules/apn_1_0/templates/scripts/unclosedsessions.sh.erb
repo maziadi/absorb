@@ -1,0 +1,95 @@
+#!/bin/bash
+#
+# List unclosed sessions
+# Input : [msisdn]
+#
+
+function getref() {
+# $1 : msisdn
+  local ref=""
+  ref=$(su - postgres -c "psql -1 -d <%= db_name %> -c \"SELECT ref FROM refmsisdn WHERE refmsisdn.msisdn = '$1';\" -h <%= virtual_ip %>" | sed 's/ //g' | head -n 3 | tail -1)
+  echo "$ref"
+}
+
+function getip() {
+# $1 : username
+  local ip=""
+  ip=$(su - postgres -c "psql -1 -d <%= db_name %> -c \"SELECT value FROM radreply WHERE radreply.username = '$1' AND radreply.attribute = 'Framed-IP-Address';\" -h <%= virtual_ip %>" | sed 's/ //g' | head -n 3 | tail -1)
+  echo "$ip"
+}
+
+function usage() {
+  fcmd=$(basename $0)
+  echo "Usage: $fcmd [-m msisdn] [-d delay] [-h]"
+  echo "-m msisdn         msisdn, 336nnnnnnnn. Optional"
+  echo "-d delay          unclosed delay in hour. Optional"
+  echo "-h help           this help"
+}
+
+nargs=0
+while getopts ":m:d:h" optname; do
+  case "$optname" in
+    "m")
+      msisdn=$(echo $OPTARG | grep -E "^336[0-9]{8}$")
+      if [ "$?" != 0 ]; then
+        echo "Bad format: $OPTARG"
+        exit -1
+      else
+        nargs=$(($nargs+1))
+      fi
+      ;;
+    "d")
+      delay=$(echo $OPTARG | grep -E "[0-9]+")
+      if [ "$?" != 0 ]; then
+        echo "Bad format: $OPTARG"
+        exit -1
+      else
+        nargs=$(($nargs+1))
+      fi
+      ;;
+    "h")
+      usage
+      exit 0
+      ;;
+    "?")
+      echo "Unknown option $OPTARG"
+      usage
+      exit -1
+      ;;
+  esac
+done
+if [ "$nargs" -gt "3" ]; then
+  usage
+  exit -1
+fi
+
+# get unstopped session
+fic=$(mktemp)
+[ "${#delay}" == "0" ] && endstr=";" || endstr=" AND acctstarttime >= now() - interval '$delay hour';"
+if [ "${#msisdn}" == "0" ]; then
+  su - postgres -c "psql -1 -d <%= db_name %> -c \"SELECT * FROM radacct WHERE acctsessionid NOT IN (SELECT acctsessionid FROM radacct WHERE acctstoptime IS NOT null)$endstr\" -h <%= virtual_ip %>" | grep -v "^[[:space:]]\+radacctid" | grep -v "^-" | grep -v "^(.*row" | grep -v "^$" >$fic
+else
+  su - postgres -c "psql -1 -d <%= db_name %> -c \"SELECT * FROM radacct WHERE acctsessionid NOT IN (SELECT acctsessionid FROM radacct WHERE acctstoptime IS NOT null) AND username LIKE '$msisdn%'$endstr\" -h <%= virtual_ip %>" | grep -v "^[[:space:]]\+radacctid" | grep -v "^-" | grep -v "^(.*row" | grep -v "^$" >$fic
+fi
+
+while read line
+do
+  id=$(echo $line | cut -d'|' -f2 | sed 's/ //g')
+  username=$(echo $line | cut -d'|' -f4 | sed 's/ //g')
+  msisdn=$(echo $username | cut -d'-' -f1)
+  ref=$(getref $msisdn)
+  ip=$(getip $username)
+  starttime=$(echo $line | cut -d'|' -f10 | sed 's/ //g')
+  codemcc=$(echo $line | cut -d'|' -f28 | sed 's/ //g')
+  timezone=$(echo $line | cut -d'|' -f29 | sed 's/ //g')
+  echo "Session:"
+  echo "  start time: $starttime"
+  echo "  accounting session id: $id"
+  echo "  account reference: $ref"
+  echo "  msisdn: $msisdn"
+  echo "  ip: $ip"
+  echo "  mcc: $codemcc"
+  echo "  timezone: $timezone"
+done < $fic
+
+rm $fic

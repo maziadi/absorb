@@ -1,0 +1,12 @@
+/var/log/taxman/*log {
+  daily
+  missingok
+  rotate 52
+  compress
+  delaycompress
+  create 640 taxman taxman
+  sharedscripts
+  postrotate
+    [ ! -f /var/run/unicorn.pid ] || kill -USR1 `cat /var/run/unicorn.pid`
+  endscript
+}

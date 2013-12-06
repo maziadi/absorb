@@ -1,0 +1,53 @@
+# Options DHCP spécifiques à Pxelinux:
+option space pxelinux;
+option pxelinux.magic      code 208 = string;
+option pxelinux.configfile code 209 = text;
+option pxelinux.pathprefix code 210 = text;
+option pxelinux.reboottime code 211 = unsigned integer 32;
+
+
+subnet <%= network_addr -%> netmask 255.255.255.0 {
+
+  option routers <%= pxe_sub_network -%>.1;
+  option domain-name-servers 217.15.80.4, 217.15.88.4;
+
+  # IP addresses available for guests
+  range <%= pxe_sub_network -%>.95 <%= pxe_sub_network -%>.105;
+  # lease 5 min
+  default-lease-time 300;
+
+  # allow booting from the net
+  allow bootp;
+
+  # for net booting, server where the first file to be loaded (by TFTP
+  # protocol) ("filename" following definition) lies : so the TFTP
+  # server's name.
+  next-server <%= pxe_server -%>;
+
+  # net boot configuration for guests with a PXE client :
+  if substring (option vendor-class-identifier, 0, 9) = "PXEClient" or substring (option vendor-class-identifier, 0, 9) = "Etherboot" {
+    # Note : all files for PXE are relatives to the TFTP server's root
+    # path, as usually defined in /etc/inetd.conf.
+
+    # PXE boot loader (first program to be loaded, by TFTP)
+    filename "pxelinux.0";
+
+    # describe some specific pxelinux's options through DHCP options :
+    site-option-space "pxelinux";
+    option pxelinux.magic f1:00:74:7e;
+    if exists dhcp-parameter-request-list {
+      # Always send the PXELINUX options (specified in hexadecimal)
+      option dhcp-parameter-request-list = concat(option dhcp-parameter-request-list,d0,d1,d2,d3);
+    }
+
+    # For a PXE boot menu, different versions are available : simple
+    # text, text with curses, graphic (VESA)
+    option pxelinux.configfile "pxelinux/config_simple";
+    #option pxelinux.configfile "pxelinux/config_curses";
+    #option pxelinux.configfile "pxelinux/config_vesa";
+
+    # automatically reboot after 10 minutes of no activity
+    option pxelinux.reboottime 600;
+  }
+}
+

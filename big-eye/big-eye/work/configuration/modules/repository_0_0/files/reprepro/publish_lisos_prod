@@ -1,0 +1,100 @@
+#!/bin/bash
+
+usage () {
+  cat <<- EOF
+
+  usage : ${0} -v version [-d distrib] [-a] [-p]
+      -a    : passage en prod de toutes les versions (dublin, moscou, berlin ...)
+      -d    : passage en prod d'une distrib particulière
+      -p    : passage en preprod d'une version de test
+      -v    : version
+EOF
+  exit -1
+}
+
+find_links () {
+  initrd="initrd_${distrib}.img"
+  filesystem="filesystem_${distrib}.squashfs"
+  sha1="sha1_${distrib}.yaml"
+  vmlinuz="vmlinuz_${distrib}"
+}
+
+delete_link () {
+  find_links
+  for file in $initrd $filesystem $sha1 $vmlinuz; do
+    rm -rf $DEST_DIR/$file
+  done
+}
+create_link () {
+  initrd="initrd_${distrib}_${version}.img"
+  filesystem="filesystem_${distrib}_${version}.squashfs"
+  sha1="sha1_${distrib}_${version}.yaml"
+  vmlinuz="vmlinuz_${distrib}_${version}"
+  for file in $initrd $filesystem $sha1 $vmlinuz; do
+    link=$(echo $file |  sed "s/_$version//")
+    if [ -f $ARCH_DIR/$file ]; then
+      ln -s $ARCH_DIR/$file $DEST_DIR/$link
+    fi
+  done
+}
+
+copy_link () {
+  find_links
+  for file in $initrd $filesystem $sha1 $vmlinuz; do
+    rsync -av  $PREPROD/$file $PROD/$file > /dev/null 2>&1
+  done
+}
+
+while getopts :v:d:ap opt
+do
+  case ${opt} in
+    a)  all="1";;
+    d)  distrib=${OPTARG};;
+    p)  preprod="1";;
+    v)  version=${OPTARG};;
+    '?')echo "${0} : option ${OPTARG} is not valid" >&2 
+        usage;;
+  esac
+done
+
+all=${all:-"0"}
+preprod=${preprod:-"0"}
+DISTRIB="berlin dublin dublin-ha moscou vienne belem grozny"
+ARCH_DIR="/data/packages/archives/lisos2"
+PREPROD="/data/packages/pre-prod/lisos2"
+PROD="/data/packages/production/lisos2"
+
+if [ $preprod -eq 0 ]; then
+  DEST_DIR="/data/packages/production/lisos2"
+else
+  DEST_DIR="/data/packages/pre-prod/lisos2"
+fi
+
+
+if [ -z $version ] && [ $preprod -eq 1 ]; then
+  echo "Vous devez specifier le numero de la version a passer en pre-production"
+  usage
+fi
+
+if [ -z $distrib ] && [ $all -eq 0 ]; then
+  echo "Vous devez specifier si vous souhaiter mettre a jour une ou toutes les distribs"
+  usage
+fi
+
+if [ $all -eq 0 ]; then
+  delete_link
+  if [ -z $version ] && [ $preprod -eq 0 ]; then
+    copy_link
+  else
+    create_link
+  fi
+else
+  for distrib in $DISTRIB; do
+    delete_link
+    if  [ -z $version ] && [ $preprod -eq 0 ]; then
+      copy_link
+    else
+      create_link 
+    fi
+  done
+fi

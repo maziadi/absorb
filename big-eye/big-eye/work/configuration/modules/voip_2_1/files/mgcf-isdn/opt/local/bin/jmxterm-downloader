@@ -1,0 +1,9 @@
+#!/bin/bash
+
+error() {
+  echo "ERROR: $1"
+  exit -1
+}
+
+cd /root
+wget -c http://gold.alphalink.fr/misc/jmxterm-1.0-alpha-4-uber.jar || error "Unable to download"

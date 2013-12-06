@@ -1,0 +1,18 @@
+#Hostname "localhost"
+FQDNLookup false
+#BaseDir "/var/lib/collectd"
+#PluginDir "/usr/lib/collectd"
+TypesDB "/usr/share/collectd/types.db" "/etc/collectd/types.db"
+Interval <%= @interval %>
+Timeout <%= @timeout %>
+ReadThreads <%= @threads %>
+
+LoadPlugin cpu
+LoadPlugin load
+LoadPlugin memory
+LoadPlugin processes
+LoadPlugin swap
+LoadPlugin users
+
+Include "/etc/collectd/filters.conf"
+Include "/etc/collectd/conf.d"

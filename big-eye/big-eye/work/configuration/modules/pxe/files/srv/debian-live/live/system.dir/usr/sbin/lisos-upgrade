@@ -1,0 +1,264 @@
+#!/usr/bin/ruby
+
+MAIN_DIR="/live/image/live"
+CONFIG_FILE="live-config.cpio.gz"
+FILESYSTEM_FILE="live-filesystem.cpio.gz"
+
+require 'sha1'
+require 'yaml'
+require 'syslog'
+require 'net/http'
+require 'cmdparse2'
+require 'lisos'
+
+include FileUtils
+
+def generateHash(file)
+  hash = Digest::SHA1.new
+  open(file, "rb") do |f|
+    while (!f.eof)
+      readBuf = f.readpartial(1024)
+      hash.update(readBuf)
+    end
+  end
+  hash.hexdigest
+end
+
+def wget(pageUrl,output)
+  url = URI.parse("#{pageUrl}")
+  Net::HTTP.start(url.host, url.port) do |http|
+    open("#{output}","w"){ |f|
+      req = Net::HTTP::Get.new(url.path) 
+      req.basic_auth url.user, url.password
+      http.request(req){|res|
+        res.value()
+        res.read_body(f)
+      }
+    }
+  end
+  return 0
+end
+
+
+def retryWget(pageUrl,output,nb)
+  begin
+    puts "Download #{pageUrl} (retry #{nb})"
+    nb=nb.pred
+    wget(pageUrl,output)
+  rescue Exception => e
+    if (nb>0) then
+      retry
+    else
+      fail "#{e.message}"
+    end
+  end
+end
+
+def log(lvl,message)
+  case lvl
+  when :err
+    $log.err("#{message}")
+    puts"#{message}"
+  when :info
+    $log.info("#{message}")
+    puts "#{message}"
+  end
+end			
+
+
+def download(name)
+  version = ($version ? "_#{$version}" : "")
+  log(:info,"BEGIN: Download")
+  begin
+    sh "mount -o remount,rw #{$media}1"
+    serv = nil
+    #default prod or archives
+    if $server.nil?
+      $server = ($version ? "archives" : "prod")
+    end
+    case $server
+    when "dev"
+      serv = "http://alphalink:WBL3UqtLwS@gold.alphalink.fr/development/lisos2"
+    when "preprod"
+      serv = "http://alphalink:WBL3UqtLwS@gold.alphalink.fr/pre-prod/lisos2"
+    when "prod"
+      serv = "http://alphalink:WBL3UqtLwS@gold.alphalink.fr/production/lisos2"
+    when "archives"
+      serv = "http://alphalink:WBL3UqtLwS@gold.alphalink.fr/archives/lisos2"
+    when "dev-pornic"
+      serv = "http://alphalink:WBL3UqtLwS@repository.admin.alphalink.fr/development/lisos2"
+    when "preprod-pornic"
+      serv = "http://alphalink:WBL3UqtLwS@repository.admin.alphalink.fr/pre-prod/lisos2"
+    when "prod-pornic"
+      serv = "http://alphalink:WBL3UqtLwS@repository.admin.alphalink.fr/production/lisos2"
+    when "archives-pornic"
+      serv = "http://alphalink:WBL3UqtLwS@repository.admin.alphalink.fr/archives/lisos2"
+    else
+      serv = $server
+    end
+    retryWget("#{serv}/filesystem_#{name}#{version}.squashfs","#{MAIN_DIR}/filesystem_new.squashfs",3)
+    retryWget("#{serv}/vmlinuz_#{name}#{version}","#{MAIN_DIR}/vmlinuz_new",3)
+    retryWget("#{serv}/initrd_#{name}#{version}.img","#{MAIN_DIR}/initrd_new.img",3)
+    retryWget("#{serv}/sha1_#{name}#{version}.yaml","#{MAIN_DIR}/sha1_new.yaml",3)
+    sh "sync"
+  rescue Exception => e
+    log(:err,"Download:  #{e.message}")
+    fail "ERROR: Download: #{e.message}"
+  ensure #We make sure that we remount in read only the media
+    retryCmd "mount -o remount,ro #{$media}1",2,2
+  end
+  log(:info,"  END: Download")
+end
+
+def install(name)
+  sha = YAML::load(File::new("#{MAIN_DIR}/sha1_new.yaml"))
+  log(:info,"BEGIN: checksum SHA1")
+  shaFilesystemDL = generateHash("#{MAIN_DIR}/filesystem_new.squashfs")
+  shaVmlinuzDL = generateHash("#{MAIN_DIR}/vmlinuz_new")
+  shaInitrdDL = generateHash("#{MAIN_DIR}/initrd_new.img")
+  version = sha["lisos-rev"] || $version
+
+  if (sha["filesystem"] != shaFilesystemDL) or (sha["vmlinuz"] !=shaVmlinuzDL) or  (sha["initrd"] != shaInitrdDL)
+    log(:err,"checksum SHA1 not correct")
+    log(:info,"BEGIN: removing corrupted files")
+    begin
+      sh "mount -o remount,rw #{$media}1"
+      rm "#{MAIN_DIR}/filesystem_new.squashfs"
+      rm "#{MAIN_DIR}/vmlinuz_new"
+      rm "#{MAIN_DIR}/initrd_new.img"
+      sh "sync"
+      sleep 1
+    rescue Exception => e
+      log(:err,"removing corrupted files: #{e.message}")
+      fail "ERROR: removing corrupted files: #{e.message}"
+    ensure
+      retryCmd "mount -o remount,ro #{$media}1",2,2
+    end
+    log(:info,"  END: removing files")
+    exit(-1)
+  end
+  log(:info,"  END: checksum SHA1")
+
+  log(:info,"BEGIN: upgrade system")
+  begin
+    sh "mount -o remount,rw #{$media}1"
+
+    if !$keep_old
+      mv "#{MAIN_DIR}/filesystem.squashfs","#{MAIN_DIR}/filesystem.old.squashfs"
+      cp "#{MAIN_DIR}/initrd1.img","#{MAIN_DIR}/initrd2.img"
+      cp "#{MAIN_DIR}/vmlinuz1","#{MAIN_DIR}/vmlinuz2"
+      cp "#{MAIN_DIR}/sha1.yaml","#{MAIN_DIR}/sha1.old.yaml"
+      sh "sync"
+    end
+    puts "Move new filesystem and kernel"
+    mv "#{MAIN_DIR}/filesystem_new.squashfs","#{MAIN_DIR}/filesystem.squashfs"
+    mv "#{MAIN_DIR}/initrd_new.img","#{MAIN_DIR}/initrd1.img"	
+    mv "#{MAIN_DIR}/vmlinuz_new","#{MAIN_DIR}/vmlinuz1"
+    mv "#{MAIN_DIR}/sha1_new.yaml","#{MAIN_DIR}/sha1.yaml"
+    sh "sync"
+    sh "sync"
+    sleep 2
+  rescue Exception => e
+    log(:err,"upgrade system: #{e.message}")
+    fail "ERROR: upgrade system: #{e.message}"
+  ensure
+    retryCmd "mount -o remount,ro #{$media}1",2,2
+  end
+  log(:info,"  END: upgrade system")
+  log(:info,"BEGIN: inject configuration")
+  begin
+    mountPersistent()
+    mv "#{PERSISTENT_MOUNT}/current/version","#{PERSISTENT_MOUNT}/old" if File::file?("#{PERSISTENT_MOUNT}/current/version") and !$keep_old
+    vfile = {"name"=>name, "version" => version}
+    File::open("#{PERSISTENT_MOUNT}/current/version","w"){|f| YAML::dump(vfile,f) }
+
+    rm_r "#{PERSISTENT_MOUNT}/old/#{FILESYSTEM_FILE}" if File::file?("#{PERSISTENT_MOUNT}/old/#{FILESYSTEM_FILE}")
+    rm_r "#{PERSISTENT_MOUNT}/old/#{CONFIG_FILE}" if File::file?("#{PERSISTENT_MOUNT}/old/#{CONFIG_FILE}")
+    cp_r "#{PERSISTENT_MOUNT}/current/#{FILESYSTEM_FILE}","#{PERSISTENT_MOUNT}/old" if File::file?("#{PERSISTENT_MOUNT}/current/#{FILESYSTEM_FILE}")
+    cp_r "#{PERSISTENT_MOUNT}/current/#{CONFIG_FILE}","#{PERSISTENT_MOUNT}/old" if File::file?("#{PERSISTENT_MOUNT}/current/#{CONFIG_FILE}")
+    rm_r "#{PERSISTENT_MOUNT}/current/#{FILESYSTEM_FILE}" if File::file?("#{PERSISTENT_MOUNT}/current/#{FILESYSTEM_FILE}")
+    sh "sync"
+  rescue Exception => e
+    log(:err,"inject configuration: #{e.message}")
+    fail "ERROR: inject configuration: #{e.message}"
+  ensure
+    umountPersistent()
+  end
+  log(:info,"  END: inject configuration")
+
+  #lock file to avoid double upgrade
+  File::open("/var/run/lisos-upgrade","w"){|f|}
+  puts "Reboot to finish upgrade"
+end
+
+
+$media = get_cmdline("live-media") #name of the media where the system is install
+
+$config=loadLisosConfig() #load current lisos config
+
+$name=$config["name"] #default name of lisos image
+
+$log = Syslog.open("lisos-upgrade")
+
+$keep_old = false
+
+#check log file
+if File::file?("/var/run/lisos-upgrade") then
+	puts "You need to reboot to finish upgrade"
+	exit(-1)
+end
+
+
+cmd = CmdParse::CommandParser.new(true,false)
+cmd.program_name = "lisos-upgrade "
+
+cmd.options = CmdParse::OptionParserWrapper::new do |opt|
+	opt.on('-v', '--version VERSION', "version to upgrade") { |version|
+		$version = version
+	}
+	opt.on('-n', '--name NAME', "select the name of the lisos version") { |name|
+    $name = name
+	}
+	opt.on('-s', '--server SERVER', "select a server [dev,archives,preprod,prod] (default : prod or archives if -v) ") { |server|
+    $server = server
+	}
+  opt.on('-k', '--keep-old', "keep old image instead of move the current image to old") {
+    $keep_old = true
+	}
+end
+
+down = CmdParse::Command.new( 'download', false )
+down.short_desc = "download an upgrade"
+down.description = "download an upgrade"
+
+
+down.set_execution_block do |args|
+	download($name)
+end
+
+inst = CmdParse::Command.new( 'install', false )
+inst.short_desc = "install a donwloaded upgrade"
+inst.description = "install the upgrade already download"
+
+inst.set_execution_block do |args|
+  install($name)
+end
+
+
+all = CmdParse::Command.new( 'all', false )
+all.short_desc = "download and install an upgrade"
+all.description = "download and install an upgrade"
+
+all.set_execution_block do |args|
+  download($name)
+	install($name)
+end
+
+
+cmd.add_command(all,true)
+cmd.add_command(CmdParse::HelpCommand::new)
+cmd.add_command(down)
+cmd.add_command(inst)
+
+cmd.parse
+

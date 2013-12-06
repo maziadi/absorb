@@ -1,0 +1,60 @@
+<group id="xen-<%= name %>">
+    <meta_attributes id="xen-<%= name %>_meta_attrs">
+        <attributes>
+            <nvpair name="target_role" id="xen-<%= name %>_metaattr_target_role" value="stopped"/>
+            <nvpair id="xen-<%= name %>_metaattr_ordered" name="ordered" value="true"/>
+            <nvpair id="xen-<%= name %>_metaattr_collocated" name="collocated" value="true"/>
+        </attributes>
+    </meta_attributes>
+    <primitive id="target-<%= name %>-swap" class="ocf" type="iscsi" provider="heartbeat">
+        <instance_attributes id="target-<%= name %>-swap_instance_attrs">
+            <attributes>
+              <nvpair id="target-xen-<%= name %>-swap-attr-01" name="portal" value="192.168.30.24"/>
+                <nvpair id="target-xen-<%= name %>-swap-attr-02" name="target" value="iqn.2008-07.fr.alphalink:storage.<%= name %>-swap"/>
+            </attributes>
+        </instance_attributes>
+        <meta_attributes id="target-<%= name %>-swap_meta_attrs">
+            <attributes>
+                <nvpair id="target-<%= name %>-swap_metaattr_is_managed" name="is_managed" value="default"/>
+            </attributes>
+        </meta_attributes>
+    </primitive>
+    <primitive id="target-<%= name %>-disk" class="ocf" type="iscsi" provider="heartbeat">
+        <instance_attributes id="target-<%= name %>-disk_instance_attrs">
+            <attributes>
+                <nvpair id="target-xen-<%= name %>-disk-attr-01" name="portal" value="192.168.30.24"/>
+                <nvpair id="target-xen-<%= name %>-disk-attr-02" name="target" value="iqn.2008-07.fr.alphalink:storage.<%= name %>-disk"/>
+            </attributes>
+        </instance_attributes>
+        <meta_attributes id="target-<%= name %>-disk_meta_attrs">
+            <attributes>
+                <nvpair id="target-<%= name %>-disk_metaattr_is_managed" name="is_managed" value="default"/>
+            </attributes>
+        </meta_attributes>
+    </primitive>
+    <primitive class="ocf" type="Xen" provider="heartbeat" id="<%= name %>">
+        <operations>
+            <op id="<%= name %>-mon-op-01" name="monitor" interval="240s" timeout="60s" prereq="nothing" start_delay="0" disabled="false" role="Started"/>
+            <op id="<%= name %>-start-op-02" name="start" timeout="60s" start_delay="0" disabled="false" role="Started" on_fail="restart"/>
+            <op id="<%= name %>-stop-op-03" name="stop" timeout="300s" start_delay="0" disabled="false" role="Started"/>
+            <op id="<%= name %>-stop-op-04" name="status" interval="10" timeout="30" start_delay="120" disabled="false" role="Started"/>
+        </operations>
+    <instance_attributes id="<%= name %>_instance_attrs">
+        <attributes>
+            <nvpair id="<%= name %>-attr-01" name="xmfile" value="/etc/xen/<%= name %>.cfg"/>
+            <nvpair id="<%= name %>-attr-02" name="allow_migrate" value="1"/>
+            <nvpair id="<%= name %>-attr-03" name="allow_mem_management" value="0"/>
+            <nvpair id="<%= name %>-attr-04" name="reserved_Dom0_memory" value="512"/>
+        </attributes>
+    </instance_attributes>
+    <meta_attributes id="<%= name %>_meta_attrs">
+        <attributes>
+            <nvpair id="<%= name %>_metaattr_is_managed" name="is_managed" value="default"/>
+        </attributes>
+    </meta_attributes>
+        </primitive>
+        <instance_attributes id="xen-<%= name %>">
+        <attributes/>
+    </instance_attributes>
+</group>
+

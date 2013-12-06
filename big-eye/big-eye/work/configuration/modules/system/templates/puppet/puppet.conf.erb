@@ -1,0 +1,35 @@
+[main]
+  logdir=/var/log/puppet
+  vardir=/var/lib/puppet
+  rundir=/var/run/puppet
+  ssldir=$vardir/ssl
+  factpath=$vardir/lib/facter
+  pluginsync = true
+  pluginsource = puppet://$server/plugins
+  environment = <%= environment %>
+  manifest   = /var/lib/puppet/branches/production/master/manifests/site.pp
+  modulepath = /var/lib/puppet/branches/production/modules/
+  manifestdir = /var/lib/puppet/branches/production/master/manifests/
+  templatedir = /var/lib/puppet/branches/production/master/templates/
+
+[development]
+  manifest   = /var/lib/puppet/branches/development/master/manifests/site.pp
+  modulepath = /var/lib/puppet/branches/development/modules/
+  manifestdir = /var/lib/puppet/branches/development/master/manifests/
+  templatedir = /var/lib/puppet/branches/development/master/templates/
+
+#[test]
+# manifest   = /var/lib/puppet/branches/test/master/manifests/site.pp
+# modulepath = /var/lib/puppet/branches/test/modules/
+# manifestdir = /var/lib/puppet/branches/test/master/manifests/
+# templatedir = /var/lib/puppet/branches/test/master/templates/
+
+[puppetd]
+  server = <%= gold_server %>
+  report = true
+  fqdn = <%= fqdn %>
+
+[puppetmasterd]
+  certname=gold.alphalink.fr
+  reports = http,store
+  reporturl = http://127.0.0.1:3000/dashboard/reports/upload

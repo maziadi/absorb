@@ -1,0 +1,4 @@
+check process redmine
+  with pidfile "/var/run/redmine/unicorn.pid"
+  start program = "/bin/su - redmine -c 'unicorn_rails -E production -c /srv/redmine/current/config/unicorn.rb -D'" 
+  stop program = "/bin/su - redmine -c 'kill -QUIT $(cat /var/run/redmine/unicorn.pid)'"

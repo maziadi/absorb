@@ -1,0 +1,6 @@
+<% if !resolv_searches.empty? -%>
+search <%= resolv_searches.join(" ") %>
+<% end -%>
+<% resolv_nameservers.each do |nameserver| -%>
+nameserver <%= nameserver %>
+<% end -%>

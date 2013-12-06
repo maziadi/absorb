@@ -1,0 +1,6 @@
+<% openntpd_servers.each do |server| -%>
+server <%= server %>
+<% end -%>
+<% if openntpd_alphalink -%>
+servers pool.ntp.alphalink.fr
+<% end -%>

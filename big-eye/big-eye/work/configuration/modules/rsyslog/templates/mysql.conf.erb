@@ -1,0 +1,5 @@
+$ModLoad ommysql
+$template t_main,"INSERT INTO `SYSLOG`.`syslog` (`ReceivedAt`,`DeviceReportedTime`,`Facility`,`Priority`,`FromHost`,`SysLogTag`,`Message`) VALUES ('%timegenerated:::date-mysql%','%timereported:::date-mysql%','%syslogfacility%','%syslogpriority%','%fromhost%','%syslogtag%','%msg%')",sql
+*.*       ><%= rsyslog_ip_service-%>,<%= rsyslog_mysql_dbname -%>,<%= rsyslog_mysql_dbuser -%>,<%= rsyslog_mysql_password -%>;t_main
+& /var/log/syslog
+& ~

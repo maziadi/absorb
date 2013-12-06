@@ -1,0 +1,13 @@
+" map <C-h> <C-w>h<C-w>\|:exe "resize " . (winwidth(0) * 1/2)<CR><C-g>
+" map <C-j> <C-w>j<C-w>_:exe "resize " . (winheight(0) * 1/2)<CR><C-g>
+" map <C-k> <C-w>k<C-w>_:exe "resize " . (winheight(0) * 1/2)<CR><C-g>
+" map <C-l> <C-w>l<C-w>\|:exe "resize " . (winwidth(0) * 1/2)<CR><C-g>
+
+map <C-W>n :Hexplore<CR>
+map <C-W>v :Vexplore!<CR>
+
+nnoremap <C-W>O :call MaximizeToggle ()<CR>
+nnoremap <C-W>o :call MaximizeToggle ()<CR>
+nnoremap <C-W><C-O> :call MaximizeToggle ()<CR>
+
+" vim: ft=vim

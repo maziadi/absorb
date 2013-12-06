@@ -1,0 +1,16 @@
+<%= environment %>:
+  wsdl:
+  <% if environment == "production" %>
+    endpoint: 'http://pnmprod:80/pnmWS/ws/inbound/Inbound.jws'
+  <% else %>
+    endpoint: 'http://pnmvabf:80/pnmWS/ws/inbound/Inbound.jws'
+  <% end %>
+    namespace: 'http://www.steria.com/pnm/types'
+  http:
+    auth:
+      basic:
+        user: <%= pnm_user %>
+        password: <%= pnm_password %>
+  pnm:
+    opr: '67'
+    oprt: '02'

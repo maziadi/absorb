@@ -1,0 +1,106 @@
+<events>
+  <event>
+    <mask>
+      <maskelement>
+        <mename>id</mename>
+        <mevalue>.1.3.6.1.4.1.34026.1.4</mevalue>
+      </maskelement>
+      <maskelement>
+        <mename>generic</mename>
+        <mevalue>6</mevalue>
+      </maskelement>
+      <maskelement>
+        <mename>specific</mename>
+        <mevalue>1</mevalue>
+      </maskelement>
+    </mask>
+  	<uei>uei.opennms.org/vendor/alphalink/traps/LimaUpDown</uei>
+    <event-label>Check Lima notification</event-label>
+    <alarm-data reduction-key="%uei%:%dpname%:%nodeid%" alarm-type="1" auto-clean="false"/>
+    <descr>&lt;p&gt; 
+      check name : %parm[#1]%
+      type : %parm[#2]%
+      ip : %parm[#3]%
+      state : %parm[#4]%
+      blocked : %parm[#5]%
+      down cause : %parm[#6]%
+      &lt;/p&gt;</descr>
+  	<logmsg dest='logndisplay'>&lt;p&gt; 
+      check name : %parm[#1]%
+      type : %parm[#2]%
+      ip : %parm[#3]%
+      state : %parm[#4]%
+      blocked : %parm[#5]%
+      down cause : %parm[#6]%
+      &lt;/p&gt;</logmsg>
+  	<severity>Warning</severity>
+  </event>
+  <event>
+    <uei>uei.opennms.org/alphalink/CallsLimit</uei>
+    <event-label>Nombre d'appels élevé</event-label>
+    <descr>Nombre d'appels élevé</descr>
+    <logmsg dest='logndisplay'>Il y a un nombre d'appels élevé sur le node %nodelabel% (%parm[value]%).</logmsg>
+    <severity>Normal</severity>
+  </event>
+  <event>
+    <uei>uei.opennms.org/alphalink/CallsLimit-rearmed</uei>
+    <event-label>Nombre d'appels normal</event-label>
+    <descr>Le nombre d'appels sur le node est devenu normal</descr>
+    <logmsg dest='logndisplay'>Le nombre d'appels est devenu normal sur %nodelabel% (%parm[value]%).</logmsg>
+    <severity>Normal</severity>
+  </event>
+  <event>
+    <mask>
+      <maskelement>
+        <mename>id</mename>
+        <mevalue>.1.3.6.1.4.1.4131.1</mevalue>
+      </maskelement>
+      <maskelement>
+        <mename>generic</mename>
+        <mevalue>6</mevalue>
+      </maskelement>
+      <maskelement>
+        <mename>specific</mename>
+        <mevalue>1</mevalue>
+      </maskelement>
+    </mask>
+    <uei>uei.opennms.org/vendor/alphalink/traps/datacenter</uei>
+    <event-label>Datacenter Notification (jace)</event-label>
+    <alarm-data reduction-key="%uei%:%dpname%:%nodeid%" alarm-type="1" auto-clean="false"/>
+    <descr>&lt;p&gt;Alarme sur %parm[#6]%.&lt;/p&gt;&lt;p&gt;Détail : %parm[#12]%&lt;/p&gt;</descr>
+    <logmsg dest='logndisplay'>Alarme sur %parm[#6]%</logmsg>
+    <severity>Warning</severity>
+  </event>
+  <event>
+    <uei>uei.opennms.org/vendor/alphalink/traps/valuelimit</uei>
+    <event-label>Datacenter is dead</event-label>
+    <alarm-data reduction-key="%uei%:%dpname%:%nodeid%" alarm-type="1" auto-clean="false"/>
+    <descr>Alarme sur %parm[#1]%</descr>
+    <logmsg dest='logndisplay'>&lt;p&gt;Alarme sur %parm[label]%&lt;/p&gt;&lt;p&gt;Valeur limite atteinte : %parm[value]% (limite a %parm[threshold]%, rearm a %parm[rearm]%)&lt;/p&gt;</logmsg>
+    <severity>Warning</severity>
+  </event>
+  <event>
+    <uei>uei.opennms.org/vendor/alphalink/traps/valuelimit-ho</uei>
+    <event-label>Datacenter is dead</event-label>
+    <alarm-data reduction-key="%uei%:%dpname%:%nodeid%" alarm-type="1" auto-clean="false"/>
+    <descr>Alarme sur %parm[#1]%</descr>
+    <logmsg dest='logndisplay'>&lt;p&gt;Alarme sur %parm[label]%&lt;/p&gt;&lt;p&gt;Valeur limite atteinte : %parm[value]% (limite a %parm[threshold]%, rearm a %parm[rearm]%)&lt;/p&gt;</logmsg>
+    <severity>Warning</severity>
+  </event>
+  <event>
+    <uei>uei.opennms.org/vendor/alphalink/traps/valuelimit-mail</uei>
+    <event-label>Datacenter is dead</event-label>
+    <alarm-data reduction-key="%uei%:%dpname%:%nodeid%" alarm-type="1" auto-clean="false"/>
+    <descr>Alarme sur %parm[#1]%</descr>
+    <logmsg dest='logndisplay'>&lt;p&gt;Alarme sur %parm[label]%&lt;/p&gt;&lt;p&gt;Valeur limite atteinte : %parm[value]% (limite a %parm[threshold]%, rearm a %parm[rearm]%)&lt;/p&gt;</logmsg>
+    <severity>Warning</severity>
+  </event>
+  <event>
+    <uei>uei.opennms.org/vendor/alphalink/traps/valuelimit-rearm</uei>
+    <event-label>Datacenter is dead</event-label>
+    <alarm-data reduction-key="%uei%:%dpname%:%nodeid%" alarm-type="1" auto-clean="false"/>
+    <descr>Fin alarme sur %parm[label]%</descr>
+    <logmsg dest='logndisplay'>&lt;p&gt;Fin d'alarme sur le point %parm[label]%&lt;/p&gt;&lt;p&gt;Valeur de %parm[value]% sous %parm[rearm]% (limite a %parm[threshold]%, rearm a %parm[rearm]%)&lt;/p&gt;</logmsg>
+    <severity>Warning</severity>
+  </event>
+</events>

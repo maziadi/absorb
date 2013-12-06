@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<?castor class-name="org.opennms.netmgt.threshd.ThreshdConfiguration"?>
+<threshd-configuration 
+	threads="5">
+
+	<package name="mib2">
+		<filter>IPADDR != '0.0.0.0'</filter>	 
+		<include-range begin="0.0.0.0" end="255.255.255.255"/>
+		<service name="SNMP" interval="300000" user-defined="false" status="on">
+			<parameter key="thresholding-group" value="mib2"/>
+		</service>
+	</package>
+	
+	<package name="hrstorage">
+    <filter>IPADDR != '0.0.0.0' &amp; (nodeSysOID LIKE '.1.3.6.1.4.1.8072.%') </filter>	 
+		<include-range begin="0.0.0.0" end="255.255.255.255"/>
+		<service name="SNMP" interval="300000" user-defined="false" status="on">
+			<parameter key="thresholding-group" value="hrstorage"/>
+		</service>
+	</package>
+
+	<package name="netsnmp">
+		<filter>IPADDR != '0.0.0.0' &amp; (nodeSysOID LIKE '.1.3.6.1.4.1.2021.%' | nodeSysOID LIKE '.1.3.6.1.4.1.8072.%')</filter>	 
+		<include-range begin="0.0.0.0" end="255.255.255.255"/>
+		<service name="SNMP" interval="300000" user-defined="false" status="on">
+			<parameter key="thresholding-group" value="netsnmp"/>
+		</service>
+  </package>
+
+	<package name="callweaver">
+		<filter>IPADDR != '0.0.0.0' &amp; (nodeSysOID LIKE '.1.3.6.1.4.1.2021.%' | nodeSysOID LIKE '.1.3.6.1.4.1.8072.%')</filter>	 
+		<include-range begin="0.0.0.0" end="255.255.255.255"/>
+		<service name="SNMP" interval="300000" user-defined="false" status="on">
+			<parameter key="thresholding-group" value="callweaver"/>
+		</service>
+  </package>
+
+  
+  <!-- =================== Thresholds packages for Pooler in-line threholds (OpenNMS v.1.7.6) ============== -->
+  <!--
+	<package name="pollerICMP">
+		<filter>IPADDR != '0.0.0.0'</filter>	 
+		<include-range begin="0.0.0.0" end="255.255.255.255"/>
+		<service name="ICMP" interval="300000" user-defined="false" status="on">
+			<parameter key="thresholding-group" value="pollerICMP"/>
+		</service>
+  </package>
+
+	<package name="pollerSSH">
+		<filter>IPADDR != '0.0.0.0'</filter>	 
+		<include-range begin="0.0.0.0" end="255.255.255.255"/>
+		<service name="SSH" interval="300000" user-defined="false" status="on">
+			<parameter key="thresholding-group" value="pollerSSH"/>
+		</service>
+  </package>
+  -->
+
+</threshd-configuration>
+

@@ -1,0 +1,7 @@
+$ActionQueueType LinkedList
+$ActionQueueFileName spool
+$ActionResumeRetryCount -1
+$ActionQueueSaveOnShutdown on
+$ActionQueueMaxFileSize 2G
+$ActionQueueMaxDiskSpace 499G
+if $inputname == 'imudp' or $hostname == '<%= @hostname %>' then :omrelp:<%= rsyslog_ip_replication %>:20514

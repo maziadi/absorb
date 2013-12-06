@@ -1,0 +1,5 @@
+check process mediation 
+  with pidfile "/var/run/mediation/mediation.pid"
+  start program = "/bin/su - mediation -c 'MEDIATION_ENV=<%= environment %> bundle exec bin/mediation start --piddir /var/run/mediation'"
+  stop program = "/bin/su - mediation -c 'MEDIATION_ENV=<%= environment %> bundle exec bin/mediation stop --piddir /var/run/mediation'"
+  group taxerp

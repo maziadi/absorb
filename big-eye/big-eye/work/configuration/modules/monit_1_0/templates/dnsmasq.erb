@@ -1,0 +1,11 @@
+check process dnsmasq
+   with pidfile "/var/run/dnsmasq/dnsmasq.pid"
+   start program = "/etc/init.d/dnsmasq restart"
+   stop program = "/etc/init.d/dnsmasq stop"
+   alert <%= monit_conf_alert_email %>
+   if 3 restarts within 4 cycles then timeout
+   if totalmem > 2 Mb then alert
+   if totalmem > 4 Mb then restart
+   if cpu usage > 60% for 3 cycles then alert
+   if cpu usage > 95% for 3 cycles then restart
+   if failed host <%= dnsmasq_service_addr %> port 53 use type udp protocol dns then restart

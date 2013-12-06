@@ -1,0 +1,4 @@
+check process unicorn_rails
+  with pidfile "/var/run/puppet/dashboard.pid"
+  start program = "/bin/su - puppet -c 'unicorn_rails -E production -c /etc/puppet-dashboard/unicorn.rb -D'" 
+  stop program = "/bin/su - puppet -c 'killall -QUIT unicorn_rails'"

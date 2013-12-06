@@ -1,0 +1,1399 @@
+[globals]
+DIVERT_SUPPORT => NO
+
+[default]
+; mandatory by monit for sip's check 
+exten => _X.,1,Hangup() 
+ 
+; mandatory to answer ok to option without username part of R-URI 
+exten => s,1,Hangup()
+
+[outbound]
+exten => _[0-9].,1,AGI(agi://localhost:12345/ss7Outbound.agi)
+exten => _[0-9].,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _[0-9].,n,Hangup()
+exten => _[0-9].,n(FAILED),Hangup(38)
+
+[inbound]
+
+; ticket 130610142301 - SDAs CONNECTOIP à restituer
+exten => 10025179994050,1,Hangup()
+exten => 10025179978923,1,Hangup()
+
+; ticket 130313125801 - SDAs IPOP à restituer
+exten => _1002524343595.,1,Hangup()
+exten => _1002524343596.,1,Hangup()
+
+; ticket 130312094601 - SDAs Woopeo à restituer
+exten => 10025148803467,1,Hangup()
+exten => 10025148803898,1,Hangup()
+exten => _1002514516896.,1,Hangup()
+exten => 10025145168970,1,Hangup()
+exten => 10025145168971,1,Hangup()
+exten => 10025145168972,1,Hangup()
+exten => 10025145168973,1,Hangup()
+exten => 10025145168974,1,Hangup()
+exten => 10025145168975,1,Hangup()
+exten => 10025175640004,1,Hangup()
+exten => 10025175640005,1,Hangup()
+
+; ticket 120430130301 - Applicall - SDAs a restituer
+exten => 10025328809945,1,Hangup()
+exten => 10025328809946,1,Hangup()
+exten => 10025328809947,1,Hangup()
+exten => 10025328809948,1,Hangup()
+exten => 10025328809949,1,Hangup()
+;
+; IG 120225182201 - Boucles apres resiliation soudaine SATECOM
+;
+; Manuel
+;  0990000330015
+exten => 10025479055243,1,Hangup()
+exten => 10025479055244,1,Hangup()
+exten => 10025479055245,1,Hangup()
+exten => 10025479055246,1,Hangup()
+exten => 10025479055247,1,Hangup()
+exten => 10025479055248,1,Hangup()
+exten => 10025479055249,1,Hangup()
+exten => 10025479055250,1,Hangup()
+exten => 10025479055251,1,Hangup()
+exten => 10025479055252,1,Hangup()
+;  0990000330019
+exten => 10025553058022,1,Hangup()
+;  0990000088020
+exten => 10025251280843,1,Hangup()
+exten => 10025251287541,1,Hangup()
+exten => 10025546363103,1,Hangup()
+; C5 VNO IS
+exten => 10025479366198,1,Hangup()
+exten => 10025546767965,1,Hangup()
+exten => 10025479366199,1,Hangup()
+exten => 10025492245068,1,Hangup()
+exten => _1002597517139.,1,Hangup()
+exten => 10025492450348,1,Hangup()
+exten => _1002547909990.,1,Hangup()
+exten => _1002549323273.,1,Hangup()
+exten => _1002547909991.,1,Hangup()
+exten => _1002547909992.,1,Hangup()
+exten => _1002549323274.,1,Hangup()
+exten => _1002549323275.,1,Hangup()
+exten => 10025479266189,1,Hangup()
+exten => 10025479266190,1,Hangup()
+exten => 10025479266191,1,Hangup()
+exten => 10025479266192,1,Hangup()
+exten => 10025479266193,1,Hangup()
+exten => 10025479266194,1,Hangup()
+exten => 10025479266195,1,Hangup()
+exten => 10025479266196,1,Hangup()
+exten => 10025479266197,1,Hangup()
+exten => 10025479266198,1,Hangup()
+exten => 10025479010059,1,Hangup()
+exten => _100254790087.,1,Hangup()
+exten => 10025479092969,1,Hangup()
+exten => _1002545018106.,1,Hangup()
+exten => 10025493231771,1,Hangup()
+exten => 10025479088102,1,Hangup()
+exten => 10025251007574,1,Hangup()
+exten => 10025479367776,1,Hangup()
+exten => 10025479367777,1,Hangup()
+exten => 10025479367778,1,Hangup()
+exten => 10025492248893,1,Hangup()
+exten => 10025479099930,1,Hangup()
+exten => 10025479099931,1,Hangup()
+exten => 10025479099932,1,Hangup()
+exten => 10025492524838,1,Hangup()
+exten => 10025479099933,1,Hangup()
+exten => _1002525121930.,1,Hangup()
+exten => 10025479099934,1,Hangup()
+exten => 10025479099935,1,Hangup()
+exten => 10025492524841,1,Hangup()
+exten => 10025479363649,1,Hangup()
+exten => 10025479363650,1,Hangup()
+exten => 10025479363651,1,Hangup()
+exten => 10025479366200,1,Hangup()
+exten => 10025479363652,1,Hangup()
+exten => 10025479363653,1,Hangup()
+exten => 10025231248539,1,Hangup()
+exten => 10025479088008,1,Hangup()
+exten => 10025476803550,1,Hangup()
+exten => _1002547680592.,1,Hangup()
+exten => 10025479369289,1,Hangup()
+exten => 10025479369290,1,Hangup()
+exten => 10025298570572,1,Hangup()
+exten => 10025479063181,1,Hangup()
+exten => 10025492493209,1,Hangup()
+exten => _1002547680906.,1,Hangup()
+exten => _1002547680907.,1,Hangup()
+exten => _1002547680908.,1,Hangup()
+exten => 10025479366366,1,Hangup()
+exten => _1002547680909.,1,Hangup()
+exten => 10025479366367,1,Hangup()
+exten => 10025479366368,1,Hangup()
+exten => _1002547680910.,1,Hangup()
+exten => _1002547680911.,1,Hangup()
+exten => 10025450967240,1,Hangup()
+exten => 10025450967241,1,Hangup()
+exten => 10025479369191,1,Hangup()
+exten => 10025450967242,1,Hangup()
+exten => 10025479369192,1,Hangup()
+exten => 10025479369193,1,Hangup()
+exten => 10025450967244,1,Hangup()
+exten => 10025450967245,1,Hangup()
+exten => 10025450967246,1,Hangup()
+exten => 10025450967247,1,Hangup()
+exten => 10025450967248,1,Hangup()
+exten => 10025450967249,1,Hangup()
+exten => 10025476805045,1,Hangup()
+exten => 10025479091059,1,Hangup()
+exten => 10025479092444,1,Hangup()
+exten => _100252512312.,1,Hangup()
+exten => _100252512313.,1,Hangup()
+exten => _100252512314.,1,Hangup()
+exten => _100252512315.,1,Hangup()
+exten => 10025479091505,1,Hangup()
+exten => 10025546765219,1,Hangup()
+exten => 10025476809120,1,Hangup()
+exten => 10025476809121,1,Hangup()
+exten => 10025476809122,1,Hangup()
+exten => 10025476809123,1,Hangup()
+exten => 10025476809124,1,Hangup()
+exten => 10025476809125,1,Hangup()
+exten => 10025476809126,1,Hangup()
+exten => 10025476809127,1,Hangup()
+exten => 10025476809128,1,Hangup()
+exten => 10025493232760,1,Hangup()
+exten => 10025493232761,1,Hangup()
+exten => 10025479004747,1,Hangup()
+exten => 10025493232762,1,Hangup()
+exten => 10025562409453,1,Hangup()
+exten => 10025493232763,1,Hangup()
+exten => 10025493232764,1,Hangup()
+exten => 10025493232765,1,Hangup()
+exten => 10025493232766,1,Hangup()
+exten => 10025493232767,1,Hangup()
+exten => 10025493232768,1,Hangup()
+exten => _100252512339.,1,Hangup()
+exten => 10025479369413,1,Hangup()
+exten => 10025297521457,1,Hangup()
+; Routes depuis VNO IS
+exten => 10025479399691,1,Hangup()
+exten => 10025479399725,1,Hangup()
+exten => 10025479399726,1,Hangup()
+exten => 10025479399727,1,Hangup()
+exten => 10025479399728,1,Hangup()
+exten => 10025479399729,1,Hangup()
+exten => _1002547939973.,1,Hangup()
+exten => _1002547939974.,1,Hangup()
+exten => _1002547939975.,1,Hangup()
+exten => _1002547939976.,1,Hangup()
+exten => _1002547939977.,1,Hangup()
+exten => _1002547939978.,1,Hangup()
+exten => 10025479399797,1,Hangup()
+exten => _1002547939979.,1,Hangup()
+exten => 10025479399801,1,Hangup()
+exten => 10025479399802,1,Hangup()
+exten => 10025479399803,1,Hangup()
+exten => 10025479399804,1,Hangup()
+exten => 10025479415890,1,Hangup()
+exten => 10025479415990,1,Hangup()
+exten => 10025479560756,1,Hangup()
+exten => 10025494538708,1,Hangup()
+
+;
+; Specifique
+;
+;exten => 970759997,1,Set(CALLED_EXTENSION=${EXTEN})
+;exten => 970759997,n,Goto(test_call,1)
+;
+;exten => test_call,1,Set(CALLERID(num)=+33${CALLERID(num)})
+;exten => test_call,n,Set(CALLERID(name)=33${CALLED_EXTENSION})
+;exten => test_call,n,SipAddHeader(X-AccountCode: 0991000001019)
+;exten => test_call,n,SipAddHeader(X-CarrierCode: D200911200001.1)
+;exten => test_call,n,SetCallerPres(allowed)
+;exten => test_call,n,SipAddHeader(P-Charging-Vector: icid-value=test_call_${RAND()}; icid-generated-at=mgcf-ss7-1-cbv1)
+;exten => test_call,n,Dial(SIP/gw-voip-2-cbv1/33970759998,600)
+;exten => test_call,n,Hangup()
+
+
+; Deviation du support
+exten => 970757076,1,GotoIf($["${DIVERT_SUPPORT}" = "YES"]?diversion)
+exten => 970757076,n,Set(CDR(accountcode)=0991000001019)
+exten => 970757076,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => 970757076,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => 970757076,n,Hangup()
+exten => 970757076,n(diversion),Set(_WOOMERA_CUSTOM=SMG003-CPC-010-RED-${EXTEN}-003-1-1-${EXTEN}-3-3-3-5-0) ; TODO REFAIRE !!!
+exten => 970757076,n,SetTransferCapability(3K1AUDIO)
+exten => 970757076,n,Dial(WOOMERA/g1/240271226,600)
+exten => 970757076,n,Hangup()
+exten => 970757076,n(FAILED),Hangup(38)
+
+; Redirection manuelle astreinte
+exten => 970757077,1,SipAddHeader(X-FreeTDM-CLD-NADI: 3)
+exten => 970757077,n,SipAddHeader(X-FreeTDM-CPC: ordinary)
+exten => 970757077,n,Dial(SIP/NSG/634386754-g=g1,600)
+exten => 970757077,n,Hangup()
+
+; Tests T38
+
+; test sur asterisk 1.8 donc bypass de ce bypass :P
+;exten => 970754686,1,Set(CALLERID(num)=33${CALLERID(num)})
+;exten => 970754686,n,Dial(SIP/mgcf-isdn-4/33${EXTEN})
+;exten => 970754686,n,Hangup()
+
+exten => 970754681,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 970754681,n,Dial(SIP/mgcf-isdn-4/33${EXTEN})
+exten => 970754681,n,Hangup()
+
+exten => 10025144431609,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 10025144431609,n,Dial(SIP/mgcf-isdn-4/33${EXTEN:5})
+exten => 10025144431609,n,Hangup()
+
+exten => 10025144431625,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 10025144431625,n,Dial(SIP/mgcf-isdn-4/33${EXTEN:5})
+exten => 10025144431625,n,Hangup()
+
+exten => 10025144431631,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 10025144431631,n,Dial(SIP/mgcf-isdn-4/33${EXTEN:5})
+exten => 10025144431631,n,Hangup()
+
+exten => 10025144431632,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 10025144431632,n,Dial(SIP/mgcf-isdn-4/33${EXTEN:5})
+exten => 10025144431632,n,Hangup()
+
+exten => 10025144431635,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 10025144431635,n,Dial(SIP/mgcf-isdn-4/33${EXTEN:5})
+exten => 10025144431635,n,Hangup()
+
+exten => 10025144431675,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 10025144431675,n,Dial(SIP/mgcf-isdn-4/33${EXTEN:5})
+exten => 10025144431675,n,Hangup()
+
+exten => 10025144782609,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 10025144782609,n,Dial(SIP/mgcf-isdn-4/33${EXTEN:5})
+exten => 10025144782609,n,Hangup()
+
+exten => 10025149211119,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 10025149211119,n,Dial(SIP/mgcf-isdn-4/33${EXTEN:5})
+exten => 10025149211119,n,Hangup()
+
+exten => 10025149237409,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 10025149237409,n,Dial(SIP/mgcf-isdn-4/33${EXTEN:5})
+exten => 10025149237409,n,Hangup()
+
+exten => 10025153649209,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 10025153649209,n,Dial(SIP/mgcf-isdn-4/33${EXTEN:5})
+exten => 10025153649209,n,Hangup()
+
+exten => 10025156543909,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 10025156543909,n,Dial(SIP/mgcf-isdn-4/33${EXTEN:5})
+exten => 10025156543909,n,Hangup()
+
+exten => 10025478386399,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 10025478386399,n,Dial(SIP/mgcf-isdn-4/33${EXTEN:5})
+exten => 10025478386399,n,Hangup()
+
+exten => 10025144431629,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 10025144431629,n,Dial(SIP/mgcf-isdn-4/33${EXTEN:5})
+exten => 10025144431629,n,Hangup()
+
+exten => 10025176783491,1,Set(CALLERID(num)=33${CALLERID(num)})
+exten => 10025176783491,n,Dial(SIP/mgcf-isdn-4/33${EXTEN:5})
+exten => 10025176783491,n,Hangup()
+
+;
+; INITSYS
+;
+
+; Prefixe de portabilite geo
+exten => _10025.,1,Set(CDR(accountcode)=0991000001019)
+exten => _10025.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10025.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10025.,n,Hangup()
+exten => _10025.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation geo
+exten => _18375.,1,Set(CDR(accountcode)=0991000001019)
+exten => _18375.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18375.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18375.,n,Hangup()
+exten => _18375.,n(FAILED),Hangup(38)
+
+exten => 183759999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _18487.,1,Set(CDR(accountcode)=0991000001019)
+exten => _18487.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18487.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18487.,n,Hangup()
+exten => _18487.,n(FAILED),Hangup(38)
+
+exten => 184879999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _18498.,1,Set(CDR(accountcode)=0991000001019)
+exten => _18498.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18498.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18498.,n,Hangup()
+exten => _18498.,n(FAILED),Hangup(38)
+
+exten => 184989999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _18499.,1,Set(CDR(accountcode)=0991000001019)
+exten => _18499.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18499.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18499.,n,Hangup()
+exten => _18499.,n(FAILED),Hangup(38)
+
+exten => 184999999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _18500.,1,Set(CDR(accountcode)=0991000001019)
+exten => _18500.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18500.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18500.,n,Hangup()
+exten => _18500.,n(FAILED),Hangup(38)
+
+exten => 185009999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _18501.,1,Set(CDR(accountcode)=0991000001019)
+exten => _18501.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18501.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18501.,n,Hangup()
+exten => _18501.,n(FAILED),Hangup(38)
+
+exten => 185019999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _18502.,1,Set(CDR(accountcode)=0991000001019)
+exten => _18502.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18502.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18502.,n,Hangup()
+exten => _18502.,n(FAILED),Hangup(38)
+
+exten => 185029999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _24685.,1,Set(CDR(accountcode)=0991000001019)
+exten => _24685.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _24685.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _24685.,n,Hangup()
+exten => _24685.,n(FAILED),Hangup(38)
+
+exten => 246859999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _25237.,1,Set(CDR(accountcode)=0991000001019)
+exten => _25237.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _25237.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _25237.,n,Hangup()
+exten => _25237.,n(FAILED),Hangup(38)
+
+exten => 252379999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _36590.,1,Set(CDR(accountcode)=0991000001019)
+exten => _36590.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _36590.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _36590.,n,Hangup()
+exten => _36590.,n(FAILED),Hangup(38)
+
+exten => 365909999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _44819.,1,Set(CDR(accountcode)=0991000001019)
+exten => _44819.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _44819.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _44819.,n,Hangup()
+exten => _44819.,n(FAILED),Hangup(38)
+
+exten => 448199999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _48109.,1,Set(CDR(accountcode)=0991000001019)
+exten => _48109.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _48109.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _48109.,n,Hangup()
+exten => _48109.,n(FAILED),Hangup(38)
+
+exten => 481099999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _53226.,1,Set(CDR(accountcode)=0991000001019)
+exten => _53226.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _53226.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _53226.,n,Hangup()
+exten => _53226.,n(FAILED),Hangup(38)
+
+exten => 532269999,1,Goto(film,1)
+
+; Prefixe de portabilite SVA
+exten => _84000.,1,Set(CDR(accountcode)=0991000001019)
+exten => _84000.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _84000.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _84000.,n,Hangup()
+exten => _84000.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite SVA/SRP
+exten => _84200.,1,Set(CDR(accountcode)=0991000001019)
+exten => _84200.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _84200.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _84200.,n,Hangup()
+exten => _84200.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation SVA
+exten => _81117.,1,Set(CDR(accountcode)=0991000001019)
+exten => _81117.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _81117.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _81117.,n,Hangup()
+exten => _81117.,n(FAILED),Hangup(38)
+
+exten => 811179999,1,Goto(film,1)
+
+; Prefixe de numerotation SVA/SRP
+exten => _89219.,1,Set(CDR(accountcode)=0991000001019)
+exten => _89219.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _89219.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _89219.,n,Hangup()
+exten => _89219.,n(FAILED),Hangup(38)
+
+exten => 892199999,1,Goto(film,1)
+
+; Prefixe de portabilite non geo
+exten => _90003.,1,Set(CDR(accountcode)=0991000001019)
+exten => _90003.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90003.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90003.,n,Hangup()
+exten => _90003.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97072.,1,Set(CDR(accountcode)=0991000001019)
+exten => _97072.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97072.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97072.,n,Hangup()
+exten => _97072.,n(FAILED),Hangup(38)
+
+exten => 970729999,1,Goto(film,1)
+
+; Prefixe de numerotation non geo
+exten => _97075.,1,Set(CDR(accountcode)=0991000001019)
+exten => _97075.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97075.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97075.,n,Hangup()
+exten => _97075.,n(FAILED),Hangup(38)
+
+exten => 970759999,1,Goto(film,1)
+
+;
+; VNO OPENIP
+;
+
+; Prefixe de portabilite geo
+exten => _10037.,1,Set(CDR(accountcode)=0991001000001)
+exten => _10037.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10037.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10037.,n,Hangup()
+exten => _10037.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97019.,1,Set(CDR(accountcode)=0991001000001)
+exten => _97019.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97019.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97019.,n,Hangup()
+exten => _97019.,n(FAILED),Hangup(38)
+
+exten => 970199999,1,Goto(film,1)
+
+;
+; VNO CMRP
+;
+
+; Prefixe de portabilite geo
+exten => _10125.,1,Set(CDR(accountcode)=0991000001275)
+exten => _10125.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10125.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10125.,n,Hangup()
+exten => _10125.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90046.,1,Set(CDR(accountcode)=0991000001275)
+exten => _90046.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90046.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90046.,n,Hangup()
+exten => _90046.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation  geo
+exten => _18554.,1,Set(CDR(accountcode)=0991000001275)
+exten => _18554.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18554.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18554.,n,Hangup()
+exten => _18554.,n(FAILED),Hangup(38)
+
+exten => 185549999,1,Goto(film,1)
+
+; Prefixe de numerotation  geo
+exten => _24666.,1,Set(CDR(accountcode)=0991000001275)
+exten => _24666.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _24666.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _24666.,n,Hangup()
+exten => _24666.,n(FAILED),Hangup(38)
+
+exten => 246669999,1,Goto(film,1)
+
+; Prefixe de numerotation  geo
+exten => _37354.,1,Set(CDR(accountcode)=0991000001275)
+exten => _37354.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _37354.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _37354.,n,Hangup()
+exten => _37354.,n(FAILED),Hangup(38)
+
+exten => 373549999,1,Goto(film,1)
+
+; Prefixe de numerotation  geo
+exten => _42251.,1,Set(CDR(accountcode)=0991000001275)
+exten => _42251.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _42251.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _42251.,n,Hangup()
+exten => _42251.,n(FAILED),Hangup(38)
+
+exten => 422519999,1,Goto(film,1)
+
+; Prefixe de numerotation  geo
+exten => _53308.,1,Set(CDR(accountcode)=0991000001275)
+exten => _53308.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _53308.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _53308.,n,Hangup()
+exten => _53308.,n(FAILED),Hangup(38)
+
+exten => 533089999,1,Goto(film,1)
+
+; Prefixe de numerotation non geo
+exten => _97103.,1,Set(CDR(accountcode)=0991000001275)
+exten => _97103.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97103.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97103.,n,Hangup()
+exten => _97103.,n(FAILED),Hangup(38)
+
+exten => 971039999,1,Goto(film,1)
+
+;
+; VNO AURANEXT
+;
+
+; Prefixe de portabilite geo
+exten => _10132.,1,Set(CDR(accountcode)=0991000001338)
+exten => _10132.,n,AGI(agi://localhost:12345/ss7Inbound.agi) [^]
+exten => _10132.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10132.,n,Hangup()
+exten => _10132.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90017.,1,Set(CDR(accountcode)=0991000001338)
+exten => _90017.,n,AGI(agi://localhost:12345/ss7Inbound.agi) [^]
+exten => _90017.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90017.,n,Hangup()
+exten => _90017.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97013.,1,Set(CDR(accountcode)=0991000001338)
+exten => _97013.,n,AGI(agi://localhost:12345/ss7Inbound.agi) [^]
+exten => _97013.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97013.,n,Hangup()
+exten => _97013.,n(FAILED),Hangup(38)
+
+exten => 970139999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _18484.,1,Set(CDR(accountcode)=0991000001338)
+exten => _18484.,n,AGI(agi://localhost:12345/ss7Inbound.agi) [^]
+exten => _18484.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18484.,n,Hangup()
+exten => _18484.,n(FAILED),Hangup(38)
+
+exten => 184849999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _18530.,1,Set(CDR(accountcode)=0991000001338)
+exten => _18530.,n,AGI(agi://localhost:12345/ss7Inbound.agi) [^]
+exten => _18530.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18530.,n,Hangup()
+exten => _18530.,n(FAILED),Hangup(38)
+
+exten => 185309999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _18531.,1,Set(CDR(accountcode)=0991000001338)
+exten => _18531.,n,AGI(agi://localhost:12345/ss7Inbound.agi) [^]
+exten => _18531.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18531.,n,Hangup()
+exten => _18531.,n(FAILED),Hangup(38)
+
+exten => 185319999,1,Goto(film,1)
+
+;
+; VNO TECHCARE
+;
+
+; Prefixe de portabilite geo
+exten => _10059.,1,Set(CDR(accountcode)=0991000001102)
+exten => _10059.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10059.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10059.,n,Hangup()
+exten => _10059.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90005.,1,Set(CDR(accountcode)=0991000001102)
+exten => _90005.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90005.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90005.,n,Hangup()
+exten => _90005.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97079.,1,Set(CDR(accountcode)=0991000001102)
+exten => _97079.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97079.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97079.,n,Hangup()
+exten => _97079.,n(FAILED),Hangup(38)
+
+exten => 970799999,1,Goto(film,1)
+
+;
+; VNO NGC FRANCE
+;
+
+; Prefixe de portabilite geo
+exten => _10086.,1,Set(CDR(accountcode)=0991000001118)
+exten => _10086.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10086.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10086.,n,Hangup()
+exten => _10086.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation geo
+exten => _36716.,1,Set(CDR(accountcode)=0991000001118)
+exten => _36716.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _36716.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _36716.,n,Hangup()
+exten => _36716.,n(FAILED),Hangup(38)
+
+exten => 367169999,1,Goto(film,1)
+
+; Prefixe de portabilite non geo
+exten => _90015.,1,Set(CDR(accountcode)=0991000001118)
+exten => _90015.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90015.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90015.,n,Hangup()
+exten => _90015.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97037.,1,Set(CDR(accountcode)=0991000001118)
+exten => _97037.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97037.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97037.,n,Hangup()
+exten => _97037.,n(FAILED),Hangup(38)
+
+exten => 970379999,1,Goto(film,1)
+
+;
+; VNO NEOTEL
+;
+
+; Prefixe de portabilite geo
+exten => _10119.,1,Set(CDR(accountcode)=0991000001240)
+exten => _10119.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10119.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10119.,n,Hangup()
+exten => _10119.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90043.,1,Set(CDR(accountcode)=0991000001240)
+exten => _90043.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90043.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90043.,n,Hangup()
+exten => _90043.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97022.,1,Set(CDR(accountcode)=0991000001240)
+exten => _97022.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97022.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97022.,n,Hangup()
+exten => _97022.,n(FAILED),Hangup(38)
+
+exten => 970229999,1,Goto(film,1)
+
+;
+; VNO NEXTO
+;
+
+; Prefixe de portabilite geo
+exten => _10120.,1,Set(CDR(accountcode)=0991000001265)
+exten => _10120.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10120.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10120.,n,Hangup()
+exten => _10120.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90045.,1,Set(CDR(accountcode)=0991000001265)
+exten => _90045.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90045.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90045.,n,Hangup()
+exten => _90045.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation geo
+exten => _18161.,1,Set(CDR(accountcode)=0991000001265)
+exten => _18161.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18161.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18161.,n,Hangup()
+exten => _18161.,n(FAILED),Hangup(38)
+
+exten => 181619999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _48491.,1,Set(CDR(accountcode)=0991000001265)
+exten => _48491.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _48491.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _48491.,n,Hangup()
+exten => _48491.,n(FAILED),Hangup(38)
+
+exten => 484919999,1,Goto(film,1)
+
+;
+; VNO ODBEE
+;
+
+; Prefixe de portabilite geo
+exten => _10088.,1,Set(CDR(accountcode)=0991000001114)
+exten => _10088.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10088.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10088.,n,Hangup()
+exten => _10088.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90018.,1,Set(CDR(accountcode)=0991000001114)
+exten => _90018.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90018.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90018.,n,Hangup()
+exten => _90018.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97051.,1,Set(CDR(accountcode)=0991000001114)
+exten => _97051.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97051.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97051.,n,Hangup()
+exten => _97051.,n(FAILED),Hangup(38)
+
+exten => 970519999,1,Goto(film,1)
+
+;
+; VNO CIENUM
+;
+
+; Prefixe de portabilite geo
+exten => _10089.,1,Set(CDR(accountcode)=0991000001121)
+exten => _10089.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10089.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10089.,n,Hangup()
+exten => _10089.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90019.,1,Set(CDR(accountcode)=0991000001121)
+exten => _90019.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90019.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90019.,n,Hangup()
+exten => _90019.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97065.,1,Set(CDR(accountcode)=0991000001121)
+exten => _97065.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97065.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97065.,n,Hangup()
+exten => _97065.,n(FAILED),Hangup(38)
+
+exten => 970659999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _42805.,1,Set(CDR(accountcode)=0991000001121)
+exten => _42805.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _42805.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _42805.,n,Hangup()
+exten => _42805.,n(FAILED),Hangup(38)
+
+exten => 428059999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _42806.,1,Set(CDR(accountcode)=0991000001121)
+exten => _42806.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _42806.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _42806.,n,Hangup()
+exten => _42806.,n(FAILED),Hangup(38)
+
+exten => 428069999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _42807.,1,Set(CDR(accountcode)=0991000001121)
+exten => _42807.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _42807.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _42807.,n,Hangup()
+exten => _42807.,n(FAILED),Hangup(38)
+
+exten => 428079999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _44400.,1,Set(CDR(accountcode)=0991000001121)
+exten => _44400.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _44400.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _44400.,n,Hangup()
+exten => _44400.,n(FAILED),Hangup(38)
+
+exten => 444009999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _44401.,1,Set(CDR(accountcode)=0991000001121)
+exten => _44401.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _44401.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _44401.,n,Hangup()
+exten => _44401.,n(FAILED),Hangup(38)
+
+exten => 444019999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _44402.,1,Set(CDR(accountcode)=0991000001121)
+exten => _44402.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _44402.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _44402.,n,Hangup()
+exten => _44402.,n(FAILED),Hangup(38)
+
+exten => 444029999,1,Goto(film,1)
+
+;
+; VNO IPXTEL
+;
+
+; Prefixe de portabilite geo
+exten => _10016.,1,Set(CDR(accountcode)=0991000001147)
+exten => _10016.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10016.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10016.,n,Hangup()
+exten => _10016.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90023.,1,Set(CDR(accountcode)=0991000001147)
+exten => _90023.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90023.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90023.,n,Hangup()
+exten => _90023.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97053.,1,Set(CDR(accountcode)=0991000001147)
+exten => _97053.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97053.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97053.,n,Hangup()
+exten => _97053.,n(FAILED),Hangup(38)
+
+exten => 970539999,1,Goto(film,1)
+
+; Porta du bloc 970197873 sur 90003
+exten => 970197873,1,Set(CDR(accountcode)=0991000001019)
+exten => 970197873,n,DEADAGI(agi://localhost:12345/ss7Inbound.agi)
+exten => 970197873.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => 970197873.,n,Hangup()
+exten => 970197873.,n(FAILED),Hangup(38)
+
+; Porta du bloc 970197874 sur 90003
+exten => 970197874,1,Set(CDR(accountcode)=0991000001019)
+exten => 970197874,n,DEADAGI(agi://localhost:12345/ss7Inbound.agi)
+exten => 970197874.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => 970197874.,n,Hangup()
+exten => 970197874.,n(FAILED),Hangup(38)
+
+; Porta du bloc 970197875 sur 90003
+exten => 970197875,1,Set(CDR(accountcode)=0991000001019)
+exten => 970197875,n,DEADAGI(agi://localhost:12345/ss7Inbound.agi)
+exten => 970197875.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => 970197875.,n,Hangup()
+exten => 970197875.,n(FAILED),Hangup(38)
+
+; Porta du bloc 970197876 sur 90003
+exten => 970197876,1,Set(CDR(accountcode)=0991000001019)
+exten => 970197876,n,DEADAGI(agi://localhost:12345/ss7Inbound.agi)
+exten => 970197876.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => 970197876.,n,Hangup()
+exten => 970197876.,n(FAILED),Hangup(38)
+
+; Porta du bloc 970197877 sur 90003
+exten => 970197877,1,Set(CDR(accountcode)=0991000001019)
+exten => 970197877,n,DEADAGI(agi://localhost:12345/ss7Inbound.agi)
+exten => 970197877.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => 970197877.,n,Hangup()
+exten => 970197877.,n(FAILED),Hangup(38)
+
+; Porta du bloc 970197878 sur 90003
+exten => 970197878,1,Set(CDR(accountcode)=0991000001019)
+exten => 970197878,n,DEADAGI(agi://localhost:12345/ss7Inbound.agi)
+exten => 970197878.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => 970197878.,n,Hangup()
+exten => 970197878.,n(FAILED),Hangup(38)
+
+; Porta du bloc 970197879 sur 90003
+exten => 970197879,1,Set(CDR(accountcode)=0991000001019)
+exten => 970197879,n,DEADAGI(agi://localhost:12345/ss7Inbound.agi)
+exten => 970197879.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => 970197879.,n,Hangup()
+exten => 970197879.,n(FAILED),Hangup(38)
+
+; Porta du bloc 97019788x sur 90003
+exten => _97019788.,1,Set(CDR(accountcode)=0991000001019)
+exten => _97019788.,n,DEADAGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97019788.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97019788.,n,Hangup()
+exten => _97019788.,n(FAILED),Hangup(38)
+
+;
+; VNO EYESTELECOM
+;
+
+; Prefixe de portabilite geo
+exten => _10094.,1,Set(CDR(accountcode)=0991000001153)
+exten => _10094.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10094.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10094.,n,Hangup()
+exten => _10094.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90094.,1,Set(CDR(accountcode)=0991000001153)
+exten => _90094.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90094.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90094.,n,Hangup()
+exten => _90094.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97052.,1,Set(CDR(accountcode)=0991000001153)
+exten => _97052.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97052.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97052.,n,Hangup()
+exten => _97052.,n(FAILED),Hangup(38)
+
+exten => 970529999,1,Goto(film,1)
+
+;
+; VNO UPSALE
+;
+
+; Prefixe de portabilite geo
+exten => _10100.,1,Set(CDR(accountcode)=0991000001132)
+exten => _10100.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10100.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10100.,n,Hangup()
+exten => _10100.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90026.,1,Set(CDR(accountcode)=0991000001132)
+exten => _90026.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90026.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90026.,n,Hangup()
+exten => _90026.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97102.,1,Set(CDR(accountcode)=0991000001132)
+exten => _97102.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97102.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97102.,n,Hangup()
+exten => _97102.,n(FAILED),Hangup(38)
+
+exten => 971029999,1,Goto(film,1)
+
+;
+; VNO CHMURTZ
+;
+
+; Prefixe de portabilite geo
+exten => _10103.,1,Set(CDR(accountcode)=0991000001159)
+exten => _10103.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10103.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10103.,n,Hangup()
+exten => _10103.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90027.,1,Set(CDR(accountcode)=0991000001159)
+exten => _90027.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90027.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90027.,n,Hangup()
+exten => _90027.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97057.,1,Set(CDR(accountcode)=0991000001159)
+exten => _97057.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97057.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97057.,n,Hangup()
+exten => _97057.,n(FAILED),Hangup(38)
+
+exten => 970579999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _36724.,1,Set(CDR(accountcode)=0991000001159)
+exten => _36724.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _36724.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _36724.,n,Hangup()
+exten => _36724.,n(FAILED),Hangup(38)
+
+exten => 367249999,1,Goto(film,1)
+
+;
+; VNO ADDON
+;
+
+; Prefixe de portabilite geo
+exten => _10104.,1,Set(CDR(accountcode)=0991000001176)
+exten => _10104.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10104.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10104.,n,Hangup()
+exten => _10104.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90031.,1,Set(CDR(accountcode)=0991000001176)
+exten => _90031.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90031.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90031.,n,Hangup()
+exten => _90031.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97064.,1,Set(CDR(accountcode)=0991000001176)
+exten => _97064.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97064.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97064.,n,Hangup()
+exten => _97064.,n(FAILED),Hangup(38)
+
+exten => 970649999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _18429.,1,Set(CDR(accountcode)=0991000001176)
+exten => _18429.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18429.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18429.,n,Hangup()
+exten => _18429.,n(FAILED),Hangup(38)
+
+exten => 184299999,1,Goto(film,1)
+
+;
+; VNO NOVELCOM
+;
+
+; Prefixe de portabilite geo
+exten => _10110.,1,Set(CDR(accountcode)=0991000001197)
+exten => _10110.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10110.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10110.,n,Hangup()
+exten => _10110.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90038.,1,Set(CDR(accountcode)=0991000001197)
+exten => _90038.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90038.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90038.,n,Hangup()
+exten => _90038.,n(FAILED),Hangup(38)
+
+exten => _84237.,1,Set(CDR(accountcode)=0991000001197)
+exten => _84237.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _84237.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _84237.,n,Hangup()
+exten => _84237.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation geo
+exten => _18503.,1,Set(CDR(accountcode)=0991000001197)
+exten => _18503.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18503.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18503.,n,Hangup()
+exten => _18503.,n(FAILED),Hangup(38)
+
+exten => 185039999,1,Goto(film,1)
+
+exten => _37407.,1,Set(CDR(accountcode)=0991000001197)
+exten => _37407.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _37407.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _37407.,n,Hangup()
+exten => _37407.,n(FAILED),Hangup(38)
+
+exten => 374079999,1,Goto(film,1)
+
+exten => _18483.,1,Set(CDR(accountcode)=0991000001197)
+exten => _18483.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18483.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18483.,n,Hangup()
+exten => _18483.,n(FAILED),Hangup(38)
+
+exten => 184839999,1,Goto(film,1)
+
+exten => _18504.,1,Set(CDR(accountcode)=0991000001197)
+exten => _18504.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18504.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18504.,n,Hangup()
+exten => _18504.,n(FAILED),Hangup(38)
+
+exten => 185049999,1,Goto(film,1)
+
+exten => _18559.,1,Set(CDR(accountcode)=0991000001197)
+exten => _18559.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18559.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18559.,n,Hangup()
+exten => _18559.,n(FAILED),Hangup(38)
+
+exten => 185599999,1,Goto(film,1)
+
+exten => _18562.,1,Set(CDR(accountcode)=0991000001197)
+exten => _18562.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18562.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18562.,n,Hangup()
+exten => _18562.,n(FAILED),Hangup(38)
+
+exten => 185629999,1,Goto(film,1)
+
+exten => _18566.,1,Set(CDR(accountcode)=0991000001197)
+exten => _18566.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18566.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18566.,n,Hangup()
+exten => _18566.,n(FAILED),Hangup(38)
+
+exten => 185669999,1,Goto(film,1)
+
+exten => _18570.,1,Set(CDR(accountcode)=0991000001197)
+exten => _18570.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18570.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18570.,n,Hangup()
+exten => _18570.,n(FAILED),Hangup(38)
+
+exten => 185709999,1,Goto(film,1)
+
+exten => _18571.,1,Set(CDR(accountcode)=0991000001197)
+exten => _18571.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18571.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18571.,n,Hangup()
+exten => _18571.,n(FAILED),Hangup(38)
+
+exten => 185719999,1,Goto(film,1)
+
+; Prefixe de numerotation non geo
+exten => _97068.,1,Set(CDR(accountcode)=0991000001197)
+exten => _97068.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97068.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97068.,n,Hangup()
+exten => _97068.,n(FAILED),Hangup(38)
+
+exten => 970689999,1,Goto(film,1)
+
+;
+; VNO FINGERPRINT
+;
+
+; Prefixe de portabilite geo
+exten => _10106.,1,Set(CDR(accountcode)=0991000001165)
+exten => _10106.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10106.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10106.,n,Hangup()
+exten => _10106.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90029.,1,Set(CDR(accountcode)=0991000001165)
+exten => _90029.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90029.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90029.,n,Hangup()
+exten => _90029.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97059.,1,Set(CDR(accountcode)=0991000001165)
+exten => _97059.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97059.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97059.,n,Hangup()
+exten => _97059.,n(FAILED),Hangup(38)
+
+exten => 970599999,1,Goto(film,1)
+
+; Prefixe de numerotation geo
+exten => _48230.,1,Set(CDR(accountcode)=0991000001165)
+exten => _48230.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _48230.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _48230.,n,Hangup()
+exten => _48230.,n(FAILED),Hangup(38)
+
+exten => 482309999,1,Goto(film,1)
+
+;
+; VNO OPS-TELECOM (TELCOMPRO)
+;
+
+; Prefixe de portabilite geo
+exten => _10108.,1,Set(CDR(accountcode)=0991000001188)
+exten => _10108.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10108.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10108.,n,Hangup()
+exten => _10108.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90034.,1,Set(CDR(accountcode)=0991000001188)
+exten => _90034.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90034.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90034.,n,Hangup()
+exten => _90034.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97154.,1,Set(CDR(accountcode)=0991000001188)
+exten => _97154.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97154.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97154.,n,Hangup()
+exten => _97154.,n(FAILED),Hangup(38)
+
+exten => 971549999,1,Goto(film,1)
+
+;
+; VNO INTEGRAPHONE
+;
+
+; Prefixe de portabilite geo
+exten => _10109.,1,Set(CDR(accountcode)=0991000001194)
+exten => _10109.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10109.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10109.,n,Hangup()
+exten => _10109.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90037.,1,Set(CDR(accountcode)=0991000001194)
+exten => _90037.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90037.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90037.,n,Hangup()
+exten => _90037.,n(FAILED),Hangup(38)
+
+;
+; VNO ATTI
+;
+
+; Prefixe de portabilite geo
+exten => _10113.,1,Set(CDR(accountcode)=0991000001207)
+exten => _10113.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10113.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10113.,n,Hangup()
+exten => _10113.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90040.,1,Set(CDR(accountcode)=0991000001207)
+exten => _90040.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90040.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90040.,n,Hangup()
+exten => _90040.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation non geo
+exten => _97069.,1,Set(CDR(accountcode)=0991000001207)
+exten => _97069.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97069.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97069.,n,Hangup()
+exten => _97069.,n(FAILED),Hangup(38)
+
+exten => 970699999,1,Goto(film,1)
+
+;
+; VNO ALTIUS
+;
+; Prefixe de numerotation geo
+exten => _18560.,1,Set(CDR(accountcode)=0991000001218)
+exten => _18560.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18560.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18560.,n,Hangup()
+exten => _18560.,n(FAILED),Hangup(38)
+
+exten => 185609999,1,Goto(film,1)
+
+; Prefixe de numerotation non geo
+exten => _97487.,1,Set(CDR(accountcode)=0991000001218)
+exten => _97487.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _97487.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _97487.,n,Hangup()
+exten => _97487.,n(FAILED),Hangup(38)
+
+exten => 974879999,1,Goto(film,1)
+
+;
+; VNO TELECOMOBJECT
+;
+
+; Prefixe de portabilite geo
+exten => _10136.,1,Set(CDR(accountcode)=0991000001345)
+exten => _10136.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _10136.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _10136.,n,Hangup()
+exten => _10136.,n(FAILED),Hangup(38)
+
+; Prefixe de portabilite non geo
+exten => _90048.,1,Set(CDR(accountcode)=0991000001345)
+exten => _90048.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _90048.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _90048.,n,Hangup()
+exten => _90048.,n(FAILED),Hangup(38)
+
+;
+; VNO de TESTVNO
+;
+
+; Prefixe de numerotation geo
+exten => _18375420.,1,Set(CDR(accountcode)=0991000001025)
+exten => _18375420.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _18375420.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _18375420.,n,Hangup()
+exten => _18375420.,n(FAILED),Hangup(38)
+
+; Prefixe de numerotation SRP
+exten => _89219420.,1,Set(CDR(accountcode)=0991000001025)
+exten => _89219420.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _89219420.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _89219420.,n,Hangup()
+exten => _89219420.,n(FAILED),Hangup(38)
+
+; Mise en oeuvre de bridge pour les portas
+exten => _183754209,1,SIPAddHeader(X-FreeTDM-TransUUID:${SIP_HEADER(X-FreeTDM-TransUUID)})
+exten => _183754209,n,Dial(SIP/NSG/10684183754209-g=g1,600)
+
+exten => _892194209,1,SIPAddHeader(X-FreeTDM-TransUUID:${SIP_HEADER(X-FreeTDM-TransUUID)})
+exten => _892194209,n,Dial(SIP/NSG/84208892194209-g=g2,600)
+
+; porta entrante SRP
+; transcription vers numero ft
+exten => _84200899705027,1,SIPAddHeader(X-FreeTDM-TransUUID:${SIP_HEADER(X-FreeTDM-TransUUID)})
+exten => _84200899705027,n,Dial(SIP/NSG/144543055-g=g1,600)
+;; aboutissement sur tel3
+;exten => _84200892705027.,1,Set(CDR(accountcode)=0991000001025)
+;exten => _84200892705027.,n,AGI(agi://localhost:12345/ss7Inbound.agi)
+;exten => _84200892705027.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+;exten => _84200892705027.,n,Hangup()
+;exten => _84200892705027.,n(FAILED),Hangup(38)
+
+; prefixe de preselection (a commenter pour passer en prod le prefixe de preselection)
+exten => _1620.,1,SIPAddHeader(X-FreeTDM-TransUUID:${SIP_HEADER(X-FreeTDM-TransUUID)})
+exten => _1620.,n,Dial(SIP/NSG/${EXTEN:4}-g=g1,600)
+
+; redirection
+; exten => _.,n,SipAddHeader(X-FreeTDM-DNIS: 662919514)
+; exten => _.,n,SipAddHeader(X-FreeTDM-DNIS-TON: 0)
+; exten => _.,n,SipAddHeader(X-FreeTDM-DNIS-Plan: 0)
+; exten => _.,n,SipAddHeader(X-FreeTDM-RDNIS: 970757076)
+; exten => _.,n,SipAddHeader(X-FreeTDM-RDNIS-NADI: 3)
+; exten => _.,n,SipAddHeader(X-FreeTDM-RDNIS-Plan: 1)
+; exten => _.,n,SipAddHeader(X-FreeTDM-RDNIS-Screen: 0)
+; exten => _.,n,SipAddHeader(X-FreeTDM-RDNIS-Presentation: 0)
+; exten => _.,n,SipAddHeader(X-FreeTDM-RDINF-Indicator: 3)
+; exten => _.,n,SipAddHeader(X-FreeTDM-RDINF-OrigReason: 3)
+; exten => _.,n,SipAddHeader(X-FreeTDM-RDINF-Count: 1)
+; exten => _.,n,SipAddHeader(X-FreeTDM-RDINF-Reason: 3)
+
+;
+; default
+;
+
+exten => _X.,1,AGI(agi://localhost:12345/ss7Inbound.agi)
+exten => _X.,n,GotoIf($[${AGISTATUS}=SUCCESS]?:FAILED)
+exten => _X.,n,Hangup()
+exten => _X.,n(FAILED),Hangup(38)
+
+;
+; Extension pour le film de test
+;
+exten => film,1,Playback(/var/lib/asterisk/sounds/film_operateur)
+exten => film,n,Wait(3)
+exten => film,n,Goto(1)
+exten => film,n,Hangup()

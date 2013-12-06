@@ -1,0 +1,8 @@
+\echo # http://www.if-not-true-then-false.com/2009/postgresql-psql-psqlrc-tips-and-tricks/
+
+\pset null '(null)'
+\set HISTFILE ~/.psql_history- :HOST - :DBNAME
+\set HISTSIZE 2000
+\timing
+\set PROMPT1 '%n@%m:%/%R%# '
+\set PROMPT2 '%R%# '

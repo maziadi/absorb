@@ -1,0 +1,40 @@
+upstream mongrel {
+  server 127.0.0.1:8000;
+}
+
+server {
+  listen       <%= conf_agent_http_port -%>;
+  index  index.html index.htm;
+  location / {
+    root /usr/share/conf-agent;
+    proxy_set_header  X-Real-IP  $remote_addr;
+    proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header Host $http_host;
+    proxy_redirect false;
+    if (-f $request_filename/index.html) {
+      rewrite (.*) $1/index.html break;
+    }
+    if (-f $request_filename.html) {
+      rewrite (.*) $1.html break;
+    }
+    if (!-f $request_filename) {
+      proxy_pass http://mongrel;
+      break;
+    }
+  }
+<% if conf_agent_proxy %>
+  location /squid-reports {
+    root   /var/www;
+    index  index.html index.htm;
+  }
+  location = /proxy.pac {
+    root  /var/www;
+    default_type application/x-ns-proxy-autoconfig;
+  }
+<% end %>
+  
+  error_page   500 502 503 504  /50x.html;
+  location = /50x.html {
+    root   /usr/share/nginx-default;
+  }
+}

@@ -1,0 +1,5 @@
+check process taxman 
+  with pidfile "/srv/taxman/lib/stomp/consumer.rb.pid"
+  start program = "/bin/su - taxman -c 'RAILS_ENV=production lib/taxman_control start'" 
+  stop program = "/bin/su - taxman -c 'RAILS_ENV=production lib/taxman_control stop'"
+

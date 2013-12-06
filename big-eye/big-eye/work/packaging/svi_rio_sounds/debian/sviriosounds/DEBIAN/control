@@ -1,0 +1,10 @@
+Package: sviriosounds
+Version: 1.0+alphalink-2
+Architecture: all
+Maintainer: ZIADI Mohamed ali <ma.ziadi@alphalink.fr>
+Installed-Size: 2576
+Depends: asterisk
+Section: localization
+Priority: optional
+Homepage: http://www.alphalink.fr/
+Description: installs sound files (.wav format) for SVI RIO

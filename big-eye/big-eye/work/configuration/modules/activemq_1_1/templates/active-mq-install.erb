@@ -1,0 +1,18 @@
+#!/bin/bash
+
+pkg_version="<%= active_mq_version -%>"
+pkg_name="apache-activemq-${pkg_version}" 
+pkg="${pkg_name}-bin.tar.gz"
+
+error() {
+  echo "ERROR: $1"
+  exit -1
+}
+
+cd /tmp
+wget -c http://gold.alphalink.fr/misc/active-mq/${pkg} || error "Unable to download"
+tar zxvf ${pkg} -C /opt/local/ || error "Unable to unpack"
+chown -R activemq:activemq /opt/local/${pkg_name}
+touch /etc/activemq-installed-${pkg_version} || error "Unable to create flag file"
+
+

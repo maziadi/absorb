@@ -1,0 +1,8 @@
+<%= environment %>:
+  adapter: stomp
+  login: "<%= amq_erp_user -%>"
+  passcode: "<%= amq_erp_passwd -%>"
+  host: "<%= amq_erp_host -%>"
+  port: 61613
+  reliable: true
+  reconnectDelay: 5

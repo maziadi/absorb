@@ -1,0 +1,36 @@
+#!/bin/bash
+#
+# CRON
+# Delete accounts required as deleted (D state) if no session exists or if session is older than 24h
+# Do not delete account if report has not been sent
+# Linked accounting data will be archived by cron archive.sh
+#
+
+logger_tag="delete-acct"
+
+# exit if not executed on primary
+ip a | grep <%= virtual_ip %> >/dev/null
+if [ "$?" == "1" ]; then exit 0; fi
+
+logger -t ${logger_tag} "CRON DELETE accounts start"
+accounts=$(mktemp)
+su - postgres -c "psql -1 -d <%= db_name %> -c \"SELECT DISTINCT split_part(radcheck.username, '-', 1) AS msisdn, ref FROM radcheck LEFT JOIN radacct ON radcheck.username = radacct.username WHERE radcheck.state = 'D' AND ((extract(epoch from now())::int/3600 - extract(epoch from radacct.acctstarttime)::int/3600 > 24) AND radacct.sent = true OR radacct.radacctid is null);\" -h <%= virtual_ip %>" | grep -v "^[[:space:]]\+msisdn" | grep -v "^(.*row" | grep -v "^-" | sed 's/ //g' | grep -v "^$" > $accounts
+
+while read account
+do
+  msisdn=$(echo $account | cut -d'|' -f1)
+  ref=$(echo $account | cut -d'|' -f2)
+  onotherggsn=$(su - postgres -c "psql -1 -d <%= db_name %> -c \"SELECT DISTINCT radacct.sent FROM radcheck INNER JOIN radacct ON radcheck.username = radacct.username WHERE radcheck.username LIKE '$msisdn%' AND (extract(epoch from now())::int/3600 - extract(epoch from radacct.acctstarttime)::int/3600 <= 24);\" -h <%= virtual_ip %>" | grep -v "^[[:space:]]\+sent" | grep -v "^(.*row" | grep -v "^-" | sed 's/ //g' | grep -v "^$")
+  if [ ${#onotherggsn} == "0" ]; then
+    logger -t ${logger_tag} "[$ref] CRON DELETE account"
+    su - postgres -c "psql -1 -d <%= db_name %> -c \"DELETE FROM radcheck WHERE radcheck.username LIKE '$msisdn%';\" -h <%= virtual_ip %>" >/dev/null
+    su - postgres -c "psql -1 -d <%= db_name %> -c \"DELETE FROM radreply WHERE radreply.username LIKE '$msisdn%';\" -h <%= virtual_ip %>" >/dev/null
+    su - postgres -c "psql -1 -d <%= db_name %> -c \"DELETE FROM refmsisdn WHERE refmsisdn.msisdn = '$msisdn';\" -h <%= virtual_ip %>" >/dev/null
+  fi
+done < $accounts
+
+rm $accounts
+logger -t ${logger_tag} "CRON DELETE accounts stop"
+
+exit 0
+

@@ -1,0 +1,7 @@
+function FindProxyForURL(url, host) {
+
+	if (isPlainHostName(host)) { return "DIRECT"; }
+	
+        return "PROXY <%= proxy_ip %>:<%= dansguardian_port %>; DIRECT";
+}
+

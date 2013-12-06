@@ -1,0 +1,7 @@
+system (system_1_0)
+
+  * Modification de la gestion des dépots (cf README section IMPORTANT)
+  * Suppression des classes xen-dom0 et xen-dom0-lenny au profit d'un module
+  xen
+  * Correction du bug du a la suppression du package avahi-daemon
+  * Refactoring du script check-eth-status

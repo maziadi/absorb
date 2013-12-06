@@ -1,0 +1,94 @@
+<VirtualHost *:80>
+        ServerAdmin webmaster@alphalink.fr
+	ServerName "<%= server_name %>"
+        DocumentRoot "<%= document_root %>"
+        <Directory />
+                Options FollowSymLinks
+                AllowOverride None
+        </Directory>
+        <Directory "<%= document_root %>">
+                Options Indexes FollowSymLinks MultiViews
+                AllowOverride None
+                Order allow,deny
+                allow from all
+        </Directory>
+        <DirectoryMatch "^/data/packages/debian">
+                 AuthType Basic
+                 AuthName "By Invitation Only"
+                 AuthUserFile /data/.htpasswd-packages
+                 Require valid-user
+        </DirectoryMatch>
+         <DirectoryMatch "^/data/packages/gems">
+                 AuthType Basic
+                 AuthName "By Invitation Only"
+                 AuthUserFile /data/.htpasswd-packages
+                 Require valid-user
+        </DirectoryMatch>
+         <DirectoryMatch "^/data/packages/archives">
+                 AuthType Basic
+                 AuthName "By Invitation Only"
+                 AuthUserFile /data/.htpasswd-packages
+                 Require valid-user
+        </DirectoryMatch>
+         <DirectoryMatch "^/data/packages/development">
+                 AuthType Basic
+                 AuthName "By Invitation Only"
+                 AuthUserFile /data/.htpasswd-packages
+                 Require valid-user
+        </DirectoryMatch>
+         <DirectoryMatch "^/data/packages/pre-prod">
+                 AuthType Basic
+                 AuthName "By Invitation Only"
+                 AuthUserFile /data/.htpasswd-packages
+                 Require valid-user
+        </DirectoryMatch>
+         <DirectoryMatch "^/data/packages/production">
+                 AuthType Basic
+                 AuthName "By Invitation Only"
+                 AuthUserFile /data/.htpasswd-packages
+                 Require valid-user
+        </DirectoryMatch>
+        <DirectoryMatch "^/data/packages/livrables">
+                 Order deny,allow
+                 Deny from all
+                 AuthName "By Invitation Only"
+                 AuthUserFile /data/.htpasswd-livrables
+                 AuthType Basic
+                 Require valid-user
+                 Allow from 10.0 217.15.84.94
+                 Satisfy Any
+        </DirectoryMatch>
+        <DirectoryMatch "^/data/packages/lisos2">
+                 AuthType Basic
+                 AuthName "By Invitation Only"
+                 AuthUserFile /data/.htpasswd-ldc
+                 Require valid-user
+        </DirectoryMatch>
+         <DirectoryMatch "^/data/packages/documents">
+                 AuthType Basic
+                 AuthName "By Invitation Only"
+                 AuthUserFile /data/.htpasswd-doc
+                 Require valid-user
+        </DirectoryMatch>
+        <% if has_variable?("dashboard") -%>
+        <% if dashboard -%>
+        <Location "/dashboard/">
+           ProxyPass http://127.0.0.1:3000/
+           ProxyPassReverse http://127.0.0.1:3000/
+           AuthType Basic
+           AuthName "By Invitation Only"
+           AuthUserFile /data/.htpasswd-dashboard
+           Require valid-user
+        </Location>
+        <% end -%>
+        <% end -%>
+
+        ErrorLog "/var/log/apache2/<%= server_name %>_error.log"
+
+        # Possible values include: debug, info, notice, warn, error, crit,
+        # alert, emerg.
+        LogLevel warn
+
+        CustomLog "/var/log/apache2/<%= server_name %>_access.log" combined
+        ServerSignature Off
+</VirtualHost>

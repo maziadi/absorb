@@ -1,0 +1,321 @@
+#!/usr/bin/env ruby
+
+require 'lib/xmlsimple'
+require 'cmdparse2'
+
+$kernel = "2.6.26-2-xen-686"
+$hvmloader = "/usr/lib/xen-3.2-1/boot/hvmloader"
+
+class VserverXml
+  def initialize(name,load_file,filename = nil)
+    @name = name
+    @filename = filename || "/etc/xen/#{name}.xml"
+    @xml = nil
+    @xml = nil
+    @xml = XmlSimple.xml_in(@filename) if load_file
+  end
+  def create(name,memory,vcpu,hvm,storage)
+    os = nil
+    if hvm
+      os = [{
+        "type" => ["hvm"],
+        "loader" => [$hvmloader],
+        "boot" => [{"dev" => "hd"}]
+      }]
+    else  
+      os = [{
+        "type"=>["linux"],
+        "kernel"=>["/boot/vmlinuz-#{$kernel}"],
+        "initrd"=>["/boot/initrd.img-#{$kernel}"],
+        "cmdline"=>["root=/dev/xvda2 ro "],
+        "boot" => [{"dev" => "hd"}]
+      }]
+    end
+    arch = {
+      "type" => "xen",
+      "name" => [name],
+      "memory" => ["#{memory}000"],
+      "vcpu" => [vcpu],
+      "on_crash"=>["restart"],
+      "on_reboot"=>["restart"],
+      "on_poweroff"=>["destroy"],
+      "os" => os,
+      "clock"=>[{"offset"=>"utc"}],
+      "devices"=>[{
+        "console"=>[{
+         # "tty"=>"/dev/pts/3", 
+         # "source"=>[{"path"=>"/dev/pts/3"}]
+          "type"=>"pty", 
+          "target"=>[{"port"=>"0"}], 
+          }], 
+        "interface"=> [], 
+        "disk"=>nil 
+        }]
+      }
+      
+    disk = nil
+    type = nil
+    driver = nil
+    source = nil
+    source_disk = nil
+    source_swap = nil
+    if storage == "drbd"
+      type = "block"
+      driver = "drbd"
+      source_disk = {"dev"=>"#{name}-disk"}
+      source_swap = {"dev"=>"#{name}-swap"}
+      source = {"dev"=>"#{name}"}
+    elsif storage == "img"
+      type = "file"
+      driver = "file"
+      source_disk = {"file"=>"/data/images/#{name}-disk.img"}
+      source_swap = {"file"=>"/data/images/#{name}-swap.img"}
+      source = {"file"=>"/data/images/#{name}.img"}
+    end
+    if hvm
+      disk = [{
+              "device"=>"disk", 
+              "type"=>type, 
+              "target"=>[{"bus"=>"xen", "dev"=>"xvda"}], 
+              "driver"=>[{"name"=>driver}], 
+              "source"=>[source]
+            }]
+    else    
+      disk = [{
+              "device"=>"disk", 
+              "type"=>type, 
+              "target"=>[{"bus"=>"xen", "dev"=>"xvda2"}], 
+              "driver"=>[{"name"=>driver}], 
+              "source"=>[source_disk]
+            },{
+              "device"=>"disk", 
+              "type"=>type, 
+              "target"=>[{"bus"=>"xen", "dev"=>"xvda1"}], 
+              "driver"=>[{"name"=>driver}], 
+              "source"=>[source_swap]
+            }]
+    end
+    arch["devices"][0]["disk"] = disk
+    @xml = arch
+  end
+  def add_disk(name,storage)
+    type = nil
+    driver = nil
+    type_source = nil
+    if storage == "drbd"
+      type = "block"
+      driver = "drbd"
+      type_source = "dev"
+    elsif storage == "img"
+      type = "file"
+      driver = "phy"
+      type_source = "file"
+    end
+
+    disk = {
+              "device"=>"disk", 
+              "type"=>type, 
+              "target"=>[{"bus"=>"xen", "dev"=>"xvdb1"}], 
+              "driver"=>[{"name"=>driver}], 
+              "source"=>[{type_source=>"#{name}"}]
+            }
+    @xml["devices"][0]["disk"].push(disk)
+  end
+  def bridge(bridge)
+    bridge.each{|b|
+      br = {
+            "type"=>"bridge", 
+            "source"=>[{"bridge"=>b}]
+          }
+      @xml["devices"][0]["interface"].push(br)
+    }
+  end
+  def save
+    f = File::open(@filename,'w')
+    f.write XmlSimple.xml_out(@xml,{"RootName" => "domain"})
+    f.close
+  end
+  def addcdrom(cdrom)
+    cdrom = {
+      "device" => "cdrom",
+      "type" => "file",
+     "source" => [{ "file" => cdrom}],
+     "target" => [{ "dev" => "xvdd"}]
+    }
+    @xml["devices"][0]["disk"].push(cdrom)
+  end
+  def removecdrom
+    @xml["devices"][0]["disk"].map!{|dev|
+      if dev["device"] == "cdrom"
+        nil
+      else
+        dev
+      end
+    }
+    @xml["devices"][0]["disk"].compact!
+  end
+  def boot(what)
+    @xml["os"][0]["boot"][0]["dev"] = what
+  end
+  def add_vnc(addr,port,passwd)
+    del_vnc
+    @xml["devices"][0]["graphics"] = {
+      "port" => port,
+      "listen" => addr,
+      "passwd" => passwd,
+      "type" => "vnc"
+    }
+  end
+  def del_vnc
+    @xml["devices"][0].delete("graphics")
+  end
+end
+
+
+cmd = CmdParse::CommandParser.new(true,false)
+cmd.program_name = "vserver-config "
+
+create = CmdParse::Command.new( 'create', false )
+create.short_desc = "create a new xml libvirt config"
+create.description = "create a new xml libvirt config"
+create.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-n', '--name NAME', "name of vserver") { |s|  $name = s  }
+  opt.on('-h','--hvm', "hvm vserver (default : no)") { $hvm = true  }
+  opt.on('-v','--vcpu NB', "number of vcpu (default : 1)") {|s| $vcpu = s  }
+  opt.on('-m','--memory SIZE', "memory of vserver in MB (default : 256)") {|s| $memory = s  }
+  opt.on('-b','--bridge BR0,BR1', "bridge for vserver (default : xenbr99), separe with , for multiple (xenbr99,xenbr100)") {|s| $bridge = s  }
+  opt.on('-f','--file NAME', "specify file for xml") {|s| $file_name = s  }
+  opt.on('-t','--type NAME', "type of disk [drbd|img] (default: drdb)") {|s| $type_storage = s  }
+end
+
+$hvm    = false
+$vcpu   = 1
+$memory = "256"
+$bridge = "xenbr0"
+$type_storage = "drbd"
+
+create.set_execution_block do |args|
+  v = VserverXml.new($name,false,$file_name)
+  v.create($name,$memory,1,$hvm,$type_storage)
+  v.bridge($bridge.split(","))
+  v.save
+end
+
+
+boot = CmdParse::Command.new( 'boot', false )
+boot.short_desc =  "change boot device"
+boot.description = "change boot device"
+boot.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-n', '--name NAME', "name of vserver") { |s|  $name = s  }
+  opt.on('-b', '--boot WHAT', "boot device : network | hd | cdrom") { |s|  $boot = s  }
+  opt.on('-f','--file NAME', "specify file for xml") {|s| $file_name = s  }
+end 
+boot.set_execution_block do |args|
+  if ! ["network","cdrom","hd"].include?($boot)
+    puts "Boot device need to be : network or cdrom or hd"
+    exit -1
+  end
+  v = VserverXml.new($name,true,$file_name)
+  v.boot $boot
+  v.save
+end 
+
+bridge = CmdParse::Command.new( 'bridge', false )
+bridge.short_desc =  "change bridge device"
+bridge.description = "change bridge device"
+bridge.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-n', '--name NAME', "name of vserver") { |s|  $name = s  }
+  opt.on('-b', '--bridge BR0,BR1', "bridge for the device") { |s|  $bridge2 = s  }
+  opt.on('-f','--file NAME', "specify file for xml") {|s| $file_name = s  }
+end 
+bridge.set_execution_block do |args|
+  if ! $bridge2.nil?
+    puts "You need to define bridge"
+    exit -1
+  end
+  v = VserverXml.new($name,true,$file_name)
+  v.bridge $bridge2
+  v.save
+end 
+
+cdrom = CmdParse::Command.new('cdrom', false )
+cdrom.short_desc =  "Add/remove a cdrom device"
+cdrom.description = "Add/remove a cdrom device"
+cdrom.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-n', '--name NAME', "name of vserver") { |s|  $name = s  }
+  opt.on('--cdrom PATH', "Path of cdrom, select none to remove") { |s|  $cdrom = s  }
+  opt.on('-f','--file NAME', "specify file for xml") {|s| $file_name = s  }
+end 
+cdrom.set_execution_block do |args|
+  if $cdrom.nil?
+    puts "You need to define cdrom"
+    exit -1
+  end
+  v = VserverXml.new($name,true,$file_name)
+  if $cdrom == "none"
+    v.removecdrom
+  else
+    v.addcdrom $cdrom
+  end
+  v.save
+end 
+
+disk = CmdParse::Command.new('disk', false )
+disk.short_desc =  "Add a disk device"
+disk.description = "Add a disk device"
+disk.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-n', '--name NAME', "name of vserver") { |s|  $name = s  }
+  opt.on('--disk NAME', "Name of disk") { |s|  $disk = s  }
+  opt.on('-f','--file NAME', "specify file for xml") {|s| $file_name = s  }
+  opt.on('-t','--type NAME', "type of disk [drbd|img] (default: drdb)") {|s| $type_storage = s  }
+end 
+disk.set_execution_block do |args|
+  if $disk.nil?
+    puts "You need to define disk"
+    exit -1
+  end
+  v = VserverXml.new($name,true,$file_name)
+  v.add_disk $disk,$type_storage
+  v.save
+end 
+
+
+vnc = CmdParse::Command.new('vnc', false )
+vnc.short_desc =  "Add a vnc device"
+vnc.description = "Add a vnc device"
+vnc.options = CmdParse::OptionParserWrapper::new do |opt|
+  opt.on('-n', '--name NAME', "name of vserver") { |s|  $name = s  }
+  opt.on('-f','--file NAME', "specify file for xml") {|s| $file_name = s  }
+  opt.on('--disable', "disable VNC export") { $vnc = false  }
+  opt.on('--listen ADDR', "listen addr for VNC export") {|s| $vnc_listen = s  }
+  opt.on('--port NB', "listen port for VNC export") {|s| $vnc_port = s  }
+  opt.on('--passwd PASSWD', "passwd for VNC export") {|s| $vnc_passwd = s  }
+end
+
+$vnc = true
+$vnc_listen = "0.0.0.0"
+$vnc_passwd = ""
+
+vnc.set_execution_block do |args|
+  v = VserverXml.new($name,true,$file_name)
+  if $vnc
+    if $vnc_port.nil?
+      puts "You need to define port"
+      exit -1
+    end
+    v.add_vnc($vnc_listen,$vnc_port,$vnc_passwd)
+  else
+    v.del_vnc
+  end
+  v.save
+end 
+
+cmd.add_command(create)
+cmd.add_command(boot)
+cmd.add_command(bridge)
+cmd.add_command(cdrom)
+cmd.add_command(disk)
+cmd.add_command(vnc)
+cmd.add_command(CmdParse::HelpCommand::new)
+
+cmd.parse

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+vg_name=`vgdisplay -c | cut -d : -f 1 | sed 's/^ *//g'`
+lvcreate -L <%= opennms_lv_size %> -n opennms ${vg_name} || exit -1
+vg_name=${vg_name/-/--}
+mkfs.xfs /dev/mapper/${vg_name}-opennms || exit -2
+#a tester pour la machine physique (block size XFS a 521 Bytes)
+#mkfs.xfs -b size=512 /dev/mapper/${vg_name}-opennms || exit -2
+mkdir -p /var/lib/opennms || exit -3
+echo "/dev/mapper/${vg_name}-opennms /var/lib/opennms xfs defaults 0 2" >> /etc/fstab || exit -4
+mount /var/lib/opennms || exit -5

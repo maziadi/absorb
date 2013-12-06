@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# prepare fdroid repo
+[ ! -d /usr/local/bin/fdroid ] && mkdir /usr/local/bin/fdroid
+if [ ! -d /var/local/fdroiddata ]; then
+  mkdir /var/lib/fdroiddata
+  mkdir /var/lib/fdroiddata/metadata
+  mkdir /var/lib/fdroiddata/stats
+  mkdir /var/lib/fdroiddata/tmp
+  mkdir /var/lib/fdroiddata/repo
+fi
+[ ! -e /var/lib/fdroiddata/fdroid-icon.png ] && cp /usr/local/bin/fdroid/fdroid-icon.png /var/lib/fdroiddata
+
+# get latest fdroid server
+if [ ! -d /usr/local/bin/fdroid ]; then
+  git clone git://gitorious.org/f-droid/fdroidserver.git /usr/local/bin/fdroid
+else
+  git pull /usr/local/bin/fdroid
+fi
+
+# adjust path
+grep /usr/local/bin/fdroid /root/.bashrc >/dev/null
+[ $? != 0 ] && echo "export PATH=/opt/local/bin:/opt/local/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/var/lib/gems/1.8/bin:/usr/local/bin/fdroid" >> /root/.bashrc
+
+# get fdroid adt-bundle
+if [ ! -d /usr/local/adt-bundle-linux-x86_64 ]; then
+  wget -P /usr/local http://gold/misc/adt-bundle-linux-x86_64.zip
+  unzip /usr/local/adt-bundle-linux-x86_64.zip -d /usr/local
+  rm /usr/local/adt-bundle-linux-x86_64.zip
+fi
+
+# tools
+[ ! -e /usr/local/bin/server.py ] && ln -s /usr/local/bin/fdroid/fdroidserver/server.py /usr/local/bin/server.py
+
+# lib386 must be supported
+dpkg --add-architecture i386

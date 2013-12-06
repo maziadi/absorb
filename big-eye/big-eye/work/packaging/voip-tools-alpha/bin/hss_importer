@@ -1,0 +1,98 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'sequel'
+require 'yaml'
+require 'prov_hss'
+
+CONF = '/etc/voip-tools.yaml'
+YAML_CONF = YAML.load(File.read(CONF))
+DATABASE_INFOS = YAML_CONF[:database]
+Prov::Hss::establish_connection(DATABASE_INFOS)
+
+#
+# PCSCF C5 : Accounts
+#
+
+puts "Importing C5 accounts"
+
+c5s = YAML.load(File.open('hss_c5s_dump.yaml'))
+c5s.each do |k,v|
+  begin
+  configurator = Prov::Hss::AccountConfigurator.new
+  if defined?(ActiveRecord)
+    ActiveRecord::Base.logger = nil
+  end
+  configurator.params = { :id => k }
+  configurator.data = v
+  res = configurator.create(false)
+  if res[2][:id] != k
+    raise "Something wrong with creation of '#{k}'"
+  end
+  puts "'#{k}' import: OK"
+  rescue Sequel::DatabaseError => e
+    puts "Error while processing '#{k}'\n#{e.message}"
+  end
+end
+
+#
+# PCSCF C5 : Media Groups
+#
+
+puts "Importing media groups"
+
+mgs = YAML.load(File.open('hss_mgs_dump.yaml'))
+mgs.each do |k,v|
+  begin
+    configurator = Prov::Hss::MediaGroupConfigurator.new
+    if defined?(ActiveRecord)
+      ActiveRecord::Base.logger = nil
+    end
+    configurator.params = { :id => k }
+    configurator.data = v
+    res = configurator.create(false)
+    if res[2][:id] != k
+      raise "Something wrong with creation of media group '#{k}'"
+    end
+    puts "'#{k}' import: OK"
+  rescue Sequel::DatabaseError => e
+    puts "Error while processing '#{k}'\n#{e.message}"
+  end
+end
+
+#
+# PCSCF C4 : Accounts
+#
+
+puts "Importing C4 accounts"
+
+vno_ids = Prov::Hss::db[:version].filter("table_name ~ 'd[0-9]{12}_[a-z_]+'").select {|column| column.substr(:table_name, 1, 13) }.distinct
+vno_ids.each do |vno|
+  vno_id = vno[:substr]
+  if File.exists?("hss_c4_#{vno_id}_dump.yaml")
+    vno_file = "hss_c4_#{vno_id}_dump.yaml"
+  elsif File.exists?("hss_c4_#{vno_id.capitalize}_dump.yaml")
+    vno_file = "hss_c4_#{vno_id.capitalize}_dump.yaml"
+  else
+    STDERR.puts "ERROR: no dump file found for #{vno_id}."
+    next
+  end
+  mgs = YAML.load(File.open(vno_file))
+  mgs.each do |k,v|
+    begin
+      configurator = Prov::Hss::InterconnectionConfigurator.new
+      if defined?(ActiveRecord)
+        ActiveRecord::Base.logger = nil
+      end
+      configurator.params = { :id => k, :vno => vno_id }
+      configurator.data = v
+      res = configurator.create(false)
+      if res[2][:id] != k
+        raise "Something wrong with creation of media group '#{k}'"
+      end
+      puts "'#{k}' import: OK"
+    rescue Sequel::DatabaseError => e
+      puts "Error while processing '#{k}'\n#{e.message}"
+    end
+  end
+end

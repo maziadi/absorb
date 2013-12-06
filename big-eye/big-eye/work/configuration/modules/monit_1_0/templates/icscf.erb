@@ -1,0 +1,14 @@
+check process icscf
+   with pidfile "/var/run/jboss-as/jboss-as.pid"
+   start program = "/etc/init.d/jboss-as start"
+   stop program = "/etc/init.d/jboss-as stop"
+   alert <%= monit_conf_alert_email %>
+   if 3 restarts within 4 cycles then timeout
+   if children > 255 for 5 cycles then restart
+   if children > 100 for 5 cycles then alert
+   if cpu usage > 95% for 3 cycles then restart
+   if cpu usage > 60% for 3 cycles then alert
+   if failed host <%= service_addr -%> port 5060  type udp protocol SIP
+      with target "ping@<%= service_addr -%>:5060"
+      for 4 cycles then restart
+   group jboss-as

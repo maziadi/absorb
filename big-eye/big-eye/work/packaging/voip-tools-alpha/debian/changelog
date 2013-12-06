@@ -1,0 +1,49 @@
+voip-tools (1.2.3) internal; urgency=low
+
+  * Correction des includes/exclude pour les manage_mg si plusieurs
+sont précisés (SCSCF)
+
+ -- Adrien MARTIN <a.martin@alphalink.fr>  Wed, 19 Jun 2013 10:06:06 +0200
+
+voip-tools (1.2.2+alphalink-1) internal; urgency=low
+
+  * Correction d'un bug de traitement des options -i et -e dans manage_mg
+    (PCSCF).
+
+ -- Adrien MARTIN <a.martin@alphalink.fr>  Tue, 02 Apr 2013 12:30:32 +0200
+
+voip-tools (1.2.1+alphalink-1) internal; urgency=low
+
+  * Correction du bug empêchant la suppression des tables locations sur le PCSCF
+    secondaire avec vno remove (PCSCF).
+
+ -- Adrien MARTIN <a.martin@alphalink.fr>  Fri, 29 Mar 2013 15:28:51 +0100
+
+voip-tools (1.2.0+alphalink-1) internal; urgency=low
+
+  * Amélioration des dépendances.
+  * Ajout du script monitor_gw_status (PCSCF).
+  * Utilisation de la conf vno_used_as_reference pour monitor_gw_status
+    (PCSCF).
+
+ -- Adrien MARTIN <a.martin@alphalink.fr>  Fri, 29 Mar 2013 11:50:54 +0100
+
+voip-tools (1.1.0+alphalink-1) internal; urgency=low
+
+  * Ajout de la commande gen_c4 (PCSCF).
+  * Retrait du domaine dans gen_c4 get_conf (PCSCF).
+  * Ajout de la commande vno (précédemment vno.rb) (PCSCF).
+  * Déplacement de /opt/vno_tools/ dans /usr/share/vno-tools (PCSCF).
+  * Retrait de l'affichage du domaine (-a) qui n'a plus de sens dans la sous
+    commande get_conf (PCSCF).
+  * Ajout des commandes hss_v2.{0,1}_extractor et hss_importer (PCSCF).
+  * Correction du chemin utilisé par bundle.
+  * Limitation à la version 0.14.1 pour la gemme pg.
+
+ -- Adrien MARTIN <a.martin@alphalink.fr>  Wed, 27 Mar 2013 17:53:58 +0100
+
+voip-tools (1.0.0+alphalink-1) internal; urgency=low
+
+  * Initial release.
+
+ -- Adrien MARTIN <a.martin@alphalink.fr>  Thu, 21 Mar 2013 15:20:19 +0100

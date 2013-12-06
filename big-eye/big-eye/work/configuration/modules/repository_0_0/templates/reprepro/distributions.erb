@@ -1,0 +1,13 @@
+<%  repository_debian.each do |name| -%>
+Origin: <%= name %>
+Label: <%= name %>
+Suite: <%= name %>
+Codename: <%= name %>
+Architectures: <%= @lsbdistcodename == "wheezy" ? "" : "any" %> i386 amd64 source
+Components: update internal
+UDebComponents: update internal
+Uploaders: uploaders
+Description: Repository <%= name %>
+SignWith: yes
+
+<% end %>

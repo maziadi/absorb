@@ -1,0 +1,24 @@
+configuration:
+  name        : sidaemon
+  timeout     : 2
+  loglevel    : debug
+  logdestination : syslog
+  stomp_urls   :
+    stomp1:
+      username  : <%= stomp_username %>
+      password  : <%= stomp_password %>
+      host      : <%= stomp_host %>
+      port      : <%= stomp_port %>
+      ssl       : <%= stomp_ssl %>
+
+  response-header-translator:
+    JMSCorrelationID: correlation-id
+  response-header:
+    messageType: 'SMS.SERVER.ACK'
+
+  subscribes    :
+    "<%= stomp_suscribe %>" :
+      selector: <%= stomp_selector %>
+  format        : application/json
+  daemon        :
+    db_uri      : "postgres://<%= db_user %>:<%= db_password %>@<%= db_host %>/<%= db_name %>"

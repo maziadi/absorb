@@ -1,0 +1,10 @@
+# si vrai alors le client envoie des fichiers avec mots de passse hashé
+user_crypted_password: <%= dansconfig_crypted %>
+# Choix du format entre csv et xls
+user_file_format: <%= dansconfig_format %>
+<% if proxy_blacklist_toulouse -%>
+blacklist_toulouse:
+<% proxy_blacklist_toulouse.each {|value| -%>
+  - <%= value %>
+<% } -%>
+<% end -%>

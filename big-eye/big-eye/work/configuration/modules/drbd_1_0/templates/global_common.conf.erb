@@ -1,0 +1,23 @@
+global {
+  usage-count     no;
+}
+
+common {
+  protocol        C;
+  handlers {
+    pri-on-incon-degr       "/usr/lib/drbd/notify-pri-on-incon-degr.sh; /usr/lib/drbd/notify-emergency-reboot.sh; echo b > /proc/sysrq-trigger ; reboot -f";
+    pri-lost-after-sb       "/usr/lib/drbd/notify-pri-lost-after-sb.sh; /usr/lib/drbd/notify-emergency-reboot.sh; echo b > /proc/sysrq-trigger ; reboot -f";
+    local-io-error  "/usr/lib/drbd/notify-io-error.sh; /usr/lib/drbd/notify-emergency-shutdown.sh; echo o > /proc/sysrq-trigger ; halt -f";
+    split-brain "echo split-brain. drbdadm -- --discard-my-data connect $DRBD_RESOURCE ? | mail -s 'DRBD Alert' root";
+  }
+  <% if allow_dual_primary -%>
+  net {
+    allow-two-primaries;
+  }
+  <% end -%>
+  syncer {
+    rate    100M;
+    verify-alg      sha1;
+  }
+}
+

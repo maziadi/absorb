@@ -1,0 +1,48 @@
+<%= environment %>:
+  brokers:
+    cdr_logs:
+      q1:
+        connection: &CONN
+          host: <%= amq_voip_1_host %>
+          port: <%= amq_voip_1_port %>
+          user: <%= amq_voip_user %>
+          password: <%= amq_voip_passwd %>
+        queues:
+          main: <%= amq_voip_1_queues %>
+      q2:
+        connection:
+          <<: *CONN
+          host: <%= amq_voip_2_host %>
+          port: <%= amq_voip_2_port %>
+        queues:
+          main: <%= amq_voip_2_queues %>
+    taxman:
+      t1:
+        connection: &CONN
+          host: <%= amq_taxerp_1_host %>
+          port: <%= amq_taxerp_1_port %>
+          user: <%= amq_taxerp_user %>
+          password: <%= amq_taxerp_passwd %>
+      t2:
+        connection:
+          <<: *CONN
+          host: <%= amq_taxerp_2_host %>
+          port: <%= amq_taxerp_2_port %>
+
+  queues:
+    cdrs: "cdrs"
+
+  pool_size:
+    cdr_log_consumer: 2
+  reconnect_delay: 10
+
+  exception_recipients:
+    - "si@alphalink.fr"
+<% if environment == "production" -%>
+    - "noc-alerts@alphalink.fr"
+<% else -%>
+    - "dev-noc-alerts@alphalink.fr"
+<% end -%>
+  dirs:
+    cdr_archiver: '/data/cdr_archiver'
+

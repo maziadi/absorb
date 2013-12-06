@@ -1,0 +1,11 @@
+--- 
+group: www-data
+log_file: log/mongrel.log
+port: "<%= erptech_port -%>"
+cwd: <%= erptech_directory -%> 
+environment: production
+user: www-data
+address: <%= erptech_host %>
+pid_file: tmp/pids/mongrel.pid
+servers: <%= erptech_mongrel_servers %>
+prefix: <%= erptech_prefix -%>

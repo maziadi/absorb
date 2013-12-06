@@ -1,0 +1,15 @@
+# Filter groups options
+# filtergroups sets the number of filter groups. A filter group is a set of content
+# filtering options you can apply to a group of users.  The value must be 1 or more.
+# DansGuardian will automatically look for dansguardianfN.conf where N is the filter
+# group.  To assign users to groups use the filtergroupslist option.  All users default
+# to filter group 1.  You must have some sort of authentication to be able to map users
+# to a group.  The more filter groups the more copies of the lists will be in RAM so
+# use as few as possible.
+filtergroups = <%= dansguardian_groups %>
+filtergroupslist = '/etc/dansguardian/configurator/filtergroupslist'
+
+# Authentication files location
+bannediplist = '/etc/dansguardian/lists/bannediplist'
+exceptioniplist = '/etc/dansguardian/lists/exceptioniplist'
+

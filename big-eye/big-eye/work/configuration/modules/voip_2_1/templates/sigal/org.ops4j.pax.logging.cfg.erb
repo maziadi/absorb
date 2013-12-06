@@ -1,0 +1,53 @@
+################################################################################
+#
+#    Licensed to the Apache Software Foundation (ASF) under one or more
+#    contributor license agreements.  See the NOTICE file distributed with
+#    this work for additional information regarding copyright ownership.
+#    The ASF licenses this file to You under the Apache License, Version 2.0
+#    (the "License"); you may not use this file except in compliance with
+#    the License.  You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+# 
+################################################################################
+
+# Root logger
+log4j.rootLogger=INFO, out, syslogAppender, osgi:VmLogAppender
+
+# File appender
+log4j.appender.out=org.apache.log4j.RollingFileAppender
+log4j.appender.out.layout=org.apache.log4j.PatternLayout
+log4j.appender.out.layout.ConversionPattern=%d | %-5p | %m | %c | %t%n
+log4j.appender.out.file=/var/log/karaf/karaf.log
+log4j.appender.out.maxFileSize=<%= log_max_file_size %>
+log4j.appender.out.maxBackupIndex=<%= log_max_index %>
+log4j.appender.out.Threshold=<%= local_log_level %>
+log4j.appender.out.append=true
+
+# Syslog appender
+
+log4j.appender.syslogAppender=org.apache.log4j.net.SyslogAppender
+log4j.appender.syslogAppender.syslogHost=<%= rsyslog_ip_service %>
+log4j.appender.syslogAppender.header=true
+log4j.appender.syslogAppender.layout=org.apache.log4j.PatternLayout
+log4j.appender.syslogAppender.layout.ConversionPattern=%-5p | %m
+log4j.appender.syslogAppender.Facility=LOCAL3
+log4j.appender.syslogAppender.FacilityPrinting=true
+log4j.appender.syslogAppender.Threshold=<%= syslog_log_level %>
+
+<%- if %(ALL FINEST FINER TRACE DEBUG).include?(syslog_log_level) || %(ALL FINEST FINER TRACE DEBUG).include?(local_log_level) -%>
+log4j.logger.com.initsys=DEBUG
+<%- else -%>
+log4j.logger.com.initsys=INFO
+<%- end -%>
+log4j.logger.com.initsys.sigal.SigalJmsTemplate=INFO
+log4j.logger.org.springframework=WARN
+log4j.logger.org.springframework.jdbc=WARN
+log4j.logger.org.apache.activemq=INFO
+log4j.logger.org.apache.activemq.transport.InactivityMonitor=INFO

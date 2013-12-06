@@ -1,0 +1,12 @@
+/var/log/supervision/*log {
+  daily
+  missingok
+  rotate 42
+  compress
+  delaycompress
+  create 640 supervision supervision
+  sharedscripts
+  postrotate
+    [ ! -f /var/run/supervision/unicorn.pid ] || kill -USR1 `cat /var/run/supervision/unicorn.pid`
+  endscript
+}

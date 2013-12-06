@@ -1,0 +1,13 @@
+CONFIG = {
+    'mode': 'django',
+    'working_dir': '/usr/lib/python2.7/dist-packages/graphite',
+    'user': '_graphite',
+    'group': '_graphite',
+    'args': (
+        '--bind=127.0.0.1:8000',
+        '--workers=4',
+        # '--worker-class=egg:gunicorn#sync',
+        '--timeout=10',
+        #'settings',
+    ),
+}

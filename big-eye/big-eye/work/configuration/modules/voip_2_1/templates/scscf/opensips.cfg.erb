@@ -1,0 +1,526 @@
+#
+# $Id: opensips.cfg 3542 2008-01-16 15:00:34Z miconda $
+#
+# OpenSER basic configuration script
+#     by Anca Vamanu <anca@voice-system.ro>
+#
+# Please refer to the Core CookBook at http://www.opensips.org/dokuwiki/doku.php
+# for a explanation of possible statements, functions and parameters.
+#
+
+
+####### Global Parameters #########
+
+debug=2
+log_stderror=no
+log_facility=LOG_LOCAL0
+
+fork=yes
+children=4
+
+/* uncomment the following lines to enable debugging */
+#debug=6
+#fork=no
+#log_stderror=yes
+
+/* uncomment the next line to disable TCP (default on) */
+#disable_tcp=yes
+
+/* uncomment the next line to enable the auto temporary blacklisting of 
+   not available destinations (default disabled) */
+#disable_dns_blacklist=no
+
+/* uncomment the next line to enable IPv6 lookup after IPv4 dns 
+   lookup failures (default disabled) */
+#dns_try_ipv6=yes
+
+/* uncomment the next line to disable the auto discovery of local aliases
+   based on revers DNS on IPs (default on) */
+auto_aliases=no
+
+/* uncomment the following lines to enable TLS support  (default off) */
+#disable_tls = no
+#listen = tls:your_IP:5061
+#tls_verify_server = 1
+#tls_verify_client = 1
+#tls_require_client_certificate = 0
+#tls_method = TLSv1
+#tls_certificate = "/etc/opensips/tls/user/user-cert.pem"
+#tls_private_key = "/etc/opensips/tls/user/user-privkey.pem"
+#tls_ca_list = "/etc/opensips/tls/user/user-calist.pem"
+
+
+server_header="Server: Alphalink SIP Proxy 2.0"
+user_agent_header="User-Agent: Alphalink SIP Proxy 2.0"
+
+
+port=<%= opensips_port %>
+
+/* uncomment and configure the following line if you want opensips to 
+   bind on a specific interface/port/proto (default bind on all available) */
+#listen=udp:192.168.1.2:
+#<%= opensips_port %>
+<% opensips_service_addr.each do |addr| -%>
+listen=udp:<%= addr %>:<%= opensips_port %>
+<% end -%>
+
+####### Modules Section ########
+
+#set module path
+mpath="/usr/lib/opensips/modules/"
+
+loadmodule "db_mysql.so"
+loadmodule "sl.so"
+loadmodule "tm.so"
+loadmodule "rr.so"
+loadmodule "maxfwd.so"
+loadmodule "usrloc.so"
+loadmodule "signaling.so"
+loadmodule "registrar.so"
+loadmodule "textops.so"
+loadmodule "mi_fifo.so"
+loadmodule "permissions.so"
+loadmodule "uri_db.so"
+loadmodule "uri.so"
+loadmodule "xlog.so"
+loadmodule "acc.so"
+/* uncomment next lines for MySQL based authentication support 
+   NOTE: a DB (like mysql) module must be also loaded */
+#loadmodule "auth.so"
+#loadmodule "auth_db.so"
+/* uncomment next line for aliases support
+   NOTE: a DB (like mysql) module must be also loaded */
+#loadmodule "alias_db.so"
+/* uncomment next line for multi-domain support
+   NOTE: a DB (like mysql) module must be also loaded
+   NOTE: be sure and enable multi-domain support in all used modules
+         (see "multi-module params" section ) */
+loadmodule "domain.so"
+/* uncomment the next two lines for presence server support
+   NOTE: a DB (like mysql) module must be also loaded */
+#loadmodule "presence.so"
+#loadmodule "presence_xml.so"
+loadmodule "carrierroute.so"
+
+# ----------------- setting module-specific parameters ---------------
+
+
+# ----- mi_fifo params -----
+modparam("mi_fifo", "fifo_name", "/var/run/opensips/opensips_fifo")
+
+# ----- rr params -----
+# add value to ;lr param to cope with most of the UAs
+modparam("rr", "enable_full_lr", 1)
+# do not append from tag to the RR (no need for this script)
+modparam("rr", "append_fromtag", 0)
+
+
+# ----- rr params -----
+modparam("registrar", "method_filtering", 1)
+/* uncomment the next line to disable parallel forking via location */
+# modparam("registrar", "append_branches", 0)
+/* uncomment the next line not to allow more than 10 contacts per AOR */
+#modparam("registrar", "max_contacts", 10)
+
+
+# ----- uri_db params -----
+/* by default we disable the DB support in the module as we do not need it
+   in this configuration */
+modparam("uri_db", "use_uri_table", 0)
+modparam("uri_db", "db_url", "")
+
+
+# ----- acc params -----
+#/* what special events should be accounted ? */
+#modparam("acc", "early_media", 1)
+#modparam("acc", "report_ack", 1)
+#modparam("acc", "report_cancels", 1)
+#/* by default ww do not adjust the direct of the sequential requests.
+#   if you enable this parameter, be sure the enable "append_fromtag"
+#   in "rr" module */
+#modparam("acc", "detect_direction", 0)
+#/* account triggers (flags) */
+#modparam("acc", "failed_transaction_flag", 3)
+#modparam("acc", "log_flag", 1)
+#modparam("acc", "log_missed_flag", 2)
+#/* uncomment the following lines to enable DB accounting also */
+#modparam("acc", "db_flag", 1)
+#modparam("acc", "db_missed_flag", 2)
+#modparam("acc", "db_extra", "from_uri = $fu; to_uri = $tu; account_code = $hdr(X-AccountCode); carrier_code = $avp(s:carrier_code)") 
+
+# ----- usrloc params -----
+modparam("usrloc", "db_mode",   0)
+/* uncomment the following lines if you want to enable DB persistency
+   for location entries */
+#modparam("usrloc", "db_mode",   2)
+#modparam("usrloc", "db_url",
+#  "mysql://opensips:opensipsrw@192.168.1.3/opensips_1_3")
+
+
+# ----- auth_db params -----
+/* uncomment the following lines if you want to enable the DB based
+   authentication */
+#modparam("auth_db", "calculate_ha1", yes)
+#modparam("auth_db", "password_column", "password")
+#modparam("auth_db", "db_url",
+#  "mysql://opensips:opensipsrw@192.168.1.3/opensips_1_3")
+#modparam("auth_db", "load_credentials", "")
+
+
+# ----- alias_db params -----
+/* uncomment the following lines if you want to enable the DB based
+   aliases */
+#modparam("alias_db", "db_url",
+#  "mysql://opensips:opensipsrw@192.168.1.3/opensips_1_3")
+
+
+# ----- domain params -----
+/* uncomment the following lines to enable multi-domain detection
+   support */
+#modparam("domain", "db_url",
+#  "mysql://opensips:opensipsrw@192.168.1.3/opensips_1_3")
+#modparam("domain", "db_mode", 1)   # Use caching
+
+
+# ----- multi-module params -----
+/* uncomment the following line if you want to enable multi-domain support
+   in the modules (dafault off) */
+#modparam("alias_db|auth_db|usrloc|uri_db", "use_domain", 1)
+
+
+# ----- presence params -----
+/* uncomment the following lines if you want to enable presence */
+#modparam("presence|presence_xml", "db_url",
+#  "mysql://opensips:opensipsrw@192.168.1.3/opensips_1_3")
+#modparam("presence_xml", "force_active", 1)
+#modparam("presence", "server_address", "sip:192.168.1.2:<%= opensips_port %>")
+
+modparam("permissions", "db_mode", 0)
+modparam("permissions", "peer_tag_avp", "$avp(i:707)")
+
+modparam("carrierroute", "config_source", "db")
+modparam("carrierroute", "default_tree", "<%= opensips_default_tree %>")
+modparam("carrierroute", "fetch_rows", 500)
+
+# Common Mysql DB configuration  
+modparam("acc|carrierroute|domain|permissions", "db_url", "mysql://opensips:<%= opensips_db_password %>@localhost/opensips")
+
+# TM module
+#modparam("tm", "fr_inv_timer", 120)
+
+####### Routing Logic ########
+
+
+# main request routing logic
+
+route{
+  xlog("L_INFO", "Beginning routing...\n");
+
+  if (!mf_process_maxfwd_header("10")) {
+    xlog("L_WARN", "Too Many Hops ($fu/$si/$rP)\n");
+    sl_send_reply("483","Too Many Hops");
+    exit;
+  }
+
+  if (msg:len >=  2048 ) {
+    xlog("L_WARN", "Message too big ($fu/$si/$rP)\n");
+    sl_send_reply("513", "Message too big");
+    exit;
+  };
+
+  if (!allow_trusted()) {
+     xlog("L_WARN", "Host not trusted ($fu/$si/$rP)\n");
+     sl_send_reply("403", "Forbidden");
+     exit;
+  };
+
+  xlog("L_INFO", "Peer tag: '$avp(i:707)'\n");
+
+  if ($avp(i:707) == "operator-nine") {
+    $avp(s:carrier_code) = "operator-nine"; 
+    #TODO : Transitional block : no CarrierCode was found we create a transitional one.
+    if (is_method("INVITE")) {
+      append_hf("X-CarrierCode: D200911200001.4\r\n");
+      prefix("33");
+    }
+  }
+  else if ($avp(i:707) == "operator-ten") {
+    $avp(s:carrier_code) = "operator-ten"; 
+    #TODO : Transitional block : no CarrierCode was found we create a transitional one.
+    if (is_method("INVITE")) {
+      append_hf("X-CarrierCode: D200911200001.4\r\n");
+      strip(1);
+      prefix("33");
+    }
+  }
+  else if (is_present_hf("X-CarrierCode")) {
+    $avp(s:carrier_code) = $hdr(X-CarrierCode); 
+    #TODO : Transitional block : no CarrierCode was found we create a transitional one.
+    if ($avp(s:carrier_code) == "default" || $avp(s:carrier_code) == "low-cost" || $avp(s:carrier_code) == "test" || $avp(s:carrier_code) == "viaft") {
+      remove_hf("X-CarrierCode");
+      append_hf("X-CarrierCode: D200911200001.1\r\n");
+    }
+  }
+  else {
+    $avp(s:carrier_code) = "<%= opensips_default_tree %>"; 
+    #TODO : Transitional block : no CarrierCode was found we create a transitional one.
+    if (is_method("INVITE")) {
+      append_hf("X-CarrierCode: D200911200001.1\r\n");
+    }
+  }
+  #remove_hf("X-AccountCode");
+
+  if(!is_present_hf("X-AccountCode")) {
+    #TODO : Transitional block : no AccountCode was found we create a transitional one.
+    if (is_method("INVITE")) {
+      append_hf("X-AccountCode: 0999999999999\r\n");
+    }
+  }
+
+  if (has_totag()) {
+    # sequential request withing a dialog should
+    # take the path determined by record-routing
+    if (loose_route()) {
+      xlog("L_INFO", "Loose route...\n");
+      if (is_method("BYE")) {
+        setflag(1); # do accouting ...
+        setflag(3); # ... even if the transaction fails
+      }
+      route(1);
+    }
+    else {
+      xlog("L_INFO", "No loose route...\n");
+      /* uncomment the following lines if you want to enable presence */
+      ##if (is_method("SUBSCRIBE") && $rd == "your.server.ip.address") {
+      ##  # in-dialog subscribe requests
+      ##  route(2);
+      ##  exit;
+      ##}
+      if ( is_method("ACK") ) {
+        if ( t_check_trans() ) {
+          # non loose-route, but stateful ACK; must be an ACK after a 487 or e.g. 404 from upstream server
+          if($hdr(X-Routag) == 'true') {
+            t_relay();
+          }
+          else {
+            t_relay("udp:<%= routag_service_addr -%>:<%= routag_service_port %>");
+          }
+          exit;
+        }
+        else {
+          # ACK without matching transaction ... ignore and discard.\n");
+          exit;
+        }
+      }
+      sl_send_reply("404","Not here");
+    }
+    exit;
+  }
+
+  #initial requests
+
+  # CANCEL processing
+  if (is_method("CANCEL"))
+  {
+    if (t_check_trans())
+      if($hdr(X-Routag) == 'true') {
+        t_relay();
+      }
+      else {
+        t_relay("udp:<%= routag_service_addr -%>:<%= routag_service_port %>");
+      }
+    exit;
+  }
+
+  t_check_trans();
+
+  # authenticate if from local subscriber (uncomment to enable auth)
+  ##if (!(method=="REGISTER") && from_uri==myself)
+  ##{
+  ##  if (!proxy_authorize("", "subscriber")) {
+  ##    proxy_challenge("", "0");
+  ##    exit;
+  ##  }
+  ##  if (!check_from()) {
+  ##    sl_send_reply("403","Forbidden auth ID");
+  ##    exit;
+  ##  }
+  ##
+  ##  consume_credentials();
+  ##  # caller authenticated
+  ##}
+
+  # record routing
+  if (!is_method("REGISTER|MESSAGE"))
+    record_route();
+
+  # account only INVITEs
+  if (is_method("INVITE")) {
+    setflag(1); # do accouting
+    setflag(3); # ... even if the transaction fails
+  }
+  if (!is_uri_host_local()) {
+    # Don't route requests for other domains
+    sl_send_reply("403", "Forbidden not myself"); 
+    exit;
+  }
+
+  # requests for my domain
+
+  /* uncomment this if you want to enable presence server 
+     and comment the next 'if' block
+     NOTE: uncomment also the definition of route[2] from  below */
+  ##if( is_method("PUBLISH|SUBSCRIBE"))
+  ##    route(2);
+
+  if (is_method("PUBLISH")) {
+    sl_send_reply("503", "Service Unavailable");
+    exit;
+  }
+  
+  if (is_method("REGISTER")) {
+    # authenticate the REGISTER requests (uncomment to enable auth)
+    ##if (!www_authorize("", "subscriber"))
+    ##{
+    ##  www_challenge("", "0");
+    ##  exit;
+    ##}
+    ##
+    ##if (!check_to()) 
+    ##{
+    ##  sl_send_reply("403","Forbidden auth ID");
+    ##  exit;
+    ##}
+
+    if (!save("location"))
+      sl_reply_error();
+
+    exit;
+  }
+
+  if ($rU==NULL) {
+    # request with no Username in RURI
+    sl_send_reply("484","Address Incomplete");
+    exit;
+  }
+
+  # apply DB based aliases (uncomment to enable)
+  ##alias_db_lookup("dbaliases");
+
+#  if (!lookup("location")) {
+#    switch ($retcode) {
+#      case -1:
+#      case -3:
+#        t_newtran();
+#        t_reply("404", "Not Found");
+#        exit;
+#      case -2:
+#        sl_send_reply("405", "Method Not Allowed");
+#        exit;
+#    }
+#  }
+
+  # when routing via usrloc, log the missed calls also
+  setflag(2);
+
+  if (is_method("INVITE")) {
+      route(1);
+      #xlog("L_INFO", "Routing with CR...\n");
+      #$avp(s:domain)="0";
+      #if (cr_route("$avp(s:carrier_code)", "$avp(s:domain)", "$rU", "$rU", "call_id", "$avp(s:host)")) {
+      #    route(1);
+      #    xlog("L_INFO", "Routing with CR: done.\n");
+      #    exit;
+      #};
+      #xlog("L_INFO", "Routing with CR: went wrong.\n");
+      #exit;
+  };
+  
+  if (is_method("OPTIONS")) {
+    if ($si == '<%= opensips_service_addr.first %>') {
+      xlog("L_INFO", "monit's check -> OK\n");
+      force_rport();
+      sl_send_reply("200", "OK");
+      exit;
+    } else if ($rU == 'ping') {
+        xlog("L_INFO", "SIPA check -> OK\n");
+        force_rport();
+        t_relay("udp:<%= routag_service_addr -%>:<%= routag_service_port %>");
+        exit;
+    }
+  }
+}
+
+route[1] {
+  xlog("L_INFO", "Route 1...\n");
+  xlog("L_NOTICE", "$avp(s:carrier_code)::$hdr(X-AccountCode)::$rm::$rU::$si::$avp(s:host)");
+  # for INVITEs enable some additional helper routes
+  if (is_method("INVITE")) {
+    t_on_branch("2");
+    t_on_reply("2");
+    #t_on_failure("11");
+  }
+  if($hdr(X-Routag) == 'true') {
+    if(!t_relay()) {
+      sl_reply_error();
+    }
+  }
+  else if(!t_relay("udp:<%= routag_service_addr -%>:<%= routag_service_port %>")) {
+      sl_reply_error();
+  };
+  xlog("L_INFO", "Route 1: exiting.\n");
+  exit;
+}
+
+branch_route[2] {
+  xlog("L_INFO", "new branch at $ru ($rm)\n");
+}
+
+onreply_route[2] {
+  xlog("L_INFO", "incoming reply\n");
+}
+
+failure_route[1] {
+  xlog("L_INFO", "entering failure_route[1] for reply code '$T_reply_code'\n");
+  if (t_was_cancelled()) {
+    xlog("L_INFO", "Transaction was cancelled\n");
+    exit;
+  }
+}
+
+######################
+# "default" failover #
+######################
+failure_route[11] {
+  xlog("L_INFO", "entering failure_route[11] for reply code '$T_reply_code'\n");
+  xlog("L_NOTICE", "FAILURE_ROUTE::$avp(s:carrier_code)::$hdr(X-AccountCode)::$rm::$T_reply_code::$rU::$si::$avp(s:host)\n");
+
+  if (t_was_cancelled()) {
+      xlog("L_INFO", "Transaction was cancelled\n");
+      exit;
+  }
+
+  revert_uri();
+  xlog("L_INFO","cr_next_domain(\"$avp(s:carrier_code)\", \"$avp(s:domain)\", \"$rU\", \"$avp(s:host)\", \"$T_reply_code\", \"$avp(s:domain)\");\n");
+  if (!cr_next_domain("$avp(s:carrier_code)", "$avp(s:domain)", "$rU", "$avp(s:host)", "$T_reply_code", "$avp(s:domain)")) {
+    xlog("L_ERR", "cr_next_domain failed\n");
+    exit;
+  }
+  if (!cr_route("$avp(s:carrier_code)", "$avp(s:domain)", "$rU", "$rU", "call_id", "$avp(s:host)")) {
+    xlog("L_ERR", "cr_route failed\n");
+    exit;
+  }
+  xlog("L_NOTICE", "$avp(s:carrier_code)::$hdr(X-AccountCode)::$rm::$rU::$si::$avp(s:host)\n");
+
+  t_on_failure("1");
+  if($hdr(X-Routag) == 'true') {
+    if(!t_relay()) {
+      xlog("L_ERR", "t_relay failed\n");
+      exit;
+    }
+  }
+  else if (!t_relay("udp:<%= routag_service_addr -%>:<%= routag_service_port %>")) {
+    xlog("L_ERR", "t_relay failed\n");
+    exit;
+  };
+} 

@@ -1,0 +1,7 @@
+<%= environment %>:
+  adapter: postgresql
+  encoding: UTF8
+  database: killbill_<%= environment %>
+  pool: 5
+  username: killbill_<%= environment %>
+  password: <%= db_password %>

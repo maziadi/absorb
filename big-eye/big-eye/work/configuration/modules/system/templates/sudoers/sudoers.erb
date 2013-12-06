@@ -1,0 +1,45 @@
+# /etc/sudoers
+#
+# This file MUST be edited with the 'visudo' command as root.
+#
+# See the man page for details on how to write a sudoers file.
+#
+
+Defaults	env_reset
+
+# Host alias specification
+Host_Alias SI = si-1-cbv1, si-3-pornic
+Host_Alias CALLWEAVER = mrf-1-cbv1, bc-voip-1-cbv2, bc-voip-1-ext1
+Host_Alias ASTERISK = gw-isdn-1-cbv1, gw-isdn-2-cbv2, gw-isdn-3-cbv1, gw-isdn-3-cbv2
+Host_Alias BUILDER = builder-1-grp-alpha, builder-2-grp-alpha
+
+# User alias specification
+User_Alias DEVS = j.giovinazzo, j.lefeuvre, d.broeglin
+
+# Cmnd alias specification
+Cmnd_Alias SI_CMD = /opt/local/bin/import_data_si, /opt/local/bin/export_data_si
+
+# User privilege specification
+root	ALL=(ALL) ALL
+rails	si-1-cbv1=(ALL) ALL
+
+# 
+# Devs
+#
+DEVS 	SI = (root) NOPASSWD: SI_CMD 
+DEVS 	si-2-pornic = (root) NOPASSWD: ALL 
+
+%devel  BUILDER = (root) NOPASSWD: ALL
+
+%zimbra   ALL=NOPASSWD:/opt/zimbra/openldap/libexec/slapd
+%zimbra   ALL=NOPASSWD:/opt/zimbra/libexec/zmslapd
+%zimbra   ALL=NOPASSWD:/opt/zimbra/postfix/sbin/postfix, /opt/zimbra/postfix/sbin/postalias, /opt/zimbra/postfix/sbin/qshape.pl, /opt/zimbra/postfix/sbin/postconf,/opt/zimbra/postfix/sbin/postsuper
+%zimbra   ALL=NOPASSWD:/opt/zimbra/libexec/zmqstat,/opt/zimbra/libexec/zmmtastatus
+%zimbra ALL=NOPASSWD:/opt/zimbra/libexec/zmmailboxdmgr
+%zimbra ALL=NOPASSWD:/opt/zimbra/bin/zmcertmgr
+%zimbra ALL=NOPASSWD:/opt/zimbra/nginx/sbin/nginx
+
+snmp    CALLWEAVER=NOPASSWD:/usr/sbin/callweaver -rnx *
+snmp    CALLWEAVER=NOPASSWD:/usr/bin/lsof -p *
+snmp    ASTERISK=NOPASSWD:/usr/sbin/asterisk -rnx *
+snmp    ASTERISK=NOPASSWD:/usr/bin/lsof -p *

@@ -1,0 +1,247 @@
+#!/usr/bin/env ruby
+
+#############################################
+# Script de provisionning automatique de C4 #
+#   Fabrication Maison : Raf                #
+#   Refactoring        : Tof                #
+#############################################
+
+require 'yaml'
+STDOUT.sync = true
+
+def usage
+  STDERR.puts <<EOM
+Utilisation : #$0 [-p]
+  -p : Déploiement sur plaque de préproduction
+EOM
+  exit 1
+end
+
+def ask(prompt)
+  print prompt
+  gets.chomp!
+end
+
+def check_answer(question, validation_RE)
+  answer = ask question
+  while not answer =~ validation_RE
+    answer = ask "/!\\ #{question}"
+  end
+  answer
+end
+
+def check_return_code
+  code = $?.exitstatus
+  if code != 0
+    STDERR.puts <<EOM
+Echec (#{code}) !
+===========================================
+/!\\ CONTACTEZ LE SERVICE INFRASTRUCTURE /!\\
+===========================================
+EOM
+    exit 1
+  end
+end
+
+def exec_and_check(cmd)
+  system cmd
+  check_return_code
+end
+
+
+
+exec_and_check 'rake update'
+
+
+$deploy_env = ARGV.delete('-p') ? 'preprod' : 'prod'
+usage unless ARGV.empty?
+
+case $deploy_env
+when 'prod'
+  PCSCFs = ['pcscf-1-cbv1', 'pcscf-2-cbv2']
+  SCSCFs = ['scscf-1-cbv1', 'scscf-1-cbv2']
+when 'preprod'
+  PCSCFs = ['pcscf-preprod-1', 'pcscf-preprod-2']
+  SCSCFs = ['scscf-preprod-1', 'scscf-preprod-2']
+end
+
+
+puts <<EOM
+Environnement cible : #$deploy_env
+ PCSCFs : #{PCSCFs.join(' ')}
+ SCSCFs : #{SCSCFs.join(' ')}
+
+EOM
+
+puts "Veuillez saisir les informations nécessaires à la création de l'interco C4 :"
+case check_answer " Type d'authentification (1- IP 2- IP+MDP) : ", /^[12]$/
+when '1'
+  authentication_type = :ip
+when '2'
+  authentication_type = :registrar
+end
+nom = check_answer ' Nom du client : ', /^[\w '.-]+$/
+party_ref = check_answer ' party-ref du client : ', /^P\d{9}$/
+id = check_answer ' Id de déploiement du vno client : ', /^d\d{12}$/i
+id.upcase!
+id_new = id.downcase
+plan_rout2 = check_answer ' Index du plan de routage VNO client ([1-6]) : ', /^[1-6]$/
+ips = []
+ip = check_answer " Adresse IP d'authentif pour le trunk : ", /^((25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)$/
+while ip != ''
+  ips << ip
+  ip = check_answer " Adresse IP d'authentif pour le trunk (Entrée pour continuer) : ", /^(((25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)\.){3}(25[0-5]|2[0-4]\d|1\d{2}|[1-9]\d|\d)|)$/
+end
+if authentication_type == :registrar
+  chars = ['0'..'9','A'..'Z','a'..'z'].map!(&:to_a).flatten!
+  password = ''; 10.times {password << chars.choice}
+  while tmp = ask(" Mot de passe (#{password}) : ")
+    case tmp
+    when ''
+      break
+    when /.{26,}/
+      STDERR.puts "La longueur doit être inférieure ou égale à 25 caractères !"
+    when /^[\w-]+$/ #Arbitraire, à qualifier
+      password = tmp
+      break
+    else
+      STDERR.puts 'Caractères autorisés : 0-9 A-Z a-z - _'
+    end
+  end
+end
+label = check_answer " Label de l'interco : ", /^[\w '.-]+$/
+max = check_answer " Nombre d'appels simultanés max sur l'interco : ", /^\d+$/
+
+case check_answer ' Plan de numérotation (1- E.164  2- National) : ', /^[12]$/
+when '1'
+ plan2='e164'
+when '2'
+ plan2='national'
+end
+
+voip_accounts = YAML.load_file 'data/voip_accounts.yaml'
+
+ref = voip_accounts.keys.select{|ref| ref =~ /^0991000/}.sort.last.succ
+case check_answer " Utiliser la prochaine référence d'interco disponible #{ref} ? (Y/y/O/o/N/n) : ", /^[noy]$/i
+when  /n/i
+  ref = check_answer '  Entrez la référence de ce C4 : ', /^0991000\d{6}$/
+  while voip_accounts.has_key? ref
+    puts "Référence #{ref} déjà prise !"
+    ref = check_answer '  Entrez la référence de ce C4 : ', /^0991000\d{6}$/
+  end
+end
+
+sub_num = voip_accounts.values.map{|account_hash| account_hash[:subscriber_number]}.sort.last.succ
+case check_answer " Utiliser le prochain numéro d'identification disponible #{sub_num} ? (Y/y/O/o/N/n) : ", /^[noy]$/i
+when /n/i
+  sub_num = check_answer "  Entrez le numéro d'identification pour ce C4 : ", /^33970750[5-9]\d{2}$/
+  while voip_accounts.values.find{|account_hash| account_hash[:subscriber_number] == sub_num}
+    puts "Numéro d'identification #{sub_num} déjà pris !"
+    sub_num = check_answer "  Entrez le numéro d'identification pour ce C4 : ", /^33970750[5-9]\d{2}$/
+  end
+end
+if sub_num >= '33970750900'
+  STDERR.puts <<EOM
+=======================================================
+/!\\ ATTENTION /!\\
+Dernière tranche de numéros d'identification entammée !
+CONTACTER LE SERVICE INFRASTRUCTURE
+=======================================================
+Reprise dans 5 secondes...
+EOM
+  sleep 5
+end
+
+
+
+voip_accounts_section = <<EOS
+"#{ref}":
+    :ref: "#{ref}"
+    :subscriber_number: "#{sub_num}"
+    :customer: "#{nom}"
+    :party_ref: "#{party_ref}"
+    :label: "#{label}"
+    :interco: true
+EOS
+case authentication_type
+when :ip
+  if ips.length == 1
+    voip_accounts_section << <<EOS
+    :ip: "#{ips[0]}"
+EOS
+  else
+    voip_accounts_section << <<EOS
+    :ip:
+EOS
+    ips.each do |ip|
+      voip_accounts_section << <<EOS
+      - "#{ip}"
+EOS
+    end
+  end
+  voip_accounts_section << <<EOS
+    :port: "5060"
+EOS
+when :registrar
+  voip_accounts_section << <<EOS
+    :username: "#{ref}"
+    :password: "#{password}"
+EOS
+end
+voip_accounts_section << <<EOS
+    :profile: "#{plan2}:#{plan2}"
+    :max: "#{max}"
+    :carrier_code: "#{id}.#{plan_rout2}"
+EOS
+
+puts "\nSection voip_accounts.yaml :"
+puts voip_accounts_section
+puts
+
+
+case check_answer 'Continuer ? [oOyYnN] : ', /^[noy]$/i
+when /n/i
+    puts 'Arrêt'
+    exit 1
+else
+    puts 'Déploiement du compte'
+end
+
+
+if $deploy_env == 'prod'
+  File.open('data/voip_accounts.yaml','a') do |fio|
+    fio.puts voip_accounts_section
+  end
+  exec_and_check 'rake update'
+  exec_and_check 'rake voip:maj_voip_si'
+  exec_and_check 'rake update'
+  exec_and_check "rake publish_prod MSG='Production C4 #{nom} - #{ref} (#{label})'"
+end
+
+scscf_sql_command = "insert into exchange_information (account_code,subscriber_number,max_inbound_calls,max_outbound_calls,max_calls,outbound_numbering_plan,inbound_numbering_plan,locked,carrier_code,weird_identity,creation_date) values ('#{ref}','#{sub_num}',#{max},#{max},#{max},'#{plan2}','#{plan2}','0','#{id}.#{plan_rout2}','0',now());"
+SCSCFs.each do |scscf|
+  puts "Ajout des données sur la base SQL AS de #{scscf}..."
+  exec_and_check "ssh #{scscf} \"echo \\\"#{scscf_sql_command}\\\" | mysql --defaults-file=/etc/mysql/debian.cnf as\""
+end
+
+pcscf_prov_command = "bash -l -c '/usr/bin/gen_c4 -v #{id_new} -c #{ref} create "
+ips.each{|ip| pcscf_prov_command << "-i #{ip} "}
+pcscf_prov_command << "-r -p '#{password}' " if authentication_type == :registrar
+pcscf_prov_command << case id_new
+when 'd200911200001'
+  '-g 3 '
+else
+  '-g 4 '
+end
+pcscf_prov_command << "&& /opt/local/bin/#{id_new}_opensipsctl dr reload && /opt/local/bin/#{id_new}_opensipsctl address reload'"
+PCSCFs.each do |pcscf|
+  puts "Provisionning de #{pcscf}..."
+  exec_and_check "ssh #{pcscf} \"#{pcscf_prov_command}\""
+end
+
+puts 'Upload voip_accounts.yaml vers machines de log...'
+['log-1','log-2'].each do |host|
+  exec_and_check "scp data/voip_accounts.yaml #{host}:/root/"
+end
+
+puts 'Fini'

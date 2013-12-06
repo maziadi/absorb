@@ -1,0 +1,58 @@
+#!/usr/bin/env ruby
+
+puts "maybe obsoleted"
+exit
+
+require 'open3'
+
+PROV_SERVER = "gold.alphalink.fr"
+
+def sh(cmd)
+  puts cmd
+  system cmd
+end
+
+sh "ssh -t root@#{PROV_SERVER} 'cd /data/switchs; svn update; swiprov --config /data/switchs/swiprov.yaml #{ARGV.join(" ")}'"
+
+cmd =  "ssh root@#{PROV_SERVER} 'cd /data/switchs; svn status'"
+puts cmd
+stdin, stdout, stderr = Open3::popen3 cmd 
+err = stderr.readlines
+out = stdout.readlines
+
+commit_modif  = false
+if ! out.empty?
+  puts out
+  commit_modif = true
+end
+if !err.empty?
+  puts err
+  puts "ERROR !! commit aborted"
+  exit
+end
+
+if commit_modif
+  cmd =  "ssh root@#{PROV_SERVER} \"cd /data/switchs; svn commit -m \'swiprov : #{ARGV.join( )}\'\""
+  puts cmd
+  stdin, stdout, stderr = Open3::popen3 cmd
+  stdout.each { |line|
+    puts line
+    if line.match('^.*vision [0-9]*.*$') then
+      $revision = line.match('\d+').to_s
+    end
+  }
+  lines = stderr.readlines
+  if ! lines.empty? then
+    puts lines
+    puts "ERROR !! commit aborted"
+    exit
+  end
+
+  if $revision
+    sh "ssh root@#{PROV_SERVER} 'cd /var/lib/puppet/branches/production; svnmerge merge -r#{$revision}; svn ci -F svnmerge-commit-message.txt;'"
+  else
+    puts "ERROR !! Cannot merge change in production"
+  end
+else
+  puts "No modification of swiprov.yaml"
+end

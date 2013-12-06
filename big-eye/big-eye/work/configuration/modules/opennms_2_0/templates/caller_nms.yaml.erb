@@ -1,0 +1,12 @@
+caller_id: <%= caller_id %>
+ami_host: 127.0.0.1
+ami_user: opennms
+ami_password: opennms
+timeout: 30000
+account_code: <%= account_code %>
+onms_url: http://<%= opennms_login %>:<%= opennms_password %>@127.0.0.1:8980/opennms 
+<% if alert_dahdi -%>
+dahdi: true
+<% end -%>
+check_notifications: true
+remote_ack_ip: <%= opennms_remote_ack_ip %>

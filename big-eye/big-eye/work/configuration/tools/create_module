@@ -1,0 +1,24 @@
+#!/bin/bash
+name=$1
+create="mkdir"
+temp="/tmp/$$"
+
+if [ -z $1 ]; then
+  echo "Usage : $0 module_name"
+  exit -1
+fi
+
+$create modules/$name
+$create modules/$name/manifests
+$create modules/$name/templates
+$create modules/$name/files
+
+echo "#modules $name" > modules/$name/manifests/init.pp
+echo "import \"$name\"" >> master/manifests/modules.pp
+sort master/manifests/modules.pp > $temp
+mv $temp master/manifests/modules.pp
+
+git add modules/$name/manifests/init.pp
+
+exit 0
+

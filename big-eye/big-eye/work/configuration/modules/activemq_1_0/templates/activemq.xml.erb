@@ -1,0 +1,133 @@
+<!--
+  ActiveMQ activemq.xml configuration file (/usr/local/activemq/conf/activemq.xml)
+
+  * ActiveMQ JVM Startup options are in /etc/activemq.conf
+
+  * Uses the Sun JMX connector for remote management.  Point jconsole at:
+     service:jmx:rmi:///jndi/rmi://myserver.domain.net:61616/jmxrmi
+
+  * Uses Kaha persistence storage, stored in the "activemq-data" directory.
+    "activemq-data" and "logs" sub-directories must be writable by the
+    ActiveMQ user.
+
+  * Also see conf/log4j.properties for logging configuration
+-->
+
+<beans
+  xmlns="http://www.springframework.org/schema/beans" 
+  xmlns:amq="http://activemq.apache.org/schema/core" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd 
+  http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd">
+    <!-- Enables system properties as variables in this configuration file -->
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"/>
+
+    <broker xmlns="http://activemq.apache.org/schema/core"
+           brokerName="<%= hostname -%>"
+           advisorySupport="true"
+           useJmx="true"
+           populateJMSXUserID="true"
+           persistent="true"
+           dataDirectory="/var/lib/activemq-data/">
+        <!-- Queue setup.  Queues can be created on the fly by any user with
+             admin rights, but it is not good to give every user admin rights.  -->
+        <destinations>
+<% if active_mq_queue -%>
+<% active_mq_queue.each do |amq_queue| -%>
+            <queue physicalName="<%= amq_queue -%>" />
+<% end -%>
+<% end -%>
+<% if active_mq_topic -%>
+            <topic physicalName="<%= active_mq_topic -%>" />
+<% end -%>
+
+            <topic physicalName="ActiveMQ.Advisory.Connection"/>
+        </destinations>
+    
+        <!-- We only allow Stomp clients -->
+        <transportConnectors>
+            <transportConnector name="stomp" uri="stomp://<%= active_mq_service_addr -%>:61613"/>
+            <transportConnector name="openwire" uri="tcp://<%= active_mq_service_addr -%>:61616" discoveryUri="multicast://default"/>
+        </transportConnectors>
+    
+        <networkConnectors>
+<% if active_mq_connector_url -%>
+          <networkConnector name="sigal-bridge"
+            userName="bridge"
+            password="<%= active_mq_bridge_password -%>"
+            uri="static://(<%= active_mq_connector_url -%>)?maxReconnectDelay=5000&amp;initialReconnectDelay=250"
+            decreaseNetworkConsumerPriority="true"/>
+<% else -%>
+        <!-- We don't have any other brokers to connect to -->
+<% end -%>
+        </networkConnectors>
+    
+        <!-- Do not create an ActiveMQ JMX connector.  Use the Sun JMX connector
+             instead, and hook ActiveMQ to it. -->
+        <managementContext>
+            <managementContext createConnector="false" />
+        </managementContext>
+    
+        <plugins>
+            <simpleAuthenticationPlugin>
+                <users>
+                    <authenticationUser username="admin" password="<%= active_mq_admin_password -%>" groups="admins,<%= active_mq_user_login -%>s" />
+                    <authenticationUser username="<%= active_mq_user_login -%>" password="<%= active_mq_user_password -%>" groups="<%= active_mq_user_login -%>s" />
+                    <authenticationUser username="monit" password="<%= active_mq_monit_password -%>" groups="monits" />
+<% if active_mq_connector_url -%>
+                    <authenticationUser username="bridge" password="<%= active_mq_bridge_password -%>" groups="admins" />
+<% end -%>
+                </users>
+            </simpleAuthenticationPlugin>
+            <authorizationPlugin>
+                <map>
+                    <authorizationMap>
+                        <authorizationEntries>
+                            <authorizationEntry queue=">" write="admins" read="admins" admin="admins" />
+                            <authorizationEntry topic=">" write="admins" read="admins" admin="admins" />
+<% if active_mq_queue -%>
+<% active_mq_queue.each do |amq_queue| -%>
+                            <authorizationEntry queue="<%= amq_queue -%>" write="<%= active_mq_user_login -%>s" read="<%= active_mq_user_login -%>s" admin="admins" />
+<% end -%>
+<% end -%>
+<% if active_mq_topic -%>
+                            <authorizationEntry topic="<%= active_mq_topic -%>" write="<%= active_mq_user_login -%>s" read="<%= active_mq_user_login -%>s" admin="admins" />
+<% end -%>
+                            <authorizationEntry topic="ActiveMQ.Advisory.>" read="admins,<%= active_mq_user_login -%>s" 
+                                write="admins,<%= active_mq_user_login -%>s" admin="admins,<%= active_mq_user_login -%>s"/>
+
+                        </authorizationEntries>
+                        <tempDestinationAuthorizationEntry>
+                            <tempDestinationAuthorizationEntry read="admins,<%= active_mq_user_login -%>s" 
+                                write="admins,<%= active_mq_user_login -%>s" admin="admins,<%= active_mq_user_login -%>s"/>
+                        </tempDestinationAuthorizationEntry>
+                    </authorizationMap>
+                </map>
+            </authorizationPlugin>
+        </plugins>
+        <systemUsage sendFailIfNoSpace="true">
+            <systemUsage>
+                <memoryUsage>
+                    <memoryUsage limit="32 mb"/>
+                </memoryUsage>
+                <storeUsage>
+                    <storeUsage limit="512 mb" name="persist-store"/>
+                </storeUsage>
+                <tempUsage>
+                    <tempUsage limit="128 mb"/>
+                </tempUsage>
+              </systemUsage>
+              <destinationPolicy>
+                <policyMap>
+                  <policyEntries>
+                    <policyEntry topic=">" producerFlowControl="false" memoryLimit="10mb" />
+                    <policyEntry queue=">" producerFlowControl="false" memoryLimit="10mb" />
+                  </policyEntries>
+                </policyMap>
+              </destinationPolicy>
+        </systemUsage>
+      </broker>
+      <commandAgent xmlns="http://activemq.apache.org/schema/core"
+        username="admin"
+        password="<%= active_mq_admin_password -%>"/>
+</beans>

@@ -1,0 +1,47 @@
+<%= taxman_env %>:
+  brokers:
+    taxman:
+      t1:
+        connection: 
+          host: '<%= amq_taxerp_1_host %>'
+          port: <%= amq_taxerp_1_port %>
+          user: '<%= amq_taxerp_user %>'
+          password: '<%= amq_taxerp_passwd %>'
+        prefetch: 10
+      t2:
+        connection:
+          host: '<%= amq_taxerp_2_host %>'
+          port: <%= amq_taxerp_2_port %>
+          user: '<%= amq_taxerp_user %>'
+          password: '<%= amq_taxerp_passwd %>'
+        prefetch: 10
+
+  queues:
+    cdrs: "cdrs"
+    mobile_exports: "mobile"
+
+  pool_size:
+    cdrs: 4
+    cashbot_mobile: 4
+    voip_reporter: 4
+    voip_monthly_exporter: 4
+    outback_mobile: 8
+
+  apps:
+    anderson:
+      account_api_path: "/tmp_api/voip"
+
+  mobile:
+    apn: 'mds02011'
+
+  dirs:
+    cdr_archives: '/data/archives'
+    vno_journals: '/data/vno_journals'
+    accounting_report: '/data/accounting'
+    cdr_archiver: '/data/cdr_archiver'
+    csv_report: '/data/csv_reports'
+    grid_sets: '/data/grid_sets'
+    call_logs_archives: '/data/call_logs'
+    sfr_tickets: '/data/sfr/tickets'
+    mobile_batches: '/data/mobile_batches'
+    exports: '/data/exports'

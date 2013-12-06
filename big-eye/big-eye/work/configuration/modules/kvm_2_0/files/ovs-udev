@@ -1,0 +1,17 @@
+#!/bin/sh
+
+logger -t ovs-udev "$ACTION $1"
+logger -t ovs-udev "$*"
+
+case $ACTION in
+     add)
+         ifup --force $1 | logger -t ovs-udev
+         ;;
+     remove)
+         # hm, this won't ever work, because this script gets
+         # called after the device is already removed...
+         ifdown --force $1 | logger -t ovs-udev
+         ;;
+esac
+
+exit 0

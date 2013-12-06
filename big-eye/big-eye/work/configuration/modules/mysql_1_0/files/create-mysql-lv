@@ -1,0 +1,9 @@
+#!/bin/bash
+
+vg_name=`vgdisplay -c | cut -d : -f 1 | sed 's/^ *//g'`
+lvcreate -L 100G -n mysql ${vg_name} || exit -1
+vg_name=${vg_name/-/--}
+mkfs.xfs /dev/mapper/${vg_name}-mysql || exit -2
+mkdir -p /var/lib/mysql || exit -3
+echo "/dev/mapper/${vg_name}-mysql /var/lib/mysql xfs defaults 0 2" >> /etc/fstab || exit -4
+mount /var/lib/mysql || exit -5

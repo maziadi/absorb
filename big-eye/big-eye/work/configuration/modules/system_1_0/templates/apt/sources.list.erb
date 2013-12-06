@@ -1,0 +1,113 @@
+<% repositories.each do |repo| -%>
+<% case repo -%>
+<% when "sarge" -%>
+deb http://<%= proxy_apt %>archive.debian.org/debian/ sarge main contrib non-free
+deb-src http://<%= proxy_apt %>archive.debian.org/debian/ sarge main contrib non-free
+
+<% when "etch" -%>
+deb http://archive.debian.org/debian/ etch main contrib non-free
+
+deb http://alphalink:WBL3UqtLwS@gold.alphalink.fr/debian etch update internal
+
+<% when "lenny" -%>
+deb http://<%= proxy_apt %>archive.debian.org/debian/ lenny main contrib non-free
+deb-src http://<%= proxy_apt %>archive.debian.org/debian/ lenny main contrib non-free
+
+#deb http://security.debian.org/ lenny/updates main contrib non-free
+
+deb http://alphalink:WBL3UqtLwS@gold.alphalink.fr/debian lenny update internal
+
+<% when "lenny-backports" -%>
+deb http://<%= proxy_apt %>www.backports.org/debian lenny-backports main contrib non-free
+
+<% when "squeeze" -%>
+deb http://<%= proxy_apt != "" ? proxy_apt : "ftp.fr.debian.org/" %>debian/ squeeze main contrib non-free
+deb-src http://<%= proxy_apt != "" ? proxy_apt : "ftp.fr.debian.org/"  %>debian/ squeeze main contrib non-free
+
+deb http://<%= proxy_apt %>security.debian.org/ squeeze/updates main contrib non-free
+
+deb http://alphalink:WBL3UqtLwS@gold.alphalink.fr/debian squeeze update internal
+
+<% when "squeeze-backports" -%>
+deb http://<%= proxy_apt %>backports.debian.org/debian-backports squeeze-backports main
+
+<% when "wheezy" -%>
+deb http://<%= proxy_apt != "" ? proxy_apt : "ftp.fr.debian.org/"  %>debian/ wheezy main contrib non-free
+deb-src http://<%= proxy_apt != "" ? proxy_apt : "ftp.fr.debian.org/"  %>debian/ wheezy main contrib non-free
+
+deb http://<%= proxy_apt %>security.debian.org wheezy/updates main
+
+deb http://alphalink:WBL3UqtLwS@gold.alphalink.fr/debian wheezy update internal
+
+<% when "wheezy-backports" -%>
+deb http://<%= proxy_apt != "" ? proxy_apt : "ftp.fr.debian.org/"  %>debian/ wheezy-backports main
+
+<% when "sid" -%>
+deb http://<%= proxy_apt != "" ? proxy_apt : "ftp.fr.debian.org/"  %>debian/ sid main contrib non-free
+deb-src http://<%= proxy_apt != "" ? proxy_apt : "ftp.fr.debian.org/"  %>debian/ sid main contrib non-free
+
+<% when "etch-volatile" -%>
+deb http://volatile.debian.org/debian-volatile etch/volatile main contrib non-free
+
+<% when "lenny-volatile" -%>
+deb http://archive.debian.org/debian-volatile lenny/volatile main contrib non-free
+
+<% when "opennms" -%>
+deb http://debian.opennms.org stable main
+
+<% when "pacemaker" -%>
+deb http://<%= proxy_apt %>people.debian.org/~madkiss/ha lenny main
+
+<% when "webmin" -%>
+deb http://<%= proxy_apt %>download.webmin.com/download/repository sarge contrib
+
+<% when "ubuntu-hardy" -%>
+deb http://archive.ubuntu.com/ubuntu/ hardy main restricted
+deb http://archive.ubuntu.com/ubuntu/ hardy-updates main restricted
+
+deb http://archive.ubuntu.com/ubuntu/ hardy universe
+deb http://archive.ubuntu.com/ubuntu/ hardy-updates universe
+
+deb http://archive.ubuntu.com/ubuntu/ hardy multiverse
+deb-src http://archive.ubuntu.com/ubuntu/ hardy multiverse
+
+deb http://security.ubuntu.com/ubuntu hardy-security main restricted
+
+deb http://alphalink:WBL3UqtLwS@gold.alphalink.fr/debian ubuntu-hardy update internal
+<% when "dev-source" -%>
+deb-src http://<%= proxy_apt != "" ? proxy_apt : "ftp.fr.debian.org/" %>debian/ stable main contrib non-free
+deb-src http://<%= proxy_apt %>security.debian.org/ stable/updates main contrib non-free
+deb-src http://<%= proxy_apt != "" ? proxy_apt : "ftp.fr.debian.org" %>debian/ testing main contrib non-free
+deb-src http://<%= proxy_apt != "" ? proxy_apt : "ftp.fr.debian.org" %>debian/ unstable main contrib non-free
+
+<% when "intellique" -%>
+deb http://<%= proxy_apt %>update.intellique.com/repository/  etch contrib main non-free
+deb http://<%= proxy_apt %>update.intellique.com/repository/ storiq int
+deb http://<%= proxy_apt %>update.intellique.com/repository/security  etch/updates contrib main non-free
+
+<% when "lenny-test" -%>
+deb http://alphalink:WBL3UqtLwS@gold.alphalink.fr/debian lenny-test update internal
+
+<% when "etch-test" -%>
+deb http://alphalink:WBL3UqtLwS@gold.alphalink.fr/debian etch-test update internal
+
+<% when "lenny-dev" -%>
+deb http://alphalink:WBL3UqtLwS@repository.admin.alphalink.fr/debian lenny-dev update internal
+
+<% when "etch-dev" -%>
+deb http://alphalink:WBL3UqtLwS@repository.admin.alphalink.fr/debian lenny-dev update internal
+
+<% when "squeeze-dev" -%>
+deb http://alphalink:WBL3UqtLwS@repository.admin.alphalink.fr/debian squeeze-dev update internal
+
+<% when "squeeze-test" -%>
+deb http://alphalink:WBL3UqtLwS@gold.alphalink.fr/debian squeeze-test update internal
+
+<% when "wheezy-test" -%>
+deb http://alphalink:WBL3UqtLwS@gold.alphalink.fr/debian wheezy-test update internal
+
+<% when "wheezy-pgsql" -%>
+deb http://gold.alphalink.fr:3142/apt.postgresql.org/pub/repos/apt/ wheezy-pgdg main
+
+<% end -%>
+<% end -%>

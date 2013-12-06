@@ -1,0 +1,12 @@
+do_symlinks = yes
+relative_links = yes
+do_bootfloppy = no
+do_initrd = yes
+link_in_boot = no
+<% if bootloader_lilo -%>
+do_bootloader = yes
+<% else -%>
+do_bootloader = no
+postinst_hook = update-grub
+postrm_hook   = update-grub
+<% end -%>

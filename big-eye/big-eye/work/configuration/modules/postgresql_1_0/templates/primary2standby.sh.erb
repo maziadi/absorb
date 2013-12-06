@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+# Rebuild local standby database
+# Log to syslog
+#
+
+uid=$(id -u)
+
+if [[ "x$uid" == "x0" ]]; then
+  echo "Forbidden, you are root !! Please use postgres user to execute this command"
+  exit 1
+fi
+
+SYSLOG_NAME="primary2standby"
+VIRTUAL_IP="<%= virtual_ip %>"
+REPL_IP="<%= replicate_ip %>"
+PORT="<%= port %>"
+
+logger -t "${SYSLOG_NAME}[$$]" "START db rebuild in standby"
+pg_version="<%= version %>"
+
+handle_errors() {
+  if [ "$2" != "0" ]; then
+    echo "Error(s) while $1. See syslog."
+    cat $errors | logger -p local0.crit -t $SYSLOG_NAME
+  fi
+}
+
+errors=$(mktemp)
+
+# ensure db is stopped
+pkill postgres
+pg_ctlcluster ${pg_version} main stop 2>$errors
+handle_errors "stopping local database" $?
+rm /tmp/stopstandby 2>/dev/null
+
+# rebuild db
+echo "* Rebuilding local database"
+rm -rf /var/lib/postgresql/${pg_version}/main
+pg_basebackup -D /var/lib/postgresql/${pg_version}/main/ -x -h ${REPL_IP} -U postgres -w 2>$errors
+handle_errors "rebuilding local database" $?
+ln -s /etc/postgresql/${pg_version}/main/recovery.conf /var/lib/postgresql/${pg_version}/main/recovery.conf
+ln -s /etc/postgresql/${pg_version}/main/postgresql.conf /var/lib/postgresql/${pg_version}/main/postgresql.conf
+
+# start db
+echo "* Starting local database"
+pg_ctlcluster ${pg_version} main start 2>$errors
+handle_errors "starting local database" $?
+
+rm $errors
+logger -t "${SYSLOG_NAME}[$$]" "END db rebuild in standby"

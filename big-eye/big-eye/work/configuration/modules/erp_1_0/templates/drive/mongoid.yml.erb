@@ -1,0 +1,8 @@
+<%= environment %>:
+  sessions:
+    default:
+      database: drive_<%= environment %>
+      hosts:
+        - <%= db_host %>:27017
+      options:
+        consistency: :strong

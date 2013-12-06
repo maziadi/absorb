@@ -1,0 +1,6 @@
+<% if has_variable? ("list_users") -%>
+<% list_users.each do |user|  -%>
+<%= user %>
+<%= list_passwd.shift %>
+<% end -%>
+<% end -%>

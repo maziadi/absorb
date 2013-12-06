@@ -1,0 +1,86 @@
+#  /etc/rsyslog.conf	Configuration file for rsyslog v3.
+#
+#			For more information see 
+#			/usr/share/doc/rsyslog-doc/html/rsyslog_conf.html
+
+
+#################
+#### MODULES ####
+#################
+
+<% if !rsyslog_ubuntu -%>
+$ModLoad imuxsock # provides support for local system logging
+$ModLoad imklog   # provides kernel logging support (previously done by rklogd) 
+#$ModLoad immark  # provides --MARK-- message capability
+<% end -%>
+
+# provides UDP syslog reception
+
+<% if rsyslog_is_syslog_server -%>
+$ModLoad imudp
+$UDPServerRun 514
+<% end -%>
+
+# provides TCP syslog reception
+#$ModLoad imtcp
+#$InputTCPServerRun 514
+
+
+###########################
+#### GLOBAL DIRECTIVES ####
+###########################
+
+<% if !rsyslog_ubuntu -%>
+#
+# Use traditional timestamp format.
+# To enable high precision timestamps, comment out the following line.
+#
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+
+<% end -%>
+#
+# Set the default permissions for all log files.
+#
+$FileOwner root
+$FileGroup adm
+$FileCreateMode 0640
+$DirCreateMode 0755
+
+#
+# Configuration for spooling to disk if server is unreachable
+#
+
+<% if ! rsyslog_ubuntu -%>
+#
+# Include all config files in /etc/rsyslog.d/
+#
+$IncludeConfig /etc/rsyslog.d/*.conf
+
+<% end -%>
+
+###############
+#### RULES ####
+###############
+
+#send all messages to central log server
+#:msg, contains, "adjusting local clock by"      /var/log/ntp_test.log
+<% if rsyslog_send_to_server -%>
+*.*                 @<%= rsyslog_ip_service %>
+<% end -%>
+# First some standard log files.  Log by facility.
+auth,authpriv.*			/var/log/auth.log
+<% if rsyslog_zimbra %>
+*.*;auth,authpriv.none;local0.none;local1.none;mail.none                -/var/log/syslog
+# Emergencies are sent to everybody logged in.
+#
+*.emerg                         *
+local0.*                -/var/log/zimbra.log
+local1.*                -/var/log/zimbra-stats.log
+auth.*                  -/var/log/zimbra.log
+mail.*                -/var/log/zimbra.log
+<% else %>
+*.*;auth,authpriv.none		-/var/log/syslog
+# Emergencies are sent to everybody logged in.
+#
+*.emerg				*
+<% end -%>

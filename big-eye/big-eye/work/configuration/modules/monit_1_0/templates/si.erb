@@ -1,0 +1,4 @@
+check process <%= app_name %>
+  with pidfile "/var/run/<%= app_name %>/unicorn.pid"
+  start program = "/bin/su - <%= app_name %> -c 'bundle exec unicorn_rails -E <%= environment %> -c /srv/<%= app_name %>/config/unicorn.rb -D'" 
+  stop program = "/bin/su - <%= app_name %> -c 'kill -QUIT $(cat /var/run/<%= app_name %>/unicorn.pid)'"

@@ -1,0 +1,6 @@
+# si use_first_pass sol non fonctionnelle
+#auth sufficient /lib/security/pam_ldap.so use_first_pass
+auth sufficient /lib/security/pam_ldap.so
+account sufficient /lib/security/pam_ldap.so 
+password required /lib/security/pam_ldap.so use_authtok 
+session sufficient /lib/security/pam_ldap.so

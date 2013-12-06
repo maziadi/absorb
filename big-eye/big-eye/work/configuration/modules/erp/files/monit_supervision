@@ -1,0 +1,5 @@
+check process supervision 
+  with pidfile "/var/run/supervision/unicorn.pid"
+  start program = "/bin/su - supervision -c 'bundle exec unicorn -c /etc/supervision/unicorn.rb -D'" 
+  stop program = "/bin/su - supervision -c 'kill $(cat /var/run/supervision/unicorn.pid)'"
+

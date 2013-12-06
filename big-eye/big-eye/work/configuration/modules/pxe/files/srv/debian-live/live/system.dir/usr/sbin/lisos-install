@@ -1,0 +1,565 @@
+#!/usr/bin/ruby
+require 'fileutils'
+require 'cmdparse2'
+require 'sha1'
+require 'yaml'
+require 'net/http'
+require 'augeas'
+require 'tempfile'
+require 'sha1'
+require 'net/smtp'
+require 'augeas'
+
+include FileUtils
+
+EMAIL_FROM="noreply@alphalink.fr"
+
+$http_user=nil
+$http_password=nil
+$smtp_server="217.15.80.77"
+$size_p1=400
+$size_p2=200
+$media="/dev/hda"
+$config=false
+$email_to=["n.turpault@alphalink.fr"]
+$tty="ttyS0"
+$change_tty=false
+$kernel_opt=""
+$itx = false
+$default_config = false
+
+def parted(cmd)
+  system "parted -s #{cmd}"
+  puts "parted -s #{cmd}"
+  if ($? != 256 && $? != 0)
+    fail "Error in parted"
+  end
+end
+
+
+def send_email(from, tos, subject, message)
+
+  tos.each{|to|
+    msg = <<END_OF_MESSAGE
+From: #{from} <#{from}>
+To: #{to} <#{to}>
+Subject: #{subject}
+#{message}
+END_OF_MESSAGE
+Net::SMTP.start("#{$smtp_server}") do |smtp|
+  smtp.send_message msg, from, to
+end
+  }
+end
+
+
+
+def wget(pageUrl,output)
+  url = URI.parse("#{pageUrl}")
+  Net::HTTP.start(url.host, url.port) do |http|
+    open("#{output}","w"){ |f|
+      req = Net::HTTP::Get.new(url.path) 
+      req.basic_auth url.user, url.password
+      http.request(req){|res|
+        res.value()
+        res.read_body(f)
+      }
+    }
+  end
+  return 0
+end
+
+def retryWget(pageUrl,output,nb)
+  begin
+    puts "Download #{pageUrl} (retry #{nb})"
+    nb=nb.pred
+    wget(pageUrl,output)
+  rescue Exception => e
+    if (nb>0) then
+      retry
+    else
+      fail "#{e.message}"
+    end
+  end
+end
+
+def generateHash(file)
+  hash = Digest::SHA1.new
+  open(file, "rb") do |f|
+    while (!f.eof)
+      readBuf = f.readpartial(1024)
+      hash.update(readBuf)
+    end
+  end
+  hash.hexdigest
+end
+
+def sh(commands)
+  system "#{commands}"
+  exitStatus=$?
+  fail "Command failed with status (#{exitStatus}): [#{commands}]" if exitStatus!=0
+end
+
+
+class Tempdir
+  attr_reader :path
+  def initialize(name)
+    tmpfile = Tempfile::new("#{name}")
+    @path = tmpfile.path
+    tmpfile.delete
+    mkdir_p @path
+  end
+  def delete
+    rm_rf @path
+  end
+end
+
+class MountDisk
+  attr_reader :path,:device,:tmpdir
+  def initialize(dev)
+    @device=dev
+    @tmpdir = Tempdir::new("disk")
+    @path = @tmpdir.path
+    sh "mount #{@device} #{@path}"
+  end
+  def umount
+    sh "umount #{@path}"
+    @tmpdir.delete
+  end
+end
+
+class MountSquashfs
+  attr_reader :tmpdir,:path
+  def initialize(img)
+    @tmpdir = Tempdir::new("imgsquashfs")
+    @path = @tmpdir.path
+    begin
+      sh "mount -t squashfs -o loop #{img} #{@path}"
+    rescue Exception => e
+      raise ScriptError, "Could not mount squashfs"
+    end
+  end
+  def umount
+    sh "umount #{@path}"
+    @tmpdir.delete
+  end
+end
+
+class Disp
+  attr_reader :message
+  def initialize(mess)
+    @message=mess
+    puts "BEGIN: #{@message}"
+  end
+  def end
+  puts "  END: #{@message}"
+end
+end
+
+
+def checkInstallArgs
+  if $device.nil?
+    puts "--device, -d is mandatory"
+    exit(-1)
+  end
+
+  if $name.nil?
+    puts "--name, -n is mandatory"
+    exit(-1)
+  end
+
+  if $host.nil? and $config_snapshot.nil?
+    puts "--host, -h is mandatory"
+    exit(-1)
+  end
+
+end
+
+def encrypt_password(password)  
+  salt = ""
+  64.times { salt << (i = Kernel.rand(62); i += ((i < 10) ? 48 : ((i < 36) ? 55 : 61 ))).chr } 
+  password.crypt(SHA1.hexdigest("#{password}:#{salt}"))
+end
+
+
+def gen_password
+  possible = ('a'..'z').to_a + ('A'..'Z').to_a + ('0'..'9').to_a
+  (1..16).inject("") { |passwd, e| passwd << possible[rand(possible.length)]}
+end
+
+
+def installation
+  #Partition the device
+  mess=Disp::new("partition")
+  parted "#{$device} mklabel msdos"
+  parted "#{$device} mkpartfs primary fat16 0.0 #{$size_p1}MB"
+  parted "#{$device} set 1 boot on"
+  parted "#{$device} set 1 lba off"
+  parted "#{$device} mkpartfs primary ext2 #{$size_p1}MB #{$size_p2+$size_p1}MB"
+  sh "dd if=/usr/lib/syslinux/mbr.bin of=#{$device} bs=512 count=1"
+  sleep 1
+  sh "tune2fs -c -1 #{$device}2"
+  sleep 1
+
+  mess.end()
+
+  disk = MountDisk::new("#{$device}1")
+  begin
+    mkdir_p "#{disk.path}/live"
+    mkdir_p "#{disk.path}/syslinux"
+    mess=Disp::new("download")
+    serv = nil
+    if $server.nil?
+      $server = ($version ? "archives" : "prod")
+    end
+    case $server
+    when "dev"
+      serv = "http://alphalink:WBL3UqtLwS@gold.alphalink.fr/development/lisos2"
+    when "preprod"
+      serv = "http://alphalink:WBL3UqtLwS@gold.alphalink.fr/pre-prod/lisos2"
+    when "prod"
+      serv = "http://alphalink:WBL3UqtLwS@gold.alphalink.fr/production/lisos2"
+    when "archives"
+      serv = "http://alphalink:WBL3UqtLwS@gold.alphalink.fr/archives/lisos2"
+    when "dev-pornic"
+      serv = "http://alphalink:WBL3UqtLwS@repository.admin.alphalink.fr/development/lisos2"
+    when "preprod-pornic"
+      serv = "http://alphalink:WBL3UqtLwS@repository.admin.alphalink.fr/pre-prod/lisos2"
+    when "prod-pornic"
+      serv = "http://alphalink:WBL3UqtLwS@repository.admin.alphalink.fr/production/lisos2"
+    when "archives-pornic"
+      serv = "http://alphalink:WBL3UqtLwS@repository.admin.alphalink.fr/archives/lisos2"
+    else
+      serv = $server
+    end
+    version = ($version ? "_#{$version}" : "" )
+    retryWget("#{serv}/filesystem_#{$name}#{version}.squashfs","#{disk.path}/live/filesystem.squashfs",3)
+    retryWget("#{serv}/vmlinuz_#{$name}#{version}","#{disk.path}/live/vmlinuz1",3)
+    retryWget("#{serv}/initrd_#{$name}#{version}.img","#{disk.path}/live/initrd1.img",3)
+    retryWget("#{serv}/sha1_#{$name}#{version}.yaml","#{disk.path}/live/sha1.yaml",3)
+    mess.end()
+    mess=Disp::new("check SHA1")
+    tmpsha = Tempfile::new("sha1")
+    cp("#{disk.path}/live/sha1.yaml",tmpsha.path)
+    sha = YAML::load(tmpsha)
+    shaFilesystemDL = generateHash("#{disk.path}/live/filesystem.squashfs")
+    shaVmlinuzDL = generateHash("#{disk.path}/live/vmlinuz1")
+    shaInitrdDL = generateHash("#{disk.path}/live/initrd1.img")
+
+    if (sha["filesystem"] != shaFilesystemDL) or (sha["vmlinuz"] !=shaVmlinuzDL) or  (sha["initrd"] != shaInitrdDL)
+      puts "Corrupted files remove installation"
+      rm "#{disk.path}/live/filesystem.squashfs"
+      rm "#{disk.path}/live/vmlinuz1"
+      rm "#{disk.path}/live/initrd1.img"
+      rm "#{disk.path}/live/sha1.yaml"
+      sh "sync"
+      sleep 1
+      exit(-1)
+    end
+    mess.end
+    #Install bootloader
+    mess=Disp::new("install bootloader")
+    sh "syslinux #{$device}1"
+
+    $kernel_opt += " nolapic irqpoll" if $itx
+    aug = Augeas::open("#{disk.path}",nil,0)
+    aug.set("/files/syslinux/syslinux.cfg/prompt","3")
+    aug.set("/files/syslinux/syslinux.cfg/timeout","10")
+    aug.set("/files/syslinux/syslinux.cfg/default","live")
+
+    aug.set("/files/syslinux/syslinux.cfg/label[1]","live")
+    aug.set("/files/syslinux/syslinux.cfg/label[1]/kernel","/live/vmlinuz1")
+    aug.set("/files/syslinux/syslinux.cfg/label[1]/append","initrd=/live/initrd1.img boot=live live-media=#{$media} noswap union=aufs console=#{$tty},19200n8 module=current persistent #{$kernel_opt}")
+    aug.set("/files/syslinux/syslinux.cfg/label[2]","old")
+    aug.set("/files/syslinux/syslinux.cfg/label[2]/kernel","/live/vmlinuz2")
+    aug.set("/files/syslinux/syslinux.cfg/label[2]/append","initrd=/live/initrd2.img boot=live live-media=#{$media} noswap union=aufs console=#{$tty},19200n8 module=old persistent #{$kernel_opt}")
+    if $default
+      aug.set("/files/syslinux/syslinux.cfg/label[3]","default")
+      aug.set("/files/syslinux/syslinux.cfg/label[3]/kernel","/live/vmlinuz1")
+      aug.set("/files/syslinux/syslinux.cfg/label[3]/append","initrd=/live/initrd1.img boot=live live-media=#{$media} noswap union=aufs console=#{$tty},19200n8 module=default persistent #{$kernel_opt}")
+    end
+    aug.save()
+    aug.close()
+
+    open("#{disk.path}/live/current.module","w"){|f|
+      f.write("filesystem.squashfs")
+    } 
+    open("#{disk.path}/live/old.module","w"){|f|
+      f.write("filesystem.old.squashfs")
+    }
+    if $default
+      open("#{disk.path}/live/default.module","w"){|f|
+        f.write("filesystem.squashfs")
+      }
+    end
+    sh "sync"
+    sleep 1
+    mess.end()
+
+  ensure
+    disk.umount()
+  end
+
+
+  disk=MountDisk::new("#{$device}1")
+  disk2=MountDisk::new("#{$device}2")
+  begin
+    mkdir_p "#{disk2.path}/old"
+    mkdir_p "#{disk2.path}/current"
+    mkdir_p "#{disk2.path}/default" if $default
+    tmphost = Tempdir::new("#{$host}")
+    tmpsha = Tempfile::new("sha1")
+    cp("#{disk.path}/live/sha1.yaml",tmpsha.path)
+    sha = YAML::load(File::new(tmpsha.path))
+    if $default
+      cp "/usr/share/lisos/default-config.cpio.gz","#{disk2.path}/default/live-config.cpio.gz"
+    end
+    $version = $version ? $version : sha["lisos_res"]
+    vfile = {"name"=>$name, "version" => ($version ? $version : sha["lisos_rev"]) }
+    File::open("#{disk2.path}/current/version","w"){|f| YAML::dump(vfile,f) }
+    if $config_snapshot
+      mess=Disp::new("inject configuration snapshot ")
+      cp "#{$config_snapshot}","#{disk2.path}/current/live-config.cpio.gz"
+      mess.end
+    else
+      if $config
+        mess=Disp::new("inject configuration")
+        system "lisos-config -h #{$host} -r #{tmphost.path}"
+        mess.end()
+      end	
+
+      mess=Disp::new("Create inittab, hostname, hosts and shadow")
+
+      lisos_migration = {"from" => $version}
+
+      # root password
+      if $password.nil?
+        $password = gen_password 
+        puts "Generated password : #{$password}"
+      end
+      send_email("#{EMAIL_FROM}",$email_to,"INSTALL #{$host} #{Time.new.strftime("%d/%m/%y %H:%M:%S")}","#{$password}")
+
+      if $version.to_f < 2.7     
+        begin    
+          # copy /etc/shadow to personalize root password
+          filesystem = MountSquashfs::new("#{disk.path}/live/filesystem.squashfs")
+          mkdir_p "#{tmphost.path}/etc"
+          cp "#{filesystem.path}/etc/shadow","#{tmphost.path}/etc"
+          filesystem.umount
+
+          # change root password
+          lines = open("#{tmphost.path}/etc/shadow","r").readlines
+          lines.collect! { |line|
+            if line =~ /root:/
+              timestp=line[/root:[^:]*:([0-9]*):([0-9]*:){5}[^:]*/,1]
+              "root:#{encrypt_password($password)}:#{timestp}:0:99999:7:::\n"
+            else
+              line
+            end
+          }
+          File::open("#{tmphost.path}/etc/shadow", "w") { |f| f.write(lines.join("")) }
+        rescue ScriptError => e
+          warn 'Error in squashfs mount'
+        end
+      else
+        puts "Lisos version >= 2.7, root password will be changed on boot"
+        lisos_migration["options"] = {"root_password" => "#{encrypt_password($password)}"}
+      end
+
+      # create inittab
+      content = <<"EOF"
+# /etc/inittab: init(8) configuration.
+# $Id: inittab,v 1.91 2002/01/25 13:35:21 miquels Exp $
+
+# The default runlevel.
+id:2:initdefault:
+
+# Boot-time system configuration/initialization script.
+# This is run first except when booting in emergency (-b) mode.
+si::sysinit:/etc/init.d/rcS
+
+# What to do in single-user mode.
+~~:S:wait:/sbin/sulogin
+
+# /etc/init.d executes the S and K scripts upon change
+# of runlevel.
+#
+# Runlevel 0 is halt.
+# Runlevel 1 is single-user.
+# Runlevels 2-5 are multi-user.
+# Runlevel 6 is reboot.
+
+l0:0:wait:/etc/init.d/rc 0
+l1:1:wait:/etc/init.d/rc 1
+l2:2:wait:/etc/init.d/rc 2
+l3:3:wait:/etc/init.d/rc 3
+l4:4:wait:/etc/init.d/rc 4
+l5:5:wait:/etc/init.d/rc 5
+l6:6:wait:/etc/init.d/rc 6
+# Normally not reached, but fallthrough in case of emergency.
+z6:6:respawn:/sbin/sulogin
+
+# What to do when CTRL-ALT-DEL is pressed.
+ca:12345:ctrlaltdel:/sbin/shutdown -t1 -a -r now
+
+# Action on special keypress (ALT-UpArrow).
+#kb::kbrequest:/bin/echo "Keyboard Request--edit /etc/inittab to let this work."
+
+# What to do when the power fails/returns.
+pf::powerwait:/etc/init.d/powerfail start
+pn::powerfailnow:/etc/init.d/powerfail now
+po::powerokwait:/etc/init.d/powerfail stop
+
+# /sbin/getty invocations for the runlevels.
+#
+# The "id" field MUST be the same as the last
+# characters of the device (after "tty").
+#
+# Format:
+#  <id>:<runlevels>:<action>:<process>
+#
+# Note that on most Debian systems tty7 is used by the X Window System,
+# so if you want to add more getty's go ahead but skip tty7 if you run X.
+#
+1:2345:respawn:/sbin/getty 38400 tty1
+2:23:respawn:/sbin/getty 38400 tty2
+3:23:respawn:/sbin/getty 38400 tty3
+4:23:respawn:/sbin/getty 38400 tty4
+5:23:respawn:/sbin/getty 38400 tty5
+6:23:respawn:/sbin/getty 38400 tty6
+
+# Example how to put a getty on a serial line (for a terminal)
+#
+#T1:23:respawn:/sbin/getty -L ttyS1 9600 vt100
+
+# Example how to put a getty on a modem line.
+#
+#T3:23:respawn:/sbin/mgetty -x0 -s 57600 ttyS3
+EOF
+      if $change_tty
+        content += "T0:23:respawn:/sbin/getty -L #{$tty} 19200 vt102"
+      else
+        content += "T0:23:respawn:/sbin/getty -L ttyS0 19200 vt102"
+      end			
+      mkdir_p "#{tmphost.path}/etc"
+      inittabFile = File::open("#{tmphost.path}/etc/inittab","w")
+      inittabFile.puts content
+      inittabFile.close
+
+      # hostname
+      open("#{tmphost.path}/etc/hostname","w") { |f| f.write("#{$host}") }
+
+      # hosts
+      aug = Augeas::open("#{tmphost.path}",nil,0)
+      aug.set("/files/etc/hosts/1/ipaddr","127.0.0.1")
+      aug.set("/files/etc/hosts/1/canonical",$host)
+      aug.set("/files/etc/hosts/1/alias[1]", "localhost")
+      aug.set("/files/etc/hosts/2/ipaddr","::1")
+      aug.set("/files/etc/hosts/2/canonical", "localhost")
+      aug.set("/files/etc/hosts/2/alias[1]","ip6-localhost")
+      aug.set("/files/etc/hosts/2/alias[2]","ip6-loopback")
+      aug.set("/files/etc/hosts/3/ipaddr","fe00::0")
+      aug.set("/files/etc/hosts/3/canonical","ip6-localnet")
+      aug.set("/files/etc/hosts/4/ipaddr","ff00::0")
+      aug.set("/files/etc/hosts/4/canonical","ip6-mcastprefix")
+      aug.set("/files/etc/hosts/5/ipaddr","ff02::1")
+      aug.set("/files/etc/hosts/5/canonical","ip6-allnodes")
+      aug.set("/files/etc/hosts/6/ipaddr","ff02::2")
+      aug.set("/files/etc/hosts/6/canonical","ip6-allrouters")
+      aug.set("/files/etc/hosts/7/ipaddr","ff02::3")
+      aug.set("/files/etc/hosts/7/canonical","ip6-allhosts")
+
+
+      # lisos_migration
+      File.open("#{tmphost.path}/etc/lisos_migration.yaml", "w") {|file| file.puts lisos_migration.to_yaml}
+
+      mess.end
+
+      mess=Disp::new("Create ssh keys")
+      mkdir_p "#{tmphost.path}/etc/ssh"
+      sh "ssh-keygen -q -t rsa -f #{tmphost.path}/etc/ssh/ssh_host_rsa_key -N ''"
+      sh "ssh-keygen -q -t dsa -f #{tmphost.path}/etc/ssh/ssh_host_dsa_key -N ''"
+      mess.end
+      sh "lisos-snapshots -r #{tmphost.path} -s #{disk2.path}/current config"
+      end
+
+  ensure
+    tmphost.delete
+    disk.umount()
+    disk2.umount()
+  end
+
+end
+
+
+cmd = CmdParse::CommandParser.new(true,false)
+cmd.program_name = "lisos-install "
+cmd.add_command(CmdParse::HelpCommand::new, false)
+
+  cmd.options =  CmdParse::OptionParserWrapper::new do |opt|
+    opt.on('--default', "Add default configuration to the installation") { 
+      $default = true
+    }
+    opt.on('-d', '--device DEVICE', "device where image is install (ex: /dev/hda)") { |device|
+      $device = device
+    }
+    opt.on('-s','--server SERVER', "server where the image is take [dev,test,prod] (default: prod or archives if -v)") { |server|
+      $server = server
+    }
+    opt.on('-h', '--host HOST', "host name of the device (to include a configuration snapshot)") { |host|
+      $host=host
+    }
+    opt.on('-n', '--name NAME', "name of image to install (ex: dublin)") { |name|
+      $name = name
+    }
+    opt.on('-v', '--version VERSION', "version of the image to install (ex: 2.0-1)") { |version|
+      $version = version
+    }
+    opt.on('-1','--sizefirst P1', "size of the first partition in MB (default: #{$size_p1})") { |p1|
+      $size_p1 = p1.to_i
+    }
+    opt.on('-2','--sizesecond P2', "size of the second partition in MB (default: #{$size_p2})") { |p2|
+      $size_p2 = p2.to_i
+    }
+    opt.on('-b','--boot MEDIA', "name of media when lisos boot (default: #{$media})") { |media|
+      $media=media
+    }
+    opt.on('-e','--email MAIL', "email where is sent root password (default: #{$email_to})") { |email|
+      $email_to=email
+    }
+    opt.on('-p','--p PASSWORD', "create a custom root password") { |password|
+      $password=password
+    }
+    opt.on('-c','--config', "generate a config in the snapshot (by calling lisos-config)") {
+      $config=true
+    }
+    opt.on('-ics','--include-config-snapshot FILE', "include a config snapshot") { |file|
+      $config_snapshot = file
+    }
+    opt.on('-t','--tty TTY', "tty for kernel output (default: #{$tty})") { |tty|
+      $tty=tty
+      $change_tty=true
+    }
+    opt.on('-k', '--kernelopt OPT1,OPT2', "optionnal kernel options") { |opt|
+      $kernel_opt=opt.split(",").join(" ")
+    }
+    opt.on('--itx', "enable itx kernel optimisation") {
+      $itx = true
+    }
+
+end
+
+install = CmdParse::Command.new( 'install', false )
+install.short_desc = "install"
+install.description = "install"
+
+install.set_execution_block do |args|
+  checkInstallArgs()
+  installation()
+end
+
+cmd.add_command(install,true)
+
+cmd.parse
+
+

@@ -1,0 +1,5 @@
+standby_mode = 'on'
+primary_conninfo = 'host=<%= replicate_ip %> port=<%= port %> user=postgres password='
+restore_command = 'cd .'
+archive_cleanup_command = 'cd .'
+trigger_file = '/tmp/stopstandby'

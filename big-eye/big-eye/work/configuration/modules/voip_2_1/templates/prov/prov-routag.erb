@@ -1,0 +1,24 @@
+configuration:
+  name             : prov_routag
+  timeout          : 2
+  ON_MESSAGE_DELAY : 0
+  loglevel         : info
+  logdestination   : syslog,file
+  stomp_urls:
+    stomp1:
+      username     : "<%= prov_routag_user -%>"
+      password     : "<%= prov_routag_password -%>"
+      host         : <%= prov_activemq_host %>
+      port         : 61613
+      ssl          : false
+
+  subscribes:
+    "/queue/provisioning" :
+      selector    : node_name='<%= hostname -%>-routag'
+  format          : application/json # Default is text (xml => text/xml | json => application/json)
+
+  daemon:
+    username  : "<%= prov_routag_db_user -%>"
+    password  : "<%= prov_routag_db_password -%>"
+    host      : "localhost"
+    database  : "<%= prov_routag_db_name -%>"

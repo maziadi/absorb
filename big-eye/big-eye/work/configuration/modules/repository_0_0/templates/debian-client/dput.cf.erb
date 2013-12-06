@@ -1,0 +1,69 @@
+[DEFAULT]
+default_host_main = <%= lsbdistcodename %>-test
+login     = root
+method      = rsync
+hash      = md5
+allow_unsigned_uploads  = 0
+run_lintian   = 0
+run_dinstall    = 0
+check_version   = 0
+
+[lenny-dev]
+fqdn = repository.admin.alphalink.fr
+incoming = /data/packages/debian/incoming/lenny-dev
+post_upload_command = /opt/local/bin/publish_reprepro.sh repository.admin.alphalink.fr lenny-dev
+
+[lenny-test]
+fqdn = gold.alphalink.fr
+incoming = /data/packages/debian/incoming/lenny-test
+post_upload_command = /opt/local/bin/publish_reprepro.sh gold.alphalink.fr lenny-test
+
+[lenny]
+fqdn = gold.alphalink.fr
+incoming = /data/packages/debian/incoming/lenny
+post_upload_command = /opt/local/bin/publish_reprepro.sh gold.alphalink.fr lenny
+
+[etch-dev]
+fqdn = repository.admin.alphalink.fr
+incoming = /data/packages/debian/incoming/etch-dev
+post_upload_command = /opt/local/bin/publish_reprepro.sh repository.admin.alphalink.fr etch-dev
+
+[etch-test]
+fqdn = gold.alphalink.fr
+incoming = /data/packages/debian/incoming/etch-test
+post_upload_command = /opt/local/bin/publish_reprepro.sh gold.alphalink.fr etch-test
+
+[etch]
+fqdn = gold.alphalink.fr
+incoming = /data/packages/debian/incoming/etch
+post_upload_command = /opt/local/bin/publish_reprepro.sh gold.alphalink.fr etch
+
+[squeeze-dev]
+fqdn = repository.admin.alphalink.fr
+incoming = /data/packages/debian/incoming/squeeze-dev
+post_upload_command = /opt/local/bin/publish_reprepro.sh repository.admin.alphalink.fr squeeze-dev
+
+[squeeze-test]
+fqdn = gold.alphalink.fr
+incoming = /data/packages/debian/incoming/squeeze-test
+post_upload_command = /opt/local/bin/publish_reprepro.sh gold.alphalink.fr squeeze-test
+
+[squeeze]
+fqdn = gold.alphalink.fr
+incoming = /data/packages/debian/incoming/squeeze
+post_upload_command = /opt/local/bin/publish_reprepro.sh gold.alphalink.fr squeeze
+
+[wheezy-test]
+fqdn = gold.alphalink.fr
+incoming = /data/packages/debian/incoming/wheezy-test
+post_upload_command = /opt/local/bin/publish_reprepro.sh gold.alphalink.fr wheezy-test
+
+[wheezy]
+fqdn = gold.alphalink.fr
+incoming = /data/packages/debian/incoming/wheezy
+post_upload_command = /opt/local/bin/publish_reprepro.sh gold.alphalink.fr wheezy
+
+[ubuntu-hardy]
+fqdn = gold.alphalink.fr
+incoming = /data/packages/debian/incoming/ubuntu-hardy
+post_upload_command = /opt/local/bin/publish_reprepro.sh gold.alphalink.fr ubuntu-hardy
