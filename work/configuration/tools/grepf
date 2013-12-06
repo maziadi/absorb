@@ -1,5 +1,0 @@
-#!/bin/bash
-
-#find . -path '*/.svn' -prune -o -type f -exec grep -H $1 {} \;
-#find . -path '*/.svn' -prune -o -type f -print | xargs grep -inEH "$1"
-find . -path '*/.svn' -prune -o -path '*/.git' -prune -o -type f -print | xargs grep -inEH "$1"

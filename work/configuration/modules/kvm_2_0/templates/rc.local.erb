@@ -1,6 +1,0 @@
-#!/bin/sh -e
-for s in rx tx sgo tso ufo gso
-do
-  ethtool -K <%= cluster_iface -%> $s off 
-done
-exit 0

@@ -1,6 +1,0 @@
-map <C-h> :bprevious<CR>
-imap <C-h> <C-o><C-h>
-map <C-l> :bNext<CR>
-imap <C-l> <C-o><C-l>
-
-" vim: ft=vim

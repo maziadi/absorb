@@ -1,4 +1,0 @@
-check process apnf
-  with pidfile "/var/run/apnf/unicorn.pid"
-  start program = "/bin/su - apnf -c 'APNF_ENV=<%= environment %>; bundle exec unicorn -E <%= environment %> -c /srv/apnf/config/unicorn.rb -D'" 
-  stop program = "/bin/su - apnf -c 'kill $(cat /var/run/apnf/unicorn.pid)'"

@@ -1,7 +1,0 @@
----
-database:
-	database: database_name
-	adapter:  mysql
-	username: database_username
-	password: database_password
-	host:	    localhost

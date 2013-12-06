@@ -1,9 +1,0 @@
-#!/bin/bash
-
-vg_name=`vgdisplay -c | cut -d : -f 1 | sed 's/^ *//g'`
-lvcreate -L 20G -n mongodb ${vg_name} || exit -1
-vg_name=${vg_name/-/--}
-mkfs.xfs /dev/mapper/${vg_name}-mongodb || exit -2
-mkdir -p /var/lib/mongodb || exit -3
-echo "/dev/mapper/${vg_name}-mongodb /var/lib/mongodb xfs defaults 0 2" >> /etc/fstab || exit -4
-mount /var/lib/mongodb || exit -5

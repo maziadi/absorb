@@ -1,4 +1,0 @@
-check process apnfd
-  with pidfile "/var/run/apnf/apnfd.rb.pid"
-  start program = "/bin/su - apnf -c 'APNF_ENV=<%= environment %> bundle exec ruby /srv/apnf/apnfd_control.rb start'" 
-  stop program = "/bin/su - apnf -c 'APNF_ENV=<%= environment %> bundle exec ruby /srv/apnf/apnfd_control.rb stop'"

@@ -1,5 +1,0 @@
-check process mediation 
-  with pidfile "/var/run/taxman-daemons/mediation.pid"
-  start program = "/bin/su - taxman-daemons -c 'DAEMONS_ENV=<%= environment %> bundle exec bin/mediation start --piddir /var/run/taxman-daemons'"
-  stop program = "/bin/su - taxman-daemons -c 'DAEMONS_ENV=<%= environment %> bundle exec bin/mediation stop --piddir /var/run/taxman-daemons'"
-  group taxerp

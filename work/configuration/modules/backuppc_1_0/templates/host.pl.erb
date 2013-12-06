@@ -1,6 +1,0 @@
-$Conf{XferMethod} = 'rsync';
-$Conf{RsyncShareName} = [ '<%= backuppc_directory %>' ];
-$Conf{WakeupSchedule} = [22.5];
-$Conf{BackupFilesExclude} = ['/proc', '/dev', '/sys'];
-$Conf{RsyncClientCmd} = '$sshPath -q -x -l backuppc $host sudo $rsyncPath $argList+';
-$Conf{RsyncClientRestoreCmd} = '$sshPath -q -x -l backuppc $host sudo $rsyncPath $argList+';

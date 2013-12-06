@@ -1,4 +1,0 @@
-check process delayed_job_pouss-mouss
-  with pidfile "/var/run/pouss-mouss/delayed_job.pid"
-  start program = "/bin/su - pouss-mouss -c 'RAILS_ENV=<%= environment %> bundle exec /srv/pouss-mouss/script/delayed_job start --pid-dir=/var/run/pouss-mouss/'" 
-  stop program = "/bin/su - pouss-mouss -c 'RAILS_ENV=<%= environment %> bundle exec /srv/pouss-mouss/script/delayed_job stop --pid-dir=/var/run/pouss-mouss/'"

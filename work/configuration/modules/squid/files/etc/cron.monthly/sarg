@@ -1,7 +1,0 @@
-#!/bin/sh
-sed -i 's:dansguardian/access.log:dansguardian/access.log.1:' /etc/squid/sarg.conf
-if [ -x /usr/sbin/sarg-reports ]; then
-  /usr/sbin/sarg-reports monthly
-fi
-sed -i 's:dansguardian/access.log.1:dansguardian/access.log:' /etc/squid/sarg.conf
-

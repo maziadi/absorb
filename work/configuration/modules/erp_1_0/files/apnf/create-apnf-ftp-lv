@@ -1,9 +1,0 @@
-#!/bin/bash
-
-vg_name=`vgdisplay -c | cut -d : -f 1 | sed 's/^ *//g'`
-lvcreate -L 200G -n ftp ${vg_name} || exit -1
-vg_name=${vg_name/-/--}
-mkfs.xfs /dev/mapper/${vg_name}-ftp || exit -2
-mkdir -p /data/ftp || exit -3
-echo "/dev/mapper/${vg_name}-ftp /data/ftp xfs defaults 0 2" >> /etc/fstab || exit -4
-mount /data/ftp || exit -5

@@ -1,4 +1,0 @@
-check process unicorn 
-  with pidfile "/var/run/taxman/unicorn.pid"
-  start program = "/bin/su - taxman -c 'unicorn_rails -E <%= taxman_env %> -c /srv/taxman/config/unicorn.rb -D'" 
-  stop program = "/bin/su - taxman -c 'killall -QUIT unicorn_rails'"

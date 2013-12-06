@@ -1,4 +1,0 @@
-<% list_users.each do |database| -%>
-CREATE DATABASE <%= database %>;
-GRANT ALL PRIVILEGES ON <%= database %>.* TO <%= database %>@localhost IDENTIFIED BY '<%= database %>' WITH GRANT OPTION;
-<% end -%>

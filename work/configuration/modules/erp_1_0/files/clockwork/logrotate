@@ -1,6 +1,0 @@
-/var/log/clockwork/clockwork.log {
-  missingok
-  compress
-  daily
-  rotate 20
-}
