@@ -149,3 +149,22 @@ SAMBA: SMB & CIFS
   
   Samba provides CIFS file shares. The time when you might use SMB over CIFS is if you are providing access to Windows 2K
   systems or earlier or you just want to connect to port 139 instead of 445.
+-----
+SAMBA
+-----
+  Samba est un outil permettant de partager des dossiers et des imprimantes à travers un réseau local.
+  Il permet de partager et d'accéder aux ressources d'autres ordinateurs fonctionnant avec des systèmes
+  d'exploitation Microsoft Windows et Apple Mac OS X, ainsi que des systèmes GNU/Linux, BSD et 
+  Solaris dans lesquels une implémentation de Samba est installée.
+  Le fonctionnement de Samba repose principalement sur trois services (daemons): smbd , nmbd et winbindd.
+
+  smbd : Ce service est celui qui permet le partage des fichiers et des imprimantes. Son paramètrage se fait
+  par l'intermédiaire du fichier de configuration /etc/samba/smb.conf. smbd vérifie toutes les trois minutes
+  ce fichier pour prendre en compte les modifications ; pour une application immédiate des changements,
+  relancez ce service 
+  nmbd  : Ce service sert à l'envoi et la découverte des noms NetBIOS (nom des machines) dans le réseau local.
+  Il est également utilisé pour la résolution de noms et la fonction WINS, lorsque votre serveur Samba est le 
+  serveur d'un réseau NetBIOS. Ses paramètres sont aussi renseignés dans le fichier de configuration 
+  /etc/samba/smb.conf. 
+  winbindd : Ce service n'est utilisé que lorsqu'un serveur Samba intègre un domaine NT ou pour gérer les 
+  relations d'approbation entre le serveur Samba et un domaine Windows / Active Directory.
