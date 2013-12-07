@@ -1,4 +1,0 @@
-check process anderson
-  with pidfile "/srv/anderson/tmp/pids/anderson.pid"
-  start program = "/bin/su - anderson -c 'export JRUBY_OPTS="-J-DOPTIONS=jmx -J-XX:+UseConcMarkSweepGC -J-XX:PermSize=256M -J-XX:MaxPermSize=512M -J-Xmn4096m -J-Xms8192m -J-Xmx8192m" ; export RAILS_ENV=<%= environment %>; export ANDERSON_BACKGROUND_JOB=true; bundle exec mizuno -E <%= environment %> -P /srv/anderson/tmp/pids/anderson.pid --threads 6 -D'" 
-  stop program = "/bin/su - anderson -c 'kill $(cat /srv/anderson/tmp/pids/anderson.pid)'"

@@ -1,8 +1,0 @@
-standby_mode = 'on'
-primary_conninfo = 'host=<%= pg_replicate_ip %> port=5432 user=postgres password='
-#restore_command = 'cp /var/lib/postgresql/9.1/main/cluster/archive_xlog/%f %p'
-restore_command = 'cd .'
-#archive_cleanup_command = 'pg_archivecleanup /var/lib/postgresql/9.1/main/cluster/archive_xlog/ %r'
-archive_cleanup_command = 'cd .'
-trigger_file = '/tmp/stopstandby'
-

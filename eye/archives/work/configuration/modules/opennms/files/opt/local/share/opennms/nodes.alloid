@@ -1,5 +1,0 @@
-# ============================ ALL OID (default) ===================================== 
-# cet collection collectionne:                                                         
-# par defaut les graphs de tout les OID qui sont trouves sur le node sont collectionees
-# On n'utilse pas cet collection (tout les nodes sont exclus dans cette collection.    
-# Les nodes doivent etre ajoutees dans les autres 'collection packages'                

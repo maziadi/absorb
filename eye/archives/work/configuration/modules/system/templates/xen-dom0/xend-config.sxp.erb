@@ -1,8 +1,0 @@
-(network-script '<%= xen_network_script %>')
-(vif-script 'vif-bridge')
-(dom0-min-mem 100)
-(dom0-cpus 0)
-<% if allow_migration -%>
-(xend-relocation-server yes)
-(xend-relocation-hosts-allow) 
-<% end -%>

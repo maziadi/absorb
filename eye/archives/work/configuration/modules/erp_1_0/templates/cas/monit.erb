@@ -1,4 +1,0 @@
-check process cas 
-  with pidfile "/srv/cas/unicorn.pid"
-  start program = "/bin/su - cas -c 'unicorn -E <%= environment %> -c /srv/cas/config/unicorn.rb -D'" 
-  stop program = "/bin/su - cas -c 'kill $(cat /srv/cas/unicorn.pid)'"

@@ -1,4 +1,0 @@
-check process hector
-  with pidfile "/srv/hector/unicorn.pid"
-  start program = "/bin/su - hector -c 'unicorn -E production -c /srv/hector/config/unicorn.rb -D'" 
-  stop program = "/bin/su - hector -c 'killall -QUIT unicorn'"

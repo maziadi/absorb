@@ -1,7 +1,0 @@
-#!/bin/sh
-
-app=/usr/sbin/asterisk
-
-[ -x $app ] || exit 1
-
-$app -rnx "core restart when convenient" 2>&1 | logger

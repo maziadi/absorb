@@ -1,6 +1,0 @@
-<%= environment -%>:
-  adapter: postgresql
-  host: <%= taxman_pg_host -%>
-  database: taxman_<%= environment -%>
-  user: taxman
-  pool_size: <%= taxman_pg_pool_size -%>

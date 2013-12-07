@@ -1,6 +1,0 @@
-<rsc_location id="best-location-xen-<%= @hostname %>" rsc="xen-<%= @hostname %>">
-  <rule id="best-location-xen-<%= @hostname %>-rule" score="100">
-    <expression attribute="#uname" operation="eq" value="<%= @pref_location %>" id="best-location-xen-<%= @hostname %>-attr"/>
-  </rule>
-</rsc_location>
-

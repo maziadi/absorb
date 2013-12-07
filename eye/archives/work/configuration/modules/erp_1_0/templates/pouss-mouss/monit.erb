@@ -1,4 +1,0 @@
-check process pouss-mouss 
-  with pidfile "/run/pouss-mouss.pid"
-  start program = "/bin/su - pouss-mouss -c 'bundle exec unicorn_rails -E <%= environment %> -c /srv/pouss-mouss/config/unicorn.rb -D'" 
-  stop program = "/bin/su - pouss-mouss -c 'kill -QUIT $(cat /run/pouss-mouss.pid)'"

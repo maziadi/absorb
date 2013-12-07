@@ -1,8 +1,0 @@
-#!/bin/bash
-
-LOG_DIR=/var/log/centrex
-
-find ${LOG_DIR} -mtime +10 -type f -exec rm -f "{}" \; 
-[ -z "`ls ${LOG_DIR}/debug.log_????-??-?? 2>&1 >/dev/null`" ] && nice -n 19 bzip2 -9 ${LOG_DIR}/debug.log_????-??-??
-[ -z "`ls ${LOG_DIR}/events.log_????-??-?? 2>&1 >/dev/null`" ] && nice -n 19 bzip2 -9 ${LOG_DIR}/events.log_????-??-??
-true

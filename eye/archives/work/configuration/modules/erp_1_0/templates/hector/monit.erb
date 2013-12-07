@@ -1,4 +1,0 @@
-check process hector
-  with pidfile "/srv/hector/unicorn.pid"
-  start program = "/bin/su - hector -c 'bundle exec unicorn -E <%= environment %> -c /srv/hector/config/unicorn.rb -D'" 
-  stop program = "/bin/su - hector -c 'kill $(cat /srv/hector/unicorn.pid)'"

@@ -1,9 +1,0 @@
-check process obao
-  with pidfile "/var/run/obao/obao_consumer.pid"
-  start program = "/bin/su - obao -c 'OBAO_ENV=<%= environment %> bundle exec /srv/obao/bin/consumer start -p /var/run/obao'" 
-  stop program = "/bin/su - obao -c 'OBAO_ENV=<%= environment %> bundle exec /srv/obao/bin/consumer stop -p /var/run/obao'"
-
-check process delayed_job
-  with pidfile "/var/run/obao/obao_delayed_job.pid"
-  start program = "/bin/su - obao -c 'OBAO_ENV=<%= environment %> bundle exec /srv/obao/bin/delayed_job start -p /var/run/obao'" 
-  stop program = "/bin/su - obao -c 'OBAO_ENV=<%= environment %> bundle exec /srv/obao/bin/delayed_job stop -p /var/run/obao'"
