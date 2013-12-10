@@ -1,0 +1,9 @@
+#!/usr/bin/make -f
+include /usr/share/cdbs/1/rules/debhelper.mk
+
+binary-install/svisounds::
+				mkdir -p debian/$(cdbs_curpkg)/usr/share/asterisk/sounds/
+				cp -r fr debian/$(cdbs_curpkg)/usr/share/asterisk/sounds/
+				mkdir -p debian/$(cdbs_curpkg)/var/lib/asterisk/sounds/
+				cp -r svi_rio_films debian/$(cdbs_curpkg)/var/lib/asterisk/sounds/
+				cp -r svi_infos_tarifs_films debian/$(cdbs_curpkg)/var/lib/asterisk/sounds/

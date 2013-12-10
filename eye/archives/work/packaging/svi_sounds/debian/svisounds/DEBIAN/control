@@ -1,0 +1,11 @@
+Package: svisounds
+Version: 1.0+alphalink-0
+Architecture: all
+Maintainer: ZIADI Mohamed ali <ma.ziadi@alphalink.fr>
+Installed-Size: 3324
+Depends: asterisk
+Conflicts: sviriosounds
+Section: localization
+Priority: optional
+Homepage: http://www.alphalink.fr/
+Description: installs sound files (.wav format) for Alphalink IVRs

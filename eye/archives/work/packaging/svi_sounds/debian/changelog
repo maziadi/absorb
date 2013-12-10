@@ -1,0 +1,8 @@
+svisounds (1.0+alphalink-0) stable; urgency=low
+
+  * Initial release.
+  * The package svisounds contains sound .wav files for svi_rio
+    and svi_infos_tarifs
+    
+
+ -- Ziadi Mohamed ali <ma.ziadi@alphalink.fr>  Mon, 09 Dec 2013 17:07:53 +0100

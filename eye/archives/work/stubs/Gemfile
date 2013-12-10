@@ -1,0 +1,4 @@
+source :rubygems
+
+gem 'stomp'
+gem 'json'
