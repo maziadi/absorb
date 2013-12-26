@@ -14,4 +14,6 @@ apt-get source /dget /dh_make /debcheckout
 debuild /dpkg-buildpackage
 dpkg -i / debi
 dpkg-source -x *.dsc
+apt-get build-dep (Debian)
+mk-build-deps (non Debian)
 
