@@ -1,0 +1,17 @@
+multitail
+--------
+lvresize -L 
+e2fsck
+resize2fs
+mkfs
+blkid
+mdadm
+drbdadm
+drbd-overview
+crm_mon -1
+----------
+apt-get source /dget /dh_make /debcheckout
+debuild /dpkg-buildpackage
+dpkg -i / debi
+dpkg-source -x *.dsc
+
