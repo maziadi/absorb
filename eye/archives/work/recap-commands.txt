@@ -10,10 +10,15 @@ drbdadm
 drbd-overview
 crm_mon -1
 ----------
-apt-get source /dget /dh_make /debcheckout
+apt-get source /dget /dh_make (--createorig)/debcheckout
 debuild -us -uc /dpkg-buildpackage
 dpkg -i / debi
 dpkg-source -x ***.dsc ==> generate ***/ containing sources
 apt-get build-dep (Debian)
 mk-build-deps (non Debian)
-
+quilt new patch_name
+quilt edit files
+quilt refresh
+quilt applied/unapplied
+quilt pop <-- /push -->
+lintian --check ***.deb (for static package check)
