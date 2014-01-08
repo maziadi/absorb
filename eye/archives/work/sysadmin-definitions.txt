@@ -1,0 +1,28 @@
+UDEV
+
+For Linux kernel 2.6 and newer, the udev system provides mechanism for the automatic hardware discovery and initialization.
+    > If "/lib/modules/<kernel-version>/modules.dep" was not generated properly by depmod(8) for some reason, modules
+    may not be loaded as expected by the udev system. Execute "depmod -a" to fix it.
+    > If you want to avoid some kernel modules to be auto-loaded, consider to blacklist them in the 
+    "/etc/modprobes.d/blacklist" file
+
+AUTHENTICATION
+
+    > "/etc/gshadow" provides the similar function as "/etc/shadow" for "/etc/group" but is not really used.
+
+    > Modern Unix-like systems such as the Debian system provide PAM (Pluggable Authentication Modules) 
+    and NSS (Name Service Switch) mechanism to the local system administrator to configure his system.
+    The role of these can be summarizes as the following.
+      PAM offers a flexible authentication mechanism used by the application software thus involves password data exchange.
+      NSS offers a flexible name service mechanism which is frequently used by the C standard library to obtain the user
+      and group name for programs such as ls(1) and id(1).
+
+    insecure service name  port  secure service name   port
+    www (http)              80   https                 443
+    smtp (mail)             25   ssmtp (smtps)         465
+    ftp-data                20   ftps-data             989
+    ftp                     21   ftps                  990
+    telnet                  23   telnets               992
+    imap2                   143  imaps                 993
+    pop3                    110  pop3s                 995
+    ldap                    389  ldaps                 636
