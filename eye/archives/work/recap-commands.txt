@@ -22,3 +22,11 @@ quilt refresh
 quilt applied/unapplied
 quilt pop <-- /push -->
 lintian --check ***.deb (for static package check)
+-----------
+depmod -a
+locale -a
+dpkg-reconfigure locales
+-----------
+update-rc.d service defaults/remove
+update-rc.d service start/stop 123456
+chkconfig service --level 123456 on/off
