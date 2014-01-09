@@ -1,3 +1,7 @@
+---------------------------------------------------
+http://www.debian.org/doc/manuals/debian-reference/
+---------------------------------------------------
+
 UDEV
 
 For Linux kernel 2.6 and newer, the udev system provides mechanism for the automatic hardware discovery and initialization.
@@ -17,6 +21,13 @@ AUTHENTICATION
       NSS offers a flexible name service mechanism which is frequently used by the C standard library to obtain the user
       and group name for programs such as ls(1) and id(1).
 
+TCP/UDP PORT NUMBERS
+
+    > de 0 à 65535
+    > The combination of IP address, port and protocol is called a socket, and has to be unique for every service.
+    The port numbers area available for both TCP and UDP, and when referred to in conjunction with the IP address
+    it specifies the "socket"
+
     insecure service name  port  secure service name   port
     www (http)              80   https                 443
     smtp (mail)             25   ssmtp (smtps)         465
@@ -26,3 +37,40 @@ AUTHENTICATION
     imap2                   143  imaps                 993
     pop3                    110  pop3s                 995
     ldap                    389  ldaps                 636
+    ssh                     22
+    DNS                     53
+    DHCP Server  DISCOVER   67
+    DHCP Client  OFFER      68
+    ntp                     123
+    NETBIOS                 137-139
+    snmp                    161
+    BGP                     179
+    radius                  1812
+    NFS                     2049
+    mysql                   3306
+    postgresql              5432
+    sip                     5060
+
+SECURING THE ROOT PASSWORD
+
+To prevent people to access your machine with root privilege, you need to make following actions.
+
+  > Prevent physical access to the hard disk
+  > Lock BIOS and prevent booting from the removable media
+  > Set password for GRUB interactive session
+  > Lock GRUB menu from editing
+
+With physical access to hard disk, resetting the password is relatively easy with following steps.
+
+  > Move the hard disk to a PC with CD bootable BIOS.
+  > Boot system with a rescue media (Debian boot disk, Knoppix CD, GRUB CD, …).
+  > Mount root partition with read/write access.
+  > Edit "/etc/passwd" in the root partition and make the second entry for the root account empty.
+
+If you have edit access to the GRUB menu entry (see Section 3.1.2, “Stage 2: the boot loader”) for grub-rescue-pc at boot time, it is even easier with following steps.
+
+  > Boot system with the kernel parameter changed to something like "root=/dev/hda6 rw init=/bin/sh".
+  > Edit "/etc/passwd" and make the second entry for the root account empty.
+  > Reboot system.
+
+The root shell of the system is now accessible without password.
