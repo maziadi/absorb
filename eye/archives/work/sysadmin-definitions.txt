@@ -1,6 +1,8 @@
----------------------------------------------------
-http://www.debian.org/doc/manuals/debian-reference/
----------------------------------------------------
+#######################################################
+#                                                     # 
+# http://www.debian.org/doc/manuals/debian-reference/ #
+#                                                     #
+#######################################################
 
 UDEV
 ----
@@ -68,7 +70,8 @@ With physical access to hard disk, resetting the password is relatively easy wit
   > Mount root partition with read/write access.
   > Edit "/etc/passwd" in the root partition and make the second entry for the root account empty.
 
-If you have edit access to the GRUB menu entry (see Section 3.1.2, “Stage 2: the boot loader”) for grub-rescue-pc at boot time, it is even easier with following steps.
+If you have edit access to the GRUB menu entry (see Section 3.1.2, “Stage 2: the boot loader”) for
+grub-rescue-pc at boot time, it is even easier with following steps.
 
   > Boot system with the kernel parameter changed to something like "root=/dev/hda6 rw init=/bin/sh".
   > Edit "/etc/passwd" and make the second entry for the root account empty.
@@ -87,3 +90,26 @@ LVM requires the following.
 
 Btrfs filesystem is available in Linux kernel 3.2 (Debian wheezy). It is expected to be the next default filesystem 
 after the ext4 filesystem.
+
+
+ENCRYPTED SWAP PARTITION WITH DM-CRYPT
+--------------------------------------
+Let's assume that your original "/etc/fstab" contains the following.
+
+/dev/sda7 swap sw 0 0
+You can enable encrypted swap partition using dm-crypt by as the following.
+
+  > # aptitude install cryptsetup
+  > # swapoff -a
+  > # echo "cswap /dev/sda7 /dev/urandom swap" >> /etc/crypttab
+  > # perl -i -p -e "s/\/dev\/sda7/\/dev\/mapper\/cswap/" /etc/fstab
+  > # /etc/init.d/cryptdisks restart
+  >  ...
+  > # swapon -a
+
+ANACRON
+-------
+cron-like command scheduler for systems that don't run 24 hours a day
+
+
+
