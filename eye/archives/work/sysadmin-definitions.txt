@@ -111,5 +111,8 @@ ANACRON
 -------
 cron-like command scheduler for systems that don't run 24 hours a day
 
+KVM/QEMU
+--------
+KVM (Kernel Virtual Machine) is a Linux kernel module that allows a user space program to utilize the hardware virtualization features of various processors. Today, it supports recent Intel and AMD processors (x86 and x86_64), PPC 440, PPC 970, S/390, and ARM (Cortex A15) processors.
 
-
+QEMU can make use of KVM when running a target architecture that is the same as the host architecture. For instance, when running qemu-system-x86 on an x86 compatible processor, you can take advantage of the KVM acceleration - giving you benefit for your host and your guest system.
