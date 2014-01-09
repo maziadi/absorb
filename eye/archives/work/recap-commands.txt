@@ -1,7 +1,9 @@
-multitail
---------
-lvresize -L 
-e2fsck
+lvresize -L +-
+e2fsck fsck
+tune2fs -l block-device # displays the contents of the filesystem superblock on that block
+tune2fs -O extents,uninit_bg,dir_index /dev/hda1 && fsck -pf /dev/hda1 #converts it from ext3 to ext4 on "/dev/hda1"
+hdparm -tT block-device # test disk access speed of a hard disk
+hdparm -W block-device # test write cache feature of a hard disk
 resize2fs
 mkfs
 blkid
