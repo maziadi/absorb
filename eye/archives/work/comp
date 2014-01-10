@@ -9,6 +9,7 @@ Configuration et déploiment des machines physiques/virtuelles
 H.A (High Availability)
 Préparation des clusters contenants des machines physiqques et virtuelles avec HeartBeat/PaceMaker et des volumes de stockage à répliquer avec DRBD et LVM
 Mise en place des volumes RAID 1/5/10 pour réplications des disques
+partioning avec fdisk/cfdisk/parted et chiffrement des partitions avec cryptsetup
 Recompilation du noyau linux
 Packaging Debian
   - debhelper, dh et cdbs
