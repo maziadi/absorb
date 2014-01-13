@@ -1,0 +1,94 @@
+Monitoring
+Introduction
+
+L'architecture du monitoring s'articule autour de trois éléments : la collecte des données, le stockage et la visualisation.
+
+Collecte des données
+Les données peuvent être envoyées par les serveurs surveillés, en utilisant collectd en mode client, configurés avec des plugins de récupération de données (ex: usage cpu, disque).
+
+Elles peuvent également être récupérées de manière indirect en utilisant collectd, en mode client toujours, mais avec un plugin snmp qui permet de récupérer des données sur des serveurs ne faisant pas tourner collectd (ex: switch, convert, lisos).
+
+Les clients collectd sont ensuite chargés de retransmettre les différentes données au serveur collectd qui retransmet, à l'aide d'un plugin, à une brique de stockage (en l'occurence, graphite-carbon).
+
+Les ressources utilisées ici sont principalement du cpu.
+
+Stockage des données
+Les données reçues de collectd sont stockées sous forme de base de données whisper (similaire à rrd, un fichier par métrique) par graphite-carbon.
+
+Graphite-carbon est composé de trois éléments : un relay (utilisé pour la réplication), un cache (cache de données et écriture des fichiers whisper) et un agrégateur (non utilisé).
+
+Le relay reçoit les données de collectd et les retransmet aux différents cache présent dans le cluster.
+
+Les ressources utilisées ici sont principalement de la mémoire et de l'accès disque.
+
+Visualisation des données
+Il peut parfois être utile de visualiser les données surveillées. Cela se fait à l'aide d'un frontend web, appelé sobrement graphite-web.
+
+Il permet d'afficher des graphiques personnalisés de métriques enregistrées, mais aussi d'effectuer des opérations sur les données avant de les afficher (ex: il est possible d'obtenir la dérivée).
+
+Il peut récupérer les données directement par lecture des fichiers whisper, en utilisant le cache de carbon-cache ou en interrogeant un autre graphite-web. Ceci permet depuis un frontal d'avoir l'ensemble des métriques.
+
+Il est donc possible de construire une vue avec plusieurs graphiques, des transformations, etc ... enregistrable dans un dashboard. Afin d'avoir accès aux dashboard depuis n'importe quel graphite-web du cluster, ceux-ci sont enregistrés dans une base postgresql.
+
+Les ressources utilisées ici sont négligeables.
+
+L'interface d'administration (gestion des utilisateurs, des dashboards, ...) est accessible sur /admin/
+
+Schémas de l'architecture
+
+
+Remarques
+Fréquence de mise à jour et rétention
+Par défaut, la rétention des données est la suivante : 60s:1d,30m:30d,6h:1y,18h:3y
+
+La fréquence de mise à jour, et donc d'envoi des données, devra être d'une minute. Ceci est important car plus de données ne ferait que supprimer les précédentes et moins de données créerait des trous dans la base.
+
+Il est possible de spécifier des valeurs différentes en utilisant une expression rationnelle sur le nom de la métrique. La documentation est disponible au paragraphe storage-schemas.conf de la page http://graphite.readthedocs.org/en/0.9.12/config-carbon.html
+
+Initialisation de la base de données graphite-web
+La base de données de graphite-web, qui contient entre autres les dashboard, doit être initialisée :
+
+graphite-manage syncdb
+Réplication par collectd/multicast
+Plutôt que d'assurer la réplication avec carbon, il est possible de le faire directement avec collectd en configurant les clients pour envoyer en multicast.
+
+Cela corrige quelques problèmes présent en utilisant heartbeat et une ip flottante :
+Données perdues lors de la bascule
+HA ne bascule que lorsque la machine est indisponible, pas si seulement le process collectd ne veut pas redémarrer
+Concernant le routage multicast, il est possible de s'en passer en utilisant une instance collectd en tant que proxy.
+
+Recettes puppet
+Collectd client :
+class collectd_1_1::collectd-client (
+    $server_addr, # tableau d'adresse ip unicast/multicast du/des serveur(s)
+    $server_port = 25826,
+    $username,
+    $password
+    )
+Collectd serveur :
+class collectd_1_1::collectd-server (
+    $listen_addr, # tableau d'adresse ip unicast/multicast de réception
+    $listen_port = 25826,
+    $username,
+    $password,
+    $graphite_host = '127.0.0.1' # adresse ip du relay ou cache carbon. Généralement localhost
+    )
+Plugins collectd De base, les plugins suivants sont chargés :
+interface, qui collecte les données des interfaces réseaux, lo exclue
+disk, qui collecte les données des disques (accès, débit, ...). Ne sont inclus par défaut que les disques hd, sd, vd et md.
+df, qui collecte l'espace disque utilisé/disponible et les inodes d'une partition. Sont exclus les partitions de type tmpfs, rootfs et udev.
+Pour ajouter un plugin, il faut procéder comme suit (exemple pour snmp) :
+
+  $snmp_hosts = {
+    "thomas-3-por1" => { 'addr' => "127.0.0.1", 'version' => "1", 'community' => "public", 'interval' => "15", 'collect_groups' => ["linux-network"] }
+  }
+class {
+  "collectd_1_1::plugin::snmp":
+    hosts => $snmp_hosts;
+}
+Spécificités du plugin snmp
+Le plugin prend en argument des groupes à collecter. Les groupes sont déclarés dans le fichier modules/collectd_1_1/manifests/params.pp et contiennent une liste de types élémentaires qui sont paramétrés dans le fichier modules/collectd_1_1/templates/snmp.conf.erb
+
+Les types des valeurs sont définies dans le fichier /usr/share/collectd/types.db
+
+Si il y a besoin d'ajouter un type particulier, cela se fait dans le fichier modules/collectd_1_1/templates/collectd.types.db.erb
