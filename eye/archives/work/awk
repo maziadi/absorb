@@ -1,0 +1,2 @@
+asterisk -rx "sip show channels"  | gawk '!/routag|gw-voip|nothing|active SIP dialogs|Peer/ {tab[$5]+=1} END { for(v in tab) { print "PUTVAL "hostname"/exec-tutu/gauge-"gensub(/\((.+)\)/, "\\1", "g", v)" interval="interval" N:"tab[v] } }' interval=10 host
+e=$HOSTNAME
