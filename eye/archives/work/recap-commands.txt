@@ -32,3 +32,31 @@ dpkg-reconfigure locales
 update-rc.d service defaults/remove
 update-rc.d service start/stop 123456
 chkconfig service --level 123456 on/off
+
+#############
+PARTITIONING
+#############
+
+Lorsqu’on agrandit le disque, on n’agrandit ni la partition, ni le système de fichier. Lorsqu’on agrandit la partition, on n’agrandit pas le système de fichier. Il s’agit donc bien de trois opérations tout à fait différentes.
+
+Bien entendu, il va sans dire qu’il faut que l’espace ajouté soit adjacent à la partition que l’on souhaite agrandir. Par exemple, si vous avez trois partitions, sdb1, sdb2, et sdb3, cette dernière étant à la fin du disque, il ne sera pas possible d’agrandir sdb1 ou sdb2… 
+
+Dans notre exemple, la partition /dev/sdb3 que nous allons agrandir n’est PAS utilisée pour une des partitions du système (root, /var, /boot, etc…). Si elle l’était, nous ne pourrions pas la démonter, et donc nous ne pourrions pas procéder à l’agrandissement du système de fichier. Si vous souhaitez faire cette opération sur une partition système montée, vous devez utiliser un rescueCD ou un LiveCD afin de pouvoir manipuler la partition en question.
+
+umount /dev/sdb3
+fdisk /dev/sdb
+d       # pour effacer la partition /delete)
+3       # pour indiquer la partition sdb3
+n       # pour recréer la partition
+p       # pour recréer une partition primaire
+3       # parce que c'est la partition 3 que l'on veut créer
+[Enter] # pour accepter le bloc proposé, à savoir le premier bloc disponible, 
+          # le même que celui de la partition effacée. 
+          [Enter] # pour accepter le bloc de fin, qui par défaut, est le dernier bloc disponible
+          w       # pour enregistrer les changements dans la table de partitions
+tune2fs -O ^has_journal /dev/sdb3 #Supprimer le journal du système de fichier
+fsck -f -y /dev/sdb3
+resize2fs /dev/sdb3
+fsck -f -y /dev/sdb3
+tune2fs -O has_journal /dev/sdb3  #Créer le journal du système de fichier
+mount /dev/sdb3 /point_de_montage
