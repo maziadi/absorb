@@ -1,0 +1,31 @@
+[user]
+ name = ZIADI Mohamed ali
+ email = ma.ziadi@alphalink.fr
+[color]
+ diff = auto
+ status = auto
+ branch = auto
+[alias]
+ st = status
+ ci = commit
+ co = checkout
+ di = diff
+ fp = format-patch
+ lg = log --graph --pretty=tformat:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%an %cr)%Creset' --abbrev-commit --date=relative
+ cp = cherry-pick
+ cl = clone
+ br = branch 
+ diff = diff --word-diff
+ dc = diff --cached
+ r = reset
+ r1 = reset HEAD^
+ r2 = reset HEAD^^
+ rh = reset --hard
+ rh1 = reset HEAD^ --hard
+ rh2 = reset HEAD^^ --hard
+[merge]
+ tool = meld
+[push]
+ default = current
+[core]
+	excludesfile = /home/ma.ziadi/.gitignore
