@@ -1,0 +1,135 @@
+syntax on
+set hlsearch
+set ignorecase
+set background=dark
+" indentation
+set autoindent
+set smartindent
+set shiftwidth=2
+set tabstop=2
+set expandtab
+set backspace=indent,eol,start
+set showcmd
+set statusline=%F%m%r%h%w%=[%l,%v][%p%%]
+set laststatus=2
+
+if has("autocmd")
+    au BufReadPost * if line("'\"") > 0 && line("'\"") <= line("$")
+    \| exe "normal! g'\"" | endif
+endif
+
+if has("autocmd")
+    filetype plugin indent on
+endif
+
+" remapping pour les onglets
+
+map <C-t> :Te<CR>
+map <C-j> :tabp<CR>
+map <C-k> :tabn<CR>
+map <F2> :TlistToggle<CR>
+
+colorscheme solarized
+set cursorcolumn
+set cursorline
+set t_Co=128
+set background=light
+set background=dark
+set number
+
+" Statusline
+highlight statusline ctermbg=152 ctermfg=8
+if version >= 700
+  au InsertEnter * highlight statusline term=bold,reverse cterm=bold,reverse ctermfg=1 ctermbg=0 gui=bold,reverse
+  au InsertLeave * highlight StatusLine term=bold,reverse cterm=bold,reverse ctermfg=6 ctermbg=0 gui=bold,reverse
+  " au InsertEnter * highlight statusline ctermbg=144 ctermfg=8
+  " au InsertLeave * highlight StatusLine term=bold cterm=bold ctermfg=8 ctermbg=152 gui=bold,reverse
+endif
+
+" Functions 
+
+" Find file in current directory and edit it.
+function! Find(name)
+  let l:list=system("find . -name '".a:name."' | perl -ne 'print \"$.\\t$_\"'")
+  let l:num=strlen(substitute(l:list, "[^\n]", "", "g"))
+  if l:num < 1
+    echo "'".a:name."' not found"
+    return
+  endif
+  for l:line in split(l:list, "\n")
+    let l:line=substitute(l:line, "^[^\t]*\t./", "", "")
+    execute ":tabe ".l:line
+  endfor
+endfunction
+command! -nargs=1 Find :call Find("<args>")
+command! -nargs=1 Vif :call Find("<args>")
+
+" File types
+
+" Ruby
+ au BufNewFile,BufRead *.rb,*.rbw,*.gemspec  set filetype=ruby
+
+ " Ruby on Rails
+ au BufNewFile,BufRead *.builder,*.rxml,*.rjs  set filetype=ruby
+
+ " Rakefile
+ au BufNewFile,BufRead [rR]akefile,*.rake  set filetype=ruby
+
+ " Rantfile
+ au BufNewFile,BufRead [rR]antfile,*.rant  set filetype=ruby
+
+ " IRB config
+ au BufNewFile,BufRead .irbrc,irbrc    set filetype=ruby
+
+ " Pry config
+ au BufNewFile,BufRead .pryrc      set filetype=ruby
+
+ " Rackup
+ au BufNewFile,BufRead *.ru      set filetype=ruby
+
+ " Capistrano
+ au BufNewFile,BufRead Capfile     set filetype=ruby
+
+ " Bundler
+ au BufNewFile,BufRead Gemfile     set filetype=ruby
+
+ " Guard
+ au BufNewFile,BufRead Guardfile,.Guardfile  set filetype=ruby
+
+ " Chef
+ au BufNewFile,BufRead Cheffile      set filetype=ruby
+ au BufNewFile,BufRead Berksfile     set filetype=ruby
+
+ " Vagrant
+ au BufNewFile,BufRead [vV]agrantfile    set filetype=ruby
+
+ " Autotest
+ au BufNewFile,BufRead .autotest     set filetype=ruby
+
+ " eRuby
+ au BufNewFile,BufRead *.erb,*.rhtml   set filetype=ruby
+
+ " Thor
+ au BufNewFile,BufRead [tT]horfile,*.thor  set filetype=ruby
+
+ " Rabl
+ au BufNewFile,BufRead *.rabl      set filetype=ruby
+
+ " Jbuilder
+ au BufNewFile,BufRead *.jbuilder    set filetype=ruby
+
+ " Puppet librarian
+ au BufNewFile,BufRead Puppetfile    set filetype=ruby
+ "
+ " Buildr Buildfile
+ au BufNewFile,BufRead [Bb]uildfile    set filetype=ruby
+
+ " Appraisal
+ au BufNewFile,BufRead Appraisals    set filetype=ruby
+
+ " Puppet
+ au BufNewFile,BufRead *.pp    set filetype=ruby
+ 
+  "Jbehave & Junit test scenario
+ au BufNewFile,BufRead *.scenario    set syntax=vim
+

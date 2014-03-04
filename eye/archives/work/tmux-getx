@@ -1,0 +1,1 @@
+pgrep -lf -U $(stat -c %U $(tmux server-info | sed -rn '/socket/s/.+ .+ (.+),.*/\1/p'))| sed -rn '/\/usr\/bin\/X/s/.*(:[0-9]).*/\1/p'

@@ -1,0 +1,27 @@
+#!/bin/bash -f
+currentwindow=`/usr/bin/tmux list-window | tr '\t' ' ' | sed -n -e '/(active)/s/^[^:]*: *\([^ ]*\)\* .*/\1/gp'`;
+currentpane=`/usr/bin/tmux list-panes | sed -n -e '/(active)/s/^\([^:]*\):.*/\1/gp'`;
+panecount=`/usr/bin/tmux list-panes | wc | sed -e 's/^ *//g' -e 's/ .*$//g'`;
+inzoom=`echo $currentwindow | sed -n -e '/^zoom/p'`;
+if [ $panecount -ne 1 ]; then
+    inzoom="";
+fi
+if [ $inzoom ]; then
+    lastpane=`echo $currentwindow | rev | cut -f 1 -d '@' | rev`;
+    lastwindow=`echo $currentwindow | cut -f 2- -d '@' | rev | cut -f 2- -d '@' | rev`;
+    oldwindow=$lastwindow
+    lastwindow=${lastwindow}-prezoom
+    #TODO: $lastwindow can be multiple
+    /usr/bin/tmux select-window -t $lastwindow
+    /usr/bin/tmux select-pane -t $lastpane
+    /usr/bin/tmux swap-pane -s $currentwindow
+    /usr/bin/tmux kill-window -t $currentwindow
+    currentwindow=`echo $currentwindow|sed -r 's/.+@(.+)@.+/\1/'`
+    /usr/bin/tmux rename-window $oldwindow
+else
+  newwindowname=zoom@$currentwindow@$currentpane;
+  /usr/bin/tmux rename-window ${currentwindow}-prezoom
+  /usr/bin/tmux new-window -d -n $newwindowname;
+  /usr/bin/tmux swap-pane -s $newwindowname;
+  /usr/bin/tmux select-window -t $newwindowname;
+fi
