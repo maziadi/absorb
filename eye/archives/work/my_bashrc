@@ -111,7 +111,7 @@ fi
 
 export PS1='${debian_chroot:+($debian_chroot)}\[\033[01;38m\]\u@\h\[\033[00m\]:\[\033[01;36m\]\w\[\033[01;35m\]$(__git_ps1)\[\033[00m\] \$\n'
 export PATH=$PATH:~/configuration/tools/
-export PAGER="most"
+# export PAGER="most"
 
 PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
 
@@ -130,3 +130,15 @@ do
   fi
 done
 alias ack='ack-grep'
+
+man() {
+  env \
+    LESS_TERMCAP_mb=$(printf "\e[1;31m") \
+    LESS_TERMCAP_md=$(printf "\e[1;31m") \
+    LESS_TERMCAP_me=$(printf "\e[0m") \
+    LESS_TERMCAP_se=$(printf "\e[0m") \
+    LESS_TERMCAP_so=$(printf "\e[1;44;33m") \
+    LESS_TERMCAP_ue=$(printf "\e[0m") \
+    LESS_TERMCAP_us=$(printf "\e[1;32m") \
+    man "$@"
+}
